@@ -1,0 +1,39 @@
+micronaut:
+  server:
+    cors:
+      enabled: true
+      configurations:
+        web:
+          allowed-origins:
+            - "http://localhost"
+            - "https://localhost"
+            - "capacitor://localhost"
+            - "https://fitai-analyzer-732767853162.us-west1.run.app"
+          allowed-methods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - OPTIONS
+          allowed-headers:
+            - "*" # Permite qualquer header 
+
+datasources:
+  default:
+    url: "jdbc:mysql:///exercicio-fit?cloudSqlInstance=gen-lang-client-0004040174:us-west1:banco-fit&socketFactory=com.google.cloud.sql.mysql.SocketFactory"    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: "124578Ka@"
+    dialect: MYSQL
+    hikari:
+      maximum-pool-size: 1
+      minimum-idle: 1
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      initialization-fail-timeout: -1 # Não trava o boot se o banco demorar
+      connection-timeout: 60000 # Aumente para 60s devido à distância (EUA -> Brasil)
+
+flyway:
+  datasources:
+    default:
+      enabled: false

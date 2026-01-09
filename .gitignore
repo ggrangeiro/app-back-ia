@@ -1,0 +1,12 @@
+target/
+*.class
+.settings/
+.classpath
+.project
+.factorypath
+bin/
+*.log
+*.tmp
+*.swp
+.DS_Store
+.vscode/
