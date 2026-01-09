@@ -16,8 +16,8 @@
     <jdk.version>21</jdk.version>
     <release.version>21</release.version>
     <micronaut.version>4.10.6</micronaut.version>
-    <micronaut.runtime>google_cloud_function</micronaut.runtime>
-    <exec.mainClass>io.micronaut.gcp.function.http.HttpFunction</exec.mainClass>
+    <micronaut.runtime>netty</micronaut.runtime>
+    <exec.mainClass>gcfv2.Application</exec.mainClass>
   </properties>
 
   <dependencies>
