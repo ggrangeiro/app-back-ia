@@ -11,6 +11,8 @@ import jakarta.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.HashSet;
 
 @Controller("/api/usuarios")
 @CrossOrigin("https://fitai-analyzer-732767853162.us-west1.run.app")
@@ -44,10 +46,11 @@ public class TesteController {
             }
 
             if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
-                usuario.setRole("USER"); 
-                usuario.setPersonalId(requesterId); 
+                usuario.setRole("USER");
+                usuario.setPersonalId(requesterId);
             } else if ("ADMIN".equalsIgnoreCase(requesterRole)) {
-                if (usuario.getRole() == null) usuario.setRole("USER");
+                if (usuario.getRole() == null)
+                    usuario.setRole("USER");
             } else {
                 usuario.setRole("USER");
             }
@@ -56,11 +59,15 @@ public class TesteController {
             Usuario novoUsuario = usuarioRepository.save(usuario);
 
             List<Exercise> exerciciosCatalogo = exerciseRepository.findByActiveTrueOrderByNameAsc();
+            Set<String> processedExercises = new HashSet<>();
             for (Exercise ex : exerciciosCatalogo) {
-                UsuarioExercicio ue = new UsuarioExercicio();
-                ue.setExercicio(ex.getName()); 
-                ue.setUsuario(novoUsuario);
-                usuarioExercicioRepository.save(ue);
+                if (ex.getName() != null && !processedExercises.contains(ex.getName())) {
+                    UsuarioExercicio ue = new UsuarioExercicio();
+                    ue.setExercicio(ex.getName());
+                    ue.setUsuario(novoUsuario);
+                    usuarioExercicioRepository.save(ue);
+                    processedExercises.add(ex.getName());
+                }
             }
 
             return HttpResponse.created(novoUsuario);
@@ -86,7 +93,7 @@ public class TesteController {
 
         return usuarioRepository.findById(userId).map(user -> {
             int saldoAtual = (user.getCredits() != null) ? user.getCredits() : 0;
-            
+
             if (saldoAtual <= 0) {
                 return HttpResponse.status(HttpStatus.PAYMENT_REQUIRED)
                         .body(Map.of("message", "Saldo insuficiente."));
@@ -96,23 +103,23 @@ public class TesteController {
             usuarioRepository.executeConsumeCredit(userId);
 
             return HttpResponse.ok(Map.of(
-                "message", "Crédito debitado com sucesso",
-                "novoSaldo", saldoAtual - 1
-            ));
+                    "message", "Crédito debitado com sucesso",
+                    "novoSaldo", saldoAtual - 1));
         }).orElse(HttpResponse.notFound());
     }
 
     /**
      * RECARGA DE CRÉDITOS (ADMIN APENAS)
-     * CORREÇÃO: Removido o uso de .save() para evitar erro de Duplicate Entry no Email.
+     * CORREÇÃO: Removido o uso de .save() para evitar erro de Duplicate Entry no
+     * Email.
      */
     @Post("/admin/add-credits/{userId}")
     @Transactional
     public HttpResponse<?> addCredits(
-            @PathVariable Long userId, 
-            @Body Map<String, Integer> body, 
+            @PathVariable Long userId,
+            @Body Map<String, Integer> body,
             @QueryValue String requesterRole) {
-        
+
         if (!"ADMIN".equalsIgnoreCase(requesterRole)) {
             return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Apenas administradores."));
         }
@@ -123,15 +130,15 @@ public class TesteController {
         }
 
         return usuarioRepository.findById(userId).map(user -> {
-            // CORREÇÃO: Usando a query direta para não disparar validação de e-mail duplicado
+            // CORREÇÃO: Usando a query direta para não disparar validação de e-mail
+            // duplicado
             usuarioRepository.executeAddCredits(userId, amount);
-            
+
             int novoSaldo = (user.getCredits() != null ? user.getCredits() : 0) + amount;
-            
+
             return HttpResponse.ok(Map.of(
-                "message", "Recarga realizada com sucesso",
-                "novoSaldo", novoSaldo
-            ));
+                    "message", "Recarga realizada com sucesso",
+                    "novoSaldo", novoSaldo));
         }).orElse(HttpResponse.notFound());
     }
 
@@ -163,8 +170,10 @@ public class TesteController {
     public HttpResponse<?> listar(
             @QueryValue Long requesterId,
             @QueryValue String requesterRole) {
-        if ("ADMIN".equalsIgnoreCase(requesterRole)) return HttpResponse.ok(usuarioRepository.findAll());
-        if ("PERSONAL".equalsIgnoreCase(requesterRole)) return HttpResponse.ok(usuarioRepository.findByPersonalId(requesterId));
+        if ("ADMIN".equalsIgnoreCase(requesterRole))
+            return HttpResponse.ok(usuarioRepository.findAll());
+        if ("PERSONAL".equalsIgnoreCase(requesterRole))
+            return HttpResponse.ok(usuarioRepository.findByPersonalId(requesterId));
         return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Sem permissão."));
     }
 
@@ -176,7 +185,7 @@ public class TesteController {
             @PathVariable Long userId,
             @QueryValue Long requesterId,
             @QueryValue String requesterRole) {
-        
+
         if (!usuarioRepository.hasPermission(requesterId, requesterRole, userId.toString())) {
             return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Acesso negado."));
         }
@@ -187,10 +196,9 @@ public class TesteController {
                 String nomeBruto = ue.getExercicio();
                 String nomeFormatado = (nomeBruto != null) ? nomeBruto.replace("_", " ").toLowerCase() : "Exercício";
                 return Map.<String, Object>of(
-                    "id", ue.getId(),
-                    "exercicio", nomeBruto != null ? nomeBruto : "",
-                    "nomeExibicao", nomeFormatado.substring(0, 1).toUpperCase() + nomeFormatado.substring(1)
-                );
+                        "id", ue.getId(),
+                        "exercicio", nomeBruto != null ? nomeBruto : "",
+                        "nomeExibicao", nomeFormatado.substring(0, 1).toUpperCase() + nomeFormatado.substring(1));
             }).toList();
             return HttpResponse.ok(formatado);
         }).orElse(HttpResponse.notFound());
