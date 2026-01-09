@@ -8,4 +8,4 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:21-jre-jammy
 COPY --from=build /home/app/target/exercicio-0.1.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-Dmicronaut.server.port=8080", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-Dmicronaut.server.host=0.0.0.0", "-jar", "app.jar"]

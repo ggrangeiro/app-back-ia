@@ -22,8 +22,8 @@
 
   <dependencies>
     <dependency>
-        <groupId>io.micronaut.gcp</groupId>
-        <artifactId>micronaut-gcp-function-http</artifactId>
+        <groupId>io.micronaut</groupId>
+        <artifactId>micronaut-http-server-netty</artifactId>
     </dependency>
 
     <dependency>
