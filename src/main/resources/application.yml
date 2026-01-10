@@ -9,6 +9,7 @@ micronaut:
             - "https://localhost"
             - "capacitor://localhost"
             - "https://fitai-analyzer-732767853162.us-west1.run.app"
+            - "https://analisa-exercicio-732767853162.southamerica-east1.run.app"
           allowed-methods:
             - GET
             - POST
