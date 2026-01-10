@@ -3,6 +3,7 @@ package gcfv2;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.server.cors.CrossOrigin;
 import io.micronaut.transaction.annotation.Transactional;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
@@ -14,6 +15,8 @@ import java.util.Set;
 import java.util.HashSet;
 
 @Controller("/api/usuarios")
+@CrossOrigin({ "https://fitai-analyzer-732767853162.us-west1.run.app",
+        "https://analisa-exercicio-732767853162.southamerica-east1.run.app" })
 public class TesteController {
 
     @Inject
