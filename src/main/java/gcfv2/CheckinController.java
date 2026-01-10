@@ -3,18 +3,11 @@ package gcfv2;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
-import io.micronaut.http.server.cors.CrossOrigin;
-import io.micronaut.http.HttpMethod;
 import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.List;
 
 @Controller("/api/checkins")
-@CrossOrigin(allowedOrigins = "https://fitai-analyzer-732767853162.us-west1.run.app", allowedMethods = {
-        HttpMethod.GET,
-        HttpMethod.POST,
-        HttpMethod.OPTIONS
-})
 public class CheckinController {
 
     @Inject

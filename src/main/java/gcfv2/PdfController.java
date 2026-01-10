@@ -3,17 +3,11 @@ package gcfv2;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.*;
-import io.micronaut.http.server.cors.CrossOrigin;
-import io.micronaut.http.HttpMethod;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Controller("/api/pdf")
-@CrossOrigin(allowedOrigins = "https://fitai-analyzer-732767853162.us-west1.run.app", allowedMethods = {
-        HttpMethod.POST,
-        HttpMethod.OPTIONS
-})
 public class PdfController {
 
     @Inject
