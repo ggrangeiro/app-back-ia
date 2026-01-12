@@ -355,7 +355,7 @@ public class TesteController {
      * Query: ?requesterId=1&requesterRole=ADMIN
      * Body: { "novaSenha": "..." }
      */
-    @Post("/admin-reset-password/{userId}")
+    @Post("/admin/reset-password/{userId}")
     @Transactional
     public HttpResponse<?> adminResetPassword(
             @PathVariable Long userId,
