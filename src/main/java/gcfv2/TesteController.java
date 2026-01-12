@@ -74,6 +74,15 @@ public class TesteController {
             }
 
             usuario.setCredits(10);
+
+            // Definir plano FREE por padrão para novos usuários
+            if (usuario.getPlanType() == null) {
+                usuario.setPlanType("FREE");
+            }
+            if (usuario.getSubscriptionStatus() == null) {
+                usuario.setSubscriptionStatus("INACTIVE");
+            }
+
             Usuario novoUsuario = usuarioRepository.save(usuario);
 
             List<Exercise> exerciciosCatalogo = exerciseRepository.findByActiveTrueOrderByNameAsc();
