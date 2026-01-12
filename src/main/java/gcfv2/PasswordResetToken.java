@@ -4,6 +4,7 @@ import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.MappedEntity;
 import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Transient;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.time.LocalDateTime;
@@ -77,10 +78,12 @@ public class PasswordResetToken {
         this.used = used;
     }
 
+    @Transient
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiresAt);
     }
 
+    @Transient
     public boolean isValid() {
         return !isExpired() && !Boolean.TRUE.equals(used);
     }
