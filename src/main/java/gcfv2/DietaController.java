@@ -45,8 +45,11 @@ public class DietaController {
                 String planType = user.getPlanType() != null ? user.getPlanType() : "FREE";
                 int generationsUsed = user.getGenerationsUsedCycle() != null ? user.getGenerationsUsedCycle() : 0;
 
-                // FREE: bloqueado
-                if ("FREE".equalsIgnoreCase(planType)) {
+                // FREE: bloqueado apenas se quem solicita não for PERSONAL nem ADMIN
+                boolean isPrivileged = "PERSONAL".equalsIgnoreCase(requesterRole)
+                        || "ADMIN".equalsIgnoreCase(requesterRole);
+
+                if ("FREE".equalsIgnoreCase(planType) && !isPrivileged) {
                     return HttpResponse.status(HttpStatus.FORBIDDEN)
                             .body(Map.of("message", "Plano gratuito não permite geração de dietas. Faça upgrade!"));
                 }

@@ -19,6 +19,9 @@ public class SubscriptionScheduler {
     @Inject
     private SubscriptionHistoryRepository subscriptionHistoryRepository;
 
+    @Inject
+    private EmailService emailService;
+
     /**
      * Cron Job: Roda todos os dias às 03:00 da manhã.
      * Verifica assinaturas onde subscription_end_date < AGORA e faz downgrade para
@@ -54,6 +57,19 @@ public class SubscriptionScheduler {
                             "FREE",
                             "EXPIRATION_AUTO_DOWNGRADE");
                     subscriptionHistoryRepository.save(history);
+
+                    // Enviar e-mail notificando o usuário
+                    if (user.getEmail() != null && !user.getEmail().isBlank()) {
+                        boolean emailSent = emailService.sendPlanExpiredEmail(
+                                user.getEmail(),
+                                user.getNome(),
+                                oldPlan);
+                        if (emailSent) {
+                            LOG.info("📧 [Cron] E-mail de expiração enviado para: {}", user.getEmail());
+                        } else {
+                            LOG.warn("⚠️ [Cron] Falha ao enviar e-mail de expiração para: {}", user.getEmail());
+                        }
+                    }
 
                 } catch (Exception e) {
                     LOG.error("❌ [Cron] Erro ao processar expiração para usuário " + user.getId(), e);
