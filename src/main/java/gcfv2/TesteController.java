@@ -362,6 +362,27 @@ public class TesteController {
             @Body Map<String, String> body,
             @QueryValue Long requesterId,
             @QueryValue String requesterRole) {
+        return processAdminReset(userId, body, requesterId, requesterRole);
+    }
+
+    /**
+     * Alias para a rota administrativa (suporta formato com hífen)
+     */
+    @Post("/admin-reset-password/{userId}")
+    @Transactional
+    public HttpResponse<?> adminResetPasswordAlias(
+            @PathVariable Long userId,
+            @Body Map<String, String> body,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+        return processAdminReset(userId, body, requesterId, requesterRole);
+    }
+
+    private HttpResponse<?> processAdminReset(
+            Long userId,
+            Map<String, String> body,
+            Long requesterId,
+            String requesterRole) {
 
         String novaSenha = body.get("novaSenha");
 
