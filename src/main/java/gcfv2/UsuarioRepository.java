@@ -52,7 +52,13 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     @Query("UPDATE usuario SET subscription_credits = :credits, credits = :credits + purchased_credits WHERE id = :id")
     void resetSubscriptionCredits(Long id, Integer credits);
 
-    // Verifica se o requester tem autorização sobre o targetUserId
+    // Queries para Cron Job de Expiração
+    @Query("SELECT * FROM usuario WHERE subscription_end_date < :now AND plan_type != 'FREE'")
+    List<Usuario> findExpiredSubscriptions(java.time.LocalDateTime now);
+
+    @Query("UPDATE usuario SET plan_type = 'FREE', subscription_status = 'INACTIVE', generations_used_cycle = 0, subscription_credits = 0 WHERE id = :id")
+    void executeDowngradeToFree(Long id);
+
     default boolean hasPermission(Long requesterId, String requesterRole, String targetUserId) {
         // CORREÇÃO: Usando equalsIgnoreCase para aceitar "admin", "personal", etc.
         if ("ADMIN".equalsIgnoreCase(requesterRole))

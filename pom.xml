@@ -26,6 +26,12 @@
         <artifactId>micronaut-http-server-netty</artifactId>
     </dependency>
 
+    <!-- Adicionando suporte a Agendamento (Cron) -->
+    <dependency>
+        <groupId>io.micronaut</groupId>
+        <artifactId>micronaut-management</artifactId>
+    </dependency>
+
     <dependency>
         <groupId>com.google.auth</groupId>
         <artifactId>google-auth-library-oauth2-http</artifactId>
