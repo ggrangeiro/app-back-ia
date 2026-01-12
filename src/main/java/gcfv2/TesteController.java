@@ -154,10 +154,11 @@ public class TesteController {
         }
 
         return usuarioRepository.findById(userId).map(user -> {
-            // CORREÇÃO: Usando a query direta para não disparar validação de e-mail
-            // duplicado
-            usuarioRepository.executeAddCredits(userId, amount);
+            // CORREÇÃO: Usando a query de créditos avulsos que atualiza tanto
+            // purchased_credits quanto credits (legado)
+            usuarioRepository.addPurchasedCredits(userId, amount);
 
+            // Recalcular saldo para resposta
             int novoSaldo = (user.getCredits() != null ? user.getCredits() : 0) + amount;
 
             return HttpResponse.ok(Map.of(

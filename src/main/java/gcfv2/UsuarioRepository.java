@@ -27,7 +27,7 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     @Query("UPDATE usuario SET senha = :senha WHERE id = :id")
     void updatePassword(Long id, String senha);
 
-    @Query("UPDATE usuario SET plan_type = :planType, subscription_status = :status, subscription_end_date = :endDate, credits_reset_date = :resetDate, credits = :credits, generations_used_cycle = 0 WHERE id = :id")
+    @Query("UPDATE usuario SET plan_type = :planType, subscription_status = :status, subscription_end_date = :endDate, credits_reset_date = :resetDate, credits = :credits + purchased_credits, generations_used_cycle = 0 WHERE id = :id")
     void updateSubscription(Long id, String planType, String status, java.time.LocalDateTime endDate,
             java.time.LocalDateTime resetDate, Integer credits);
 
@@ -37,17 +37,19 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     @Query("UPDATE usuario SET subscription_status = :status WHERE id = :id")
     void updateSubscriptionStatus(Long id, String status);
 
-    // Queries para créditos separados
-    @Query("UPDATE usuario SET subscription_credits = subscription_credits - 1 WHERE id = :id AND subscription_credits > 0")
+    // Queries para créditos separados - Mantendo coluna 'credits' sempre
+    // sincronizada (Soma)
+
+    @Query("UPDATE usuario SET subscription_credits = subscription_credits - 1, credits = credits - 1 WHERE id = :id AND subscription_credits > 0")
     void consumeSubscriptionCredit(Long id);
 
-    @Query("UPDATE usuario SET purchased_credits = purchased_credits - 1 WHERE id = :id AND purchased_credits > 0")
+    @Query("UPDATE usuario SET purchased_credits = purchased_credits - 1, credits = credits - 1 WHERE id = :id AND purchased_credits > 0")
     void consumePurchasedCredit(Long id);
 
-    @Query("UPDATE usuario SET purchased_credits = purchased_credits + :amount WHERE id = :id")
+    @Query("UPDATE usuario SET purchased_credits = purchased_credits + :amount, credits = credits + :amount WHERE id = :id")
     void addPurchasedCredits(Long id, Integer amount);
 
-    @Query("UPDATE usuario SET subscription_credits = :credits WHERE id = :id")
+    @Query("UPDATE usuario SET subscription_credits = :credits, credits = :credits + purchased_credits WHERE id = :id")
     void resetSubscriptionCredits(Long id, Integer credits);
 
     // Verifica se o requester tem autorização sobre o targetUserId
