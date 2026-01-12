@@ -195,6 +195,7 @@ public class Usuario {
     /**
      * Calcula o total de créditos (retrocompatibilidade)
      */
+    @Transient
     public Integer getTotalCredits() {
         int sub = subscriptionCredits != null ? subscriptionCredits : 0;
         int pur = purchasedCredits != null ? purchasedCredits : 0;
