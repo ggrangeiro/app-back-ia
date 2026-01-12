@@ -40,6 +40,9 @@ public class TesteController {
     @Inject
     private EmailService emailService;
 
+    @Inject
+    private CreditConsumptionHistoryRepository creditHistoryRepository;
+
     /**
      * CADASTRO DE USUÁRIO
      */
@@ -94,11 +97,141 @@ public class TesteController {
 
     /**
      * CONSUMIR CRÉDITO (-1)
-     * Prioridade: subscription_credits primeiro, depois purchased_credits
+     * Lógica por plano:
+     * - PRO/STUDIO: Dieta/Treino GRÁTIS (não debita)
+     * - STARTER: 10 gerações gratuitas de dieta/treino por mês, depois cobra
+     * - FREE: Sempre cobra
+     * - ANALISE: Sempre cobra (independente do plano)
+     * 
+     * Prioridade de débito: subscription_credits primeiro, depois purchased_credits
      */
     @Post("/consume-credit/{userId}")
     @Transactional
     public HttpResponse<?> consumirCredito(
+            @PathVariable Long userId,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole,
+            @QueryValue String reason,
+            @Nullable @QueryValue String analysisType) {
+
+        // Validar reason
+        if (reason == null || (!reason.equals("DIETA") && !reason.equals("TREINO") && !reason.equals("ANALISE"))) {
+            return HttpResponse
+                    .badRequest(Map.of("message", "Parâmetro 'reason' inválido. Use: DIETA, TREINO ou ANALISE"));
+        }
+
+        // Validar analysisType para ANALISE
+        if ("ANALISE".equals(reason) && (analysisType == null || analysisType.isBlank())) {
+            return HttpResponse
+                    .badRequest(Map.of("message", "Parâmetro 'analysisType' é obrigatório quando reason=ANALISE"));
+        }
+
+        if (!usuarioRepository.hasPermission(requesterId, requesterRole, userId.toString())) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Acesso negado."));
+        }
+
+        return usuarioRepository.findById(userId).map(user -> {
+            // Determinar o plano a considerar:
+            // Se o requester é PERSONAL/ADMIN gerando para aluno, usar plano do requester
+            String planTypeToCheck = user.getPlanType() != null ? user.getPlanType() : "FREE";
+            boolean isPrivileged = "PERSONAL".equalsIgnoreCase(requesterRole)
+                    || "ADMIN".equalsIgnoreCase(requesterRole);
+
+            if (isPrivileged && !requesterId.equals(userId)) {
+                // Personal/Admin gerando para aluno - usar plano do Personal/Admin
+                Optional<Usuario> requesterOpt = usuarioRepository.findById(requesterId);
+                if (requesterOpt.isPresent()) {
+                    planTypeToCheck = requesterOpt.get().getPlanType() != null ? requesterOpt.get().getPlanType()
+                            : "FREE";
+                }
+            }
+
+            boolean shouldCharge = true;
+            boolean wasFree = false;
+            String creditSource = "FREE";
+
+            // Lógica por motivo e plano
+            if ("DIETA".equals(reason) || "TREINO".equals(reason)) {
+                // PRO e STUDIO: GRÁTIS para dieta/treino
+                if ("PRO".equalsIgnoreCase(planTypeToCheck) || "STUDIO".equalsIgnoreCase(planTypeToCheck)) {
+                    shouldCharge = false;
+                    wasFree = true;
+                }
+                // STARTER: 10 gerações gratuitas por mês
+                else if ("STARTER".equalsIgnoreCase(planTypeToCheck)) {
+                    long freeUsedThisMonth = creditHistoryRepository.countFreeGenerationsThisMonth(userId);
+                    if (freeUsedThisMonth < 10) {
+                        shouldCharge = false;
+                        wasFree = true;
+                    }
+                }
+                // FREE: sempre cobra (shouldCharge permanece true)
+            }
+            // ANALISE: sempre cobra (shouldCharge permanece true)
+
+            int creditsConsumed = 0;
+
+            if (shouldCharge) {
+                int subCredits = user.getSubscriptionCredits() != null ? user.getSubscriptionCredits() : 0;
+                int purCredits = user.getPurchasedCredits() != null ? user.getPurchasedCredits() : 0;
+                int totalCredits = subCredits + purCredits;
+
+                if (totalCredits <= 0) {
+                    return HttpResponse.status(HttpStatus.PAYMENT_REQUIRED)
+                            .body(Map.of("message", "Saldo insuficiente."));
+                }
+
+                // Prioridade: debitar primeiro de subscription_credits
+                if (subCredits > 0) {
+                    usuarioRepository.consumeSubscriptionCredit(userId);
+                    creditSource = "SUBSCRIPTION";
+                } else {
+                    usuarioRepository.consumePurchasedCredit(userId);
+                    creditSource = "PURCHASED";
+                }
+                creditsConsumed = 1;
+            }
+
+            // Registrar histórico de consumo
+            CreditConsumptionHistory history = new CreditConsumptionHistory(
+                    userId,
+                    reason,
+                    analysisType,
+                    creditsConsumed,
+                    wasFree,
+                    creditSource);
+            creditHistoryRepository.save(history);
+
+            // Calcular novo saldo para resposta
+            int subCredits = user.getSubscriptionCredits() != null ? user.getSubscriptionCredits() : 0;
+            int purCredits = user.getPurchasedCredits() != null ? user.getPurchasedCredits() : 0;
+            int novoSaldo = subCredits + purCredits - creditsConsumed;
+
+            // Contagem de gerações gratuitas restantes (para STARTER)
+            long freeGenerationsUsed = creditHistoryRepository.countFreeGenerationsThisMonth(userId);
+            int freeGenerationsRemaining = "STARTER".equalsIgnoreCase(planTypeToCheck)
+                    ? Math.max(0, 10 - (int) freeGenerationsUsed)
+                    : 0;
+
+            return HttpResponse.ok(Map.of(
+                    "message", wasFree ? "Geração gratuita utilizada" : "Crédito debitado com sucesso",
+                    "novoSaldo", novoSaldo,
+                    "creditsConsumed", creditsConsumed,
+                    "wasFree", wasFree,
+                    "reason", reason,
+                    "freeGenerationsRemaining", freeGenerationsRemaining,
+                    "subscriptionCredits", shouldCharge && subCredits > 0 ? subCredits - 1 : subCredits,
+                    "purchasedCredits",
+                    shouldCharge && subCredits <= 0 && purCredits > 0 ? purCredits - 1 : purCredits));
+        }).orElse(HttpResponse.notFound());
+    }
+
+    /**
+     * HISTÓRICO DE CONSUMO DE CRÉDITOS
+     * Retorna histórico completo e resumo de uso
+     */
+    @Get("/credit-history/{userId}")
+    public HttpResponse<?> getCreditHistory(
             @PathVariable Long userId,
             @QueryValue Long requesterId,
             @QueryValue String requesterRole) {
@@ -108,27 +241,23 @@ public class TesteController {
         }
 
         return usuarioRepository.findById(userId).map(user -> {
-            int subCredits = user.getSubscriptionCredits() != null ? user.getSubscriptionCredits() : 0;
-            int purCredits = user.getPurchasedCredits() != null ? user.getPurchasedCredits() : 0;
-            int totalCredits = subCredits + purCredits;
+            List<CreditConsumptionHistory> history = creditHistoryRepository.findByUserIdOrderByCreatedAtDesc(userId);
 
-            if (totalCredits <= 0) {
-                return HttpResponse.status(HttpStatus.PAYMENT_REQUIRED)
-                        .body(Map.of("message", "Saldo insuficiente."));
-            }
+            long totalConsumed = creditHistoryRepository.sumCreditsConsumedByUserId(userId);
+            long freeGenerationsUsed = creditHistoryRepository.countFreeGenerationsThisMonth(userId);
 
-            // Prioridade: debitar primeiro de subscription_credits
-            if (subCredits > 0) {
-                usuarioRepository.consumeSubscriptionCredit(userId);
-            } else {
-                usuarioRepository.consumePurchasedCredit(userId);
-            }
+            String planType = user.getPlanType() != null ? user.getPlanType() : "FREE";
+            int freeGenerationsRemaining = "STARTER".equalsIgnoreCase(planType)
+                    ? Math.max(0, 10 - (int) freeGenerationsUsed)
+                    : ("PRO".equalsIgnoreCase(planType) || "STUDIO".equalsIgnoreCase(planType) ? -1 : 0);
 
             return HttpResponse.ok(Map.of(
-                    "message", "Crédito debitado com sucesso",
-                    "novoSaldo", totalCredits - 1,
-                    "subscriptionCredits", subCredits > 0 ? subCredits - 1 : 0,
-                    "purchasedCredits", subCredits > 0 ? purCredits : purCredits - 1));
+                    "history", history,
+                    "summary", Map.of(
+                            "totalConsumed", totalConsumed,
+                            "freeGenerationsUsed", freeGenerationsUsed,
+                            "freeGenerationsRemaining", freeGenerationsRemaining,
+                            "consumedThisMonth", creditHistoryRepository.sumCreditsConsumedThisMonth(userId))));
         }).orElse(HttpResponse.notFound());
     }
 

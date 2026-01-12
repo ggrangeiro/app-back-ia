@@ -6,19 +6,22 @@ import java.util.List;
 
 @Serdeable
 public record AnalysisResult(
-    boolean isValidContent,
-    Integer score,
-    Integer repetitions,
-    String gender,
-    String formCorrection,
-    List<Feedback> feedback,
-    List<String> strengths,
-    List<Improvement> improvements,
-    List<String> muscleGroups
-) implements Serializable {}
+        boolean isValidContent,
+        Integer score,
+        Integer repetitions,
+        String gender,
+        String formCorrection,
+        List<Feedback> feedback,
+        List<String> strengths,
+        List<Improvement> improvements,
+        List<String> muscleGroups,
+        String voiceFeedback) implements Serializable {
+}
 
 @Serdeable
-record Feedback(String message, Integer score) {}
+record Feedback(String message, Integer score) {
+}
 
 @Serdeable
-record Improvement(String instruction, String detail) {}
+record Improvement(String instruction, String detail) {
+}

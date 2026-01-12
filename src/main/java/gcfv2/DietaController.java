@@ -42,24 +42,30 @@ public class DietaController {
             var userOpt = usuarioRepository.findById(targetUserId);
             if (userOpt.isPresent()) {
                 var user = userOpt.get();
-                String planType = user.getPlanType() != null ? user.getPlanType() : "FREE";
-                int generationsUsed = user.getGenerationsUsedCycle() != null ? user.getGenerationsUsedCycle() : 0;
 
-                // FREE: bloqueado apenas se quem solicita não for PERSONAL nem ADMIN
+                // Determinar plano a verificar:
+                // Se requester é PERSONAL/ADMIN, usar plano do requester (não do aluno)
+                String planTypeToCheck = user.getPlanType() != null ? user.getPlanType() : "FREE";
                 boolean isPrivileged = "PERSONAL".equalsIgnoreCase(requesterRole)
                         || "ADMIN".equalsIgnoreCase(requesterRole);
 
-                if ("FREE".equalsIgnoreCase(planType) && !isPrivileged) {
+                if (isPrivileged && !requesterId.equals(targetUserId)) {
+                    var requesterOpt = usuarioRepository.findById(requesterId);
+                    if (requesterOpt.isPresent()) {
+                        planTypeToCheck = requesterOpt.get().getPlanType() != null ? requesterOpt.get().getPlanType()
+                                : "FREE";
+                    }
+                }
+
+                // FREE: bloqueado apenas se não for privilegiado com plano pago
+                if ("FREE".equalsIgnoreCase(planTypeToCheck) && !isPrivileged) {
                     return HttpResponse.status(HttpStatus.FORBIDDEN)
                             .body(Map.of("message", "Plano gratuito não permite geração de dietas. Faça upgrade!"));
                 }
 
-                // STARTER: limite de 10
-                if ("STARTER".equalsIgnoreCase(planType) && generationsUsed >= 10) {
-                    return HttpResponse.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("message",
-                                    "Limite mensal do plano Starter atingido (10/10). Faça upgrade para continuar!"));
-                }
+                // PRO e STUDIO: sem limite de gerações
+                // STARTER: limite de 10 (controlado pelo consume-credit)
+                // A verificação do limite agora é feita pelo consume-credit no frontend
             }
 
             Dieta salva = dietaRepository.save(dieta);
