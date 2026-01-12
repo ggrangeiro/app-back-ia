@@ -94,6 +94,7 @@ public class TesteController {
 
     /**
      * CONSUMIR CRÉDITO (-1)
+     * Prioridade: subscription_credits primeiro, depois purchased_credits
      */
     @Post("/consume-credit/{userId}")
     @Transactional
@@ -107,19 +108,27 @@ public class TesteController {
         }
 
         return usuarioRepository.findById(userId).map(user -> {
-            int saldoAtual = (user.getCredits() != null) ? user.getCredits() : 0;
+            int subCredits = user.getSubscriptionCredits() != null ? user.getSubscriptionCredits() : 0;
+            int purCredits = user.getPurchasedCredits() != null ? user.getPurchasedCredits() : 0;
+            int totalCredits = subCredits + purCredits;
 
-            if (saldoAtual <= 0) {
+            if (totalCredits <= 0) {
                 return HttpResponse.status(HttpStatus.PAYMENT_REQUIRED)
                         .body(Map.of("message", "Saldo insuficiente."));
             }
 
-            // Update atômico: altera APENAS a coluna credits
-            usuarioRepository.executeConsumeCredit(userId);
+            // Prioridade: debitar primeiro de subscription_credits
+            if (subCredits > 0) {
+                usuarioRepository.consumeSubscriptionCredit(userId);
+            } else {
+                usuarioRepository.consumePurchasedCredit(userId);
+            }
 
             return HttpResponse.ok(Map.of(
                     "message", "Crédito debitado com sucesso",
-                    "novoSaldo", saldoAtual - 1));
+                    "novoSaldo", totalCredits - 1,
+                    "subscriptionCredits", subCredits > 0 ? subCredits - 1 : 0,
+                    "purchasedCredits", subCredits > 0 ? purCredits : purCredits - 1));
         }).orElse(HttpResponse.notFound());
     }
 

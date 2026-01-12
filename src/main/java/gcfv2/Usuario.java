@@ -42,6 +42,12 @@ public class Usuario {
     @MappedProperty("generations_used_cycle")
     private Integer generationsUsedCycle;
 
+    @MappedProperty("subscription_credits")
+    private Integer subscriptionCredits;
+
+    @MappedProperty("purchased_credits")
+    private Integer purchasedCredits;
+
     @Transient
     private Object latestWorkout;
 
@@ -168,5 +174,30 @@ public class Usuario {
 
     public void setGenerationsUsedCycle(Integer generationsUsedCycle) {
         this.generationsUsedCycle = generationsUsedCycle;
+    }
+
+    public Integer getSubscriptionCredits() {
+        return subscriptionCredits;
+    }
+
+    public void setSubscriptionCredits(Integer subscriptionCredits) {
+        this.subscriptionCredits = subscriptionCredits;
+    }
+
+    public Integer getPurchasedCredits() {
+        return purchasedCredits;
+    }
+
+    public void setPurchasedCredits(Integer purchasedCredits) {
+        this.purchasedCredits = purchasedCredits;
+    }
+
+    /**
+     * Calcula o total de créditos (retrocompatibilidade)
+     */
+    public Integer getTotalCredits() {
+        int sub = subscriptionCredits != null ? subscriptionCredits : 0;
+        int pur = purchasedCredits != null ? purchasedCredits : 0;
+        return sub + pur;
     }
 }

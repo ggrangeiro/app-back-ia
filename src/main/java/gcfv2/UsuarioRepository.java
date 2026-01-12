@@ -37,6 +37,19 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     @Query("UPDATE usuario SET subscription_status = :status WHERE id = :id")
     void updateSubscriptionStatus(Long id, String status);
 
+    // Queries para créditos separados
+    @Query("UPDATE usuario SET subscription_credits = subscription_credits - 1 WHERE id = :id AND subscription_credits > 0")
+    void consumeSubscriptionCredit(Long id);
+
+    @Query("UPDATE usuario SET purchased_credits = purchased_credits - 1 WHERE id = :id AND purchased_credits > 0")
+    void consumePurchasedCredit(Long id);
+
+    @Query("UPDATE usuario SET purchased_credits = purchased_credits + :amount WHERE id = :id")
+    void addPurchasedCredits(Long id, Integer amount);
+
+    @Query("UPDATE usuario SET subscription_credits = :credits WHERE id = :id")
+    void resetSubscriptionCredits(Long id, Integer credits);
+
     // Verifica se o requester tem autorização sobre o targetUserId
     default boolean hasPermission(Long requesterId, String requesterRole, String targetUserId) {
         // CORREÇÃO: Usando equalsIgnoreCase para aceitar "admin", "personal", etc.
