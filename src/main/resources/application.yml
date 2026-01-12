@@ -38,3 +38,12 @@ flyway:
   datasources:
     default:
       enabled: false
+
+# Resend email service configuration
+resend:
+  api-key: ${RESEND_API_KEY:}
+  from-email: ${RESEND_FROM_EMAIL:onboarding@resend.dev}
+
+# Application settings
+app:
+  frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}

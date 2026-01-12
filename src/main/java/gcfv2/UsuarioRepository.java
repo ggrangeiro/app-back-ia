@@ -9,13 +9,13 @@ import java.util.Optional;
 
 @JdbcRepository(dialect = Dialect.MYSQL)
 public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
-    
+
     Optional<Usuario> findByEmail(String email);
-    
+
     boolean existsByEmail(String email);
-    
+
     List<Usuario> findByPersonalId(Long personalId);
-    
+
     List<Usuario> findByRole(String role);
 
     @Query("UPDATE usuario SET credits = credits - 1 WHERE id = :id AND credits > 0")
@@ -24,13 +24,18 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     @Query("UPDATE usuario SET credits = credits + :amount WHERE id = :id")
     void executeAddCredits(Long id, Integer amount);
 
+    @Query("UPDATE usuario SET senha = :senha WHERE id = :id")
+    void updatePassword(Long id, String senha);
+
     // Verifica se o requester tem autorização sobre o targetUserId
     default boolean hasPermission(Long requesterId, String requesterRole, String targetUserId) {
         // CORREÇÃO: Usando equalsIgnoreCase para aceitar "admin", "personal", etc.
-        if ("ADMIN".equalsIgnoreCase(requesterRole)) return true;
-        
-        if (requesterId.toString().equals(targetUserId)) return true; 
-        
+        if ("ADMIN".equalsIgnoreCase(requesterRole))
+            return true;
+
+        if (requesterId.toString().equals(targetUserId))
+            return true;
+
         if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
             try {
                 return findById(Long.parseLong(targetUserId))
