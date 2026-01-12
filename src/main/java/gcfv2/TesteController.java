@@ -192,11 +192,47 @@ public class TesteController {
                     usuarioRepository.updatePassword(usuario.getId(), hashedPassword);
                 }
 
+                // Definir latestWorkout (mantido da lógica anterior)
                 List<Treino> treinos = treinoRepository.findByUserIdOrderByCreatedAtDesc(usuario.getId().toString());
                 if (!treinos.isEmpty()) {
                     usuario.setLatestWorkout(treinos.get(0));
                 }
-                return HttpResponse.ok(usuario);
+
+                // Preparar resposta com Plano e Usage (padronizado com /api/me)
+                Map<String, Map<String, Object>> PLANS = Map.of(
+                        "FREE", Map.of("generationsLimit", 0),
+                        "STARTER", Map.of("generationsLimit", 10),
+                        "PRO", Map.of("generationsLimit", -1),
+                        "STUDIO", Map.of("generationsLimit", -1));
+
+                Map<String, Object> planInfo = PLANS.getOrDefault(usuario.getPlanType(), PLANS.get("FREE"));
+                int generationsLimit = (int) planInfo.get("generationsLimit");
+
+                int subCredits = usuario.getSubscriptionCredits() != null ? usuario.getSubscriptionCredits() : 0;
+                int purCredits = usuario.getPurchasedCredits() != null ? usuario.getPurchasedCredits() : 0;
+                int totalCredits = subCredits + purCredits;
+
+                Map<String, Object> response = Map.of(
+                        "id", usuario.getId(),
+                        "name", usuario.getNome() != null ? usuario.getNome() : "",
+                        "email", usuario.getEmail() != null ? usuario.getEmail() : "",
+                        "role", usuario.getRole() != null ? usuario.getRole() : "USER",
+                        "plan", Map.of(
+                                "type", usuario.getPlanType() != null ? usuario.getPlanType() : "FREE",
+                                "status",
+                                usuario.getSubscriptionStatus() != null ? usuario.getSubscriptionStatus() : "INACTIVE",
+                                "renewsAt",
+                                usuario.getSubscriptionEndDate() != null ? usuario.getSubscriptionEndDate().toString()
+                                        : ""),
+                        "usage", Map.of(
+                                "credits", totalCredits,
+                                "subscriptionCredits", subCredits,
+                                "purchasedCredits", purCredits,
+                                "generations",
+                                usuario.getGenerationsUsedCycle() != null ? usuario.getGenerationsUsedCycle() : 0,
+                                "generationsLimit", generationsLimit));
+
+                return HttpResponse.ok(response);
             }
         }
         return HttpResponse.status(HttpStatus.UNAUTHORIZED).body(Map.of("message", "Credenciais inválidas."));
