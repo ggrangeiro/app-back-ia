@@ -335,7 +335,8 @@ public class TesteController {
                         "PRO", Map.of("generationsLimit", -1),
                         "STUDIO", Map.of("generationsLimit", -1));
 
-                Map<String, Object> planInfo = PLANS.getOrDefault(usuario.getPlanType(), PLANS.get("FREE"));
+                String userPlanType = usuario.getPlanType() != null ? usuario.getPlanType() : "FREE";
+                Map<String, Object> planInfo = PLANS.getOrDefault(userPlanType, PLANS.get("FREE"));
                 int generationsLimit = (int) planInfo.get("generationsLimit");
 
                 int subCredits = usuario.getSubscriptionCredits() != null ? usuario.getSubscriptionCredits() : 0;
