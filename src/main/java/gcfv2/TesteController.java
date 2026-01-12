@@ -40,6 +40,11 @@ public class TesteController {
     @Inject
     private EmailService emailService;
 
+    @Get("/ping")
+    public String ping() {
+        return "pong";
+    }
+
     /**
      * CADASTRO DE USUÁRIO
      */
