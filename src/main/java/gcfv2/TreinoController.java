@@ -26,6 +26,7 @@ public class TreinoController {
     private UsuarioRepository usuarioRepository;
 
     @Post("/")
+    @Transactional
     public HttpResponse<?> salvar(@Body Treino treino,
             @QueryValue Long requesterId,
             @QueryValue String requesterRole) {
@@ -35,7 +36,33 @@ public class TreinoController {
                         .body(Map.of("message", "Acesso negado. Sem permissão para este aluno."));
             }
 
+            // GATEKEEPER: Verificar limites de geração do plano
+            Long targetUserId = Long.parseLong(treino.getUserId());
+            var userOpt = usuarioRepository.findById(targetUserId);
+            if (userOpt.isPresent()) {
+                var user = userOpt.get();
+                String planType = user.getPlanType() != null ? user.getPlanType() : "FREE";
+                int generationsUsed = user.getGenerationsUsedCycle() != null ? user.getGenerationsUsedCycle() : 0;
+
+                // FREE: bloqueado
+                if ("FREE".equalsIgnoreCase(planType)) {
+                    return HttpResponse.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message", "Plano gratuito não permite geração de treinos. Faça upgrade!"));
+                }
+
+                // STARTER: limite de 10
+                if ("STARTER".equalsIgnoreCase(planType) && generationsUsed >= 10) {
+                    return HttpResponse.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message",
+                                    "Limite mensal do plano Starter atingido (10/10). Faça upgrade para continuar!"));
+                }
+            }
+
             Treino salvo = treinoRepository.save(treino);
+
+            // Incrementar contador de gerações
+            usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(treino.getUserId()));
+
             return HttpResponse.created(salvo);
         } catch (Exception e) {
             return HttpResponse.serverError(Map.of("message", "Erro ao salvar treino: " + e.getMessage()));

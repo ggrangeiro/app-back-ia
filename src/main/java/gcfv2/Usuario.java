@@ -27,6 +27,21 @@ public class Usuario {
 
     private Integer credits;
 
+    @MappedProperty("plan_type")
+    private String planType;
+
+    @MappedProperty("subscription_status")
+    private String subscriptionStatus;
+
+    @MappedProperty("subscription_end_date")
+    private java.time.LocalDateTime subscriptionEndDate;
+
+    @MappedProperty("credits_reset_date")
+    private java.time.LocalDateTime creditsResetDate;
+
+    @MappedProperty("generations_used_cycle")
+    private Integer generationsUsedCycle;
+
     @Transient
     private Object latestWorkout;
 
@@ -113,5 +128,45 @@ public class Usuario {
 
     public void setLatestWorkout(Object latestWorkout) {
         this.latestWorkout = latestWorkout;
+    }
+
+    public String getPlanType() {
+        return planType;
+    }
+
+    public void setPlanType(String planType) {
+        this.planType = planType;
+    }
+
+    public String getSubscriptionStatus() {
+        return subscriptionStatus;
+    }
+
+    public void setSubscriptionStatus(String subscriptionStatus) {
+        this.subscriptionStatus = subscriptionStatus;
+    }
+
+    public java.time.LocalDateTime getSubscriptionEndDate() {
+        return subscriptionEndDate;
+    }
+
+    public void setSubscriptionEndDate(java.time.LocalDateTime subscriptionEndDate) {
+        this.subscriptionEndDate = subscriptionEndDate;
+    }
+
+    public java.time.LocalDateTime getCreditsResetDate() {
+        return creditsResetDate;
+    }
+
+    public void setCreditsResetDate(java.time.LocalDateTime creditsResetDate) {
+        this.creditsResetDate = creditsResetDate;
+    }
+
+    public Integer getGenerationsUsedCycle() {
+        return generationsUsedCycle;
+    }
+
+    public void setGenerationsUsedCycle(Integer generationsUsedCycle) {
+        this.generationsUsedCycle = generationsUsedCycle;
     }
 }

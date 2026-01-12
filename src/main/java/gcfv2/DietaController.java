@@ -27,6 +27,7 @@ public class DietaController {
     private UsuarioRepository usuarioRepository;
 
     @Post("/")
+    @Transactional
     public HttpResponse<?> salvar(@Body Dieta dieta,
             @QueryValue Long requesterId,
             @QueryValue String requesterRole) {
@@ -36,7 +37,33 @@ public class DietaController {
                         .body(Map.of("message", "Acesso negado. Você não tem vínculo com este aluno."));
             }
 
+            // GATEKEEPER: Verificar limites de geração do plano
+            Long targetUserId = Long.parseLong(dieta.getUserId());
+            var userOpt = usuarioRepository.findById(targetUserId);
+            if (userOpt.isPresent()) {
+                var user = userOpt.get();
+                String planType = user.getPlanType() != null ? user.getPlanType() : "FREE";
+                int generationsUsed = user.getGenerationsUsedCycle() != null ? user.getGenerationsUsedCycle() : 0;
+
+                // FREE: bloqueado
+                if ("FREE".equalsIgnoreCase(planType)) {
+                    return HttpResponse.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message", "Plano gratuito não permite geração de dietas. Faça upgrade!"));
+                }
+
+                // STARTER: limite de 10
+                if ("STARTER".equalsIgnoreCase(planType) && generationsUsed >= 10) {
+                    return HttpResponse.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message",
+                                    "Limite mensal do plano Starter atingido (10/10). Faça upgrade para continuar!"));
+                }
+            }
+
             Dieta salva = dietaRepository.save(dieta);
+
+            // Incrementar contador de gerações
+            usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(dieta.getUserId()));
+
             return HttpResponse.created(salva);
         } catch (Exception e) {
             return HttpResponse.serverError(Map.of("message", "Erro ao salvar dieta: " + e.getMessage()));
