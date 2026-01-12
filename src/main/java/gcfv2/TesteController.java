@@ -18,7 +18,6 @@ import java.util.HashSet;
 import java.util.UUID;
 
 @Controller("/api/usuarios")
-// Trigger Cloud Run build: 2026-01-11-23-47
 @CrossOrigin({ "https://fitai-analyzer-732767853162.us-west1.run.app",
         "https://analisa-exercicio-732767853162.southamerica-east1.run.app" })
 public class TesteController {
@@ -40,11 +39,6 @@ public class TesteController {
 
     @Inject
     private EmailService emailService;
-
-    @Get("/ping")
-    public String ping() {
-        return "pong";
-    }
 
     /**
      * CADASTRO DE USUÁRIO
