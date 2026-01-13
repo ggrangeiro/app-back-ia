@@ -64,7 +64,8 @@ public class SubscriptionController {
         @Get("/me")
         public HttpResponse<?> getMe(@QueryValue Long userId) {
                 return usuarioRepository.findById(userId).map(user -> {
-                        Map<String, Object> planInfo = PLANS.getOrDefault(user.getPlanType(), PLANS.get("FREE"));
+                        String userPlanType = user.getPlanType() != null ? user.getPlanType() : "FREE";
+                        Map<String, Object> planInfo = PLANS.getOrDefault(userPlanType, PLANS.get("FREE"));
                         int generationsLimit = (int) planInfo.getOrDefault("generationsLimit", 0);
 
                         int subCredits = user.getSubscriptionCredits() != null ? user.getSubscriptionCredits() : 0;
@@ -86,7 +87,7 @@ public class SubscriptionController {
                                                         "renewsAt",
                                                         user.getSubscriptionEndDate() != null
                                                                         ? user.getSubscriptionEndDate().toString()
-                                                                        : null),
+                                                                        : ""),
                                         "usage", Map.of(
                                                         "credits", totalCredits,
                                                         "subscriptionCredits", subCredits,

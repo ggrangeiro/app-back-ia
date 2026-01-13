@@ -27,7 +27,7 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     @Query("UPDATE usuario SET senha = :senha WHERE id = :id")
     void updatePassword(Long id, String senha);
 
-    @Query("UPDATE usuario SET plan_type = :planType, subscription_status = :status, subscription_end_date = :endDate, credits_reset_date = :resetDate, credits = :credits + purchased_credits, generations_used_cycle = 0 WHERE id = :id")
+    @Query("UPDATE usuario SET plan_type = :planType, subscription_status = :status, subscription_end_date = :endDate, credits_reset_date = :resetDate, credits = :credits + IFNULL(purchased_credits, 0), generations_used_cycle = 0 WHERE id = :id")
     void updateSubscription(Long id, String planType, String status, java.time.LocalDateTime endDate,
             java.time.LocalDateTime resetDate, Integer credits);
 
@@ -49,7 +49,7 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     @Query("UPDATE usuario SET purchased_credits = purchased_credits + :amount, credits = credits + :amount WHERE id = :id")
     void addPurchasedCredits(Long id, Integer amount);
 
-    @Query("UPDATE usuario SET subscription_credits = :credits, credits = :credits + purchased_credits WHERE id = :id")
+    @Query("UPDATE usuario SET subscription_credits = :credits, credits = :credits + IFNULL(purchased_credits, 0) WHERE id = :id")
     void resetSubscriptionCredits(Long id, Integer credits);
 
     // Queries para Cron Job de Expiração
