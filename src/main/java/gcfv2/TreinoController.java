@@ -56,10 +56,12 @@ public class TreinoController {
                     }
                 }
 
-                // FREE: bloqueado (apenas se não for privilegiado com plano pago)
-                if ("FREE".equalsIgnoreCase(planTypeToCheck) && !isPrivileged) {
+                // FREE: bloqueado (apenas se não for privilegiado E não tiver créditos)
+                Integer userCredits = user.getCredits() != null ? user.getCredits() : 0;
+                if ("FREE".equalsIgnoreCase(planTypeToCheck) && !isPrivileged && userCredits <= 0) {
                     return HttpResponse.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("message", "Plano gratuito não permite geração de treinos. Faça upgrade!"));
+                            .body(Map.of("message",
+                                    "Plano gratuito não permite geração de treinos sem créditos. Compre créditos ou faça upgrade!"));
                 }
 
                 // PRO e STUDIO: sem limite de gerações

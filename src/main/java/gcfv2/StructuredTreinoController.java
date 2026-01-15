@@ -76,10 +76,11 @@ public class StructuredTreinoController {
                     }
                 }
 
-                if ("FREE".equalsIgnoreCase(planTypeToCheck) && !isPrivileged) {
+                Integer userCredits = user.getCredits() != null ? user.getCredits() : 0;
+                if ("FREE".equalsIgnoreCase(planTypeToCheck) && !isPrivileged && userCredits <= 0) {
                     return HttpResponse.status(HttpStatus.FORBIDDEN)
                             .body(Map.of("message",
-                                    "Plano gratuito não permite geração de treinos estruturados. Faça upgrade!"));
+                                    "Plano gratuito não permite geração de treinos estruturados sem créditos. Compre créditos ou faça upgrade!"));
                 }
             }
 
