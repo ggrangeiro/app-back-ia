@@ -64,6 +64,13 @@ public class MercadoPagoService {
      * Cria preferência de pagamento para assinatura de plano
      */
     public Preference createSubscriptionPreference(Long userId, String planId) throws MPException, MPApiException {
+        if (accessToken == null || accessToken.trim().isEmpty()) {
+            LOG.warn("MERCADOPAGO ACCESS TOKEN ESTÁ VAZIO OU NULO!");
+        } else {
+            LOG.info("MercadoPago Access Token configurado: {}...",
+                    accessToken.substring(0, Math.min(accessToken.length(), 5)));
+        }
+
         if (!PLANS.containsKey(planId)) {
             throw new IllegalArgumentException("Plano inválido: " + planId);
         }
@@ -110,6 +117,10 @@ public class MercadoPagoService {
      * Cria preferência de pagamento para compra de créditos avulsos
      */
     public Preference createCreditsPreference(Long userId, Integer creditsAmount) throws MPException, MPApiException {
+        if (accessToken == null || accessToken.trim().isEmpty()) {
+            LOG.warn("MERCADOPAGO ACCESS TOKEN ESTÁ VAZIO OU NULO!");
+        }
+
         if (!CREDIT_PRICES.containsKey(creditsAmount)) {
             throw new IllegalArgumentException("Pacote de créditos inválido: " + creditsAmount +
                     ". Opções válidas: " + CREDIT_PRICES.keySet());

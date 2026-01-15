@@ -109,7 +109,14 @@ public class MercadoPagoController {
                                 "price", planInfo.get("price"),
                                 "credits", planInfo.get("credits"))));
 
-            } catch (MPException | MPApiException e) {
+            } catch (MPApiException e) {
+                LOG.error("Erro MP API: Status={} Content={}", e.getStatusCode(), e.getApiResponse().getContent(), e);
+                return HttpResponse.serverError(Map.of(
+                        "message", "Erro na API do Mercado Pago",
+                        "error", e.getMessage(),
+                        "status", e.getStatusCode(),
+                        "details", e.getApiResponse().getContent()));
+            } catch (MPException e) {
                 LOG.error("Erro ao criar preferência MP: {}", e.getMessage(), e);
                 return HttpResponse.serverError(Map.of(
                         "message", "Erro ao criar preferência de pagamento",
@@ -163,7 +170,14 @@ public class MercadoPagoController {
 
             } catch (IllegalArgumentException e) {
                 return HttpResponse.badRequest(Map.of("message", e.getMessage()));
-            } catch (MPException | MPApiException e) {
+            } catch (MPApiException e) {
+                LOG.error("Erro MP API: Status={} Content={}", e.getStatusCode(), e.getApiResponse().getContent(), e);
+                return HttpResponse.serverError(Map.of(
+                        "message", "Erro na API do Mercado Pago",
+                        "error", e.getMessage(),
+                        "status", e.getStatusCode(),
+                        "details", e.getApiResponse().getContent()));
+            } catch (MPException e) {
                 LOG.error("Erro ao criar preferência de créditos: {}", e.getMessage(), e);
                 return HttpResponse.serverError(Map.of(
                         "message", "Erro ao criar preferência de pagamento",
