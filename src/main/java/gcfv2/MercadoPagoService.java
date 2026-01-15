@@ -63,33 +63,64 @@ public class MercadoPagoService {
     /**
      * Cria preferência de pagamento para assinatura de plano
      */
+    /**
+     * Helper para resolver o Access Token, tentando injeção e depois variáveis de
+     * ambiente
+     */
+    private String getResolvedAccessToken() {
+        // 1. Tenta o valor injetado pelo Micronaut
+        if (accessToken != null && !accessToken.trim().isEmpty()) {
+            return accessToken;
+        }
+
+        // 2. Tenta _MP_ACCESS_TOKEN (novo padrão)
+        String envToken = System.getenv("_MP_ACCESS_TOKEN");
+        if (envToken != null && !envToken.trim().isEmpty()) {
+            LOG.info("Recuperado access token de variável de ambiente: _MP_ACCESS_TOKEN");
+            return envToken;
+        }
+
+        // 3. Tenta MP_ACCESS_TOKEN (antigo)
+        envToken = System.getenv("MP_ACCESS_TOKEN");
+        if (envToken != null && !envToken.trim().isEmpty()) {
+            LOG.info("Recuperado access token de variável de ambiente: MP_ACCESS_TOKEN");
+            return envToken;
+        }
+
+        return null;
+    }
+
+    /**
+     * Cria preferência de pagamento para assinatura de plano
+     */
     public Preference createSubscriptionPreference(Long userId, String planId) throws MPException, MPApiException {
-        // DEBUG CRÍTICO: Verificar variáveis de ambiente "cruas"
-        String rawEnvToken = System.getenv("_MP_ACCESS_TOKEN");
-        if (rawEnvToken == null) {
-            // Tenta sem o underline também, por via das dúvidas
-            rawEnvToken = System.getenv("MP_ACCESS_TOKEN");
-        }
+        // Logs de debug para ver o que está acontecendo
+        String resolvedToken = getResolvedAccessToken();
 
-        if (rawEnvToken == null) {
-            LOG.warn("DEBUG: System.getenv('_MP_ACCESS_TOKEN') e System.getenv('MP_ACCESS_TOKEN') retornaram NULL!");
-        } else {
-            LOG.info("DEBUG: System.getenv com/sem underline = {}...",
-                    rawEnvToken.substring(0, Math.min(rawEnvToken.length(), 5)));
-        }
+        // DEBUG CRÍTICO: Logar o que encontramos
+        String rawEnvTokenWithUnder = System.getenv("_MP_ACCESS_TOKEN");
+        String rawEnvTokenNoUnder = System.getenv("MP_ACCESS_TOKEN");
+        LOG.info("DEBUG DIAGNOSTICO: Injected='{}', _MP_ACCESS_TOKEN='{}', MP_ACCESS_TOKEN='{}'",
+                (accessToken != null ? accessToken.substring(0, Math.min(accessToken.length(), 5)) + "..." : "NULL"),
+                (rawEnvTokenWithUnder != null
+                        ? rawEnvTokenWithUnder.substring(0, Math.min(rawEnvTokenWithUnder.length(), 5)) + "..."
+                        : "NULL"),
+                (rawEnvTokenNoUnder != null
+                        ? rawEnvTokenNoUnder.substring(0, Math.min(rawEnvTokenNoUnder.length(), 5)) + "..."
+                        : "NULL"));
 
-        if (accessToken == null || accessToken.trim().isEmpty()) {
-            LOG.warn("MERCADOPAGO ACCESS TOKEN (Injected) ESTÁ VAZIO OU NULO! Valor: '{}'", accessToken);
+        if (resolvedToken == null) {
+            LOG.warn("MERCADOPAGO ACCESS TOKEN ESTÁ VAZIO OU NULO (Todas as tentativas falharam)!");
         } else {
-            LOG.info("MercadoPago Access Token configurado: {}...",
-                    accessToken.substring(0, Math.min(accessToken.length(), 5)));
+            LOG.info("MercadoPago Access Token resolvido: {}...",
+                    resolvedToken.substring(0, Math.min(resolvedToken.length(), 5)));
         }
 
         if (!PLANS.containsKey(planId)) {
             throw new IllegalArgumentException("Plano inválido: " + planId);
         }
 
-        MercadoPagoConfig.setAccessToken(accessToken);
+        MercadoPagoConfig.setAccessToken(resolvedToken);
 
         Map<String, Object> planInfo = PLANS.get(planId);
         String externalReference = "user_" + userId + "_plan_" + planId + "_" + System.currentTimeMillis();
@@ -131,8 +162,23 @@ public class MercadoPagoService {
      * Cria preferência de pagamento para compra de créditos avulsos
      */
     public Preference createCreditsPreference(Long userId, Integer creditsAmount) throws MPException, MPApiException {
-        if (accessToken == null || accessToken.trim().isEmpty()) {
-            LOG.warn("MERCADOPAGO ACCESS TOKEN ESTÁ VAZIO OU NULO!");
+        // Logs de debug para ver o que está acontecendo
+        String resolvedToken = getResolvedAccessToken();
+
+        // DEBUG CRÍTICO: Logar o que encontramos
+        String rawEnvTokenWithUnder = System.getenv("_MP_ACCESS_TOKEN");
+        String rawEnvTokenNoUnder = System.getenv("MP_ACCESS_TOKEN");
+        LOG.info("DEBUG DIAGNOSTICO CREDITS: Injected='{}', _MP_ACCESS_TOKEN='{}', MP_ACCESS_TOKEN='{}'",
+                (accessToken != null ? accessToken.substring(0, Math.min(accessToken.length(), 5)) + "..." : "NULL"),
+                (rawEnvTokenWithUnder != null
+                        ? rawEnvTokenWithUnder.substring(0, Math.min(rawEnvTokenWithUnder.length(), 5)) + "..."
+                        : "NULL"),
+                (rawEnvTokenNoUnder != null
+                        ? rawEnvTokenNoUnder.substring(0, Math.min(rawEnvTokenNoUnder.length(), 5)) + "..."
+                        : "NULL"));
+
+        if (resolvedToken == null) {
+            LOG.warn("MERCADOPAGO ACCESS TOKEN ESTÁ VAZIO OU NULO (Todas as tentativas falharam)!");
         }
 
         if (!CREDIT_PRICES.containsKey(creditsAmount)) {
@@ -140,7 +186,7 @@ public class MercadoPagoService {
                     ". Opções válidas: " + CREDIT_PRICES.keySet());
         }
 
-        MercadoPagoConfig.setAccessToken(accessToken);
+        MercadoPagoConfig.setAccessToken(resolvedToken);
 
         BigDecimal price = CREDIT_PRICES.get(creditsAmount);
         String externalReference = "user_" + userId + "_credits_" + creditsAmount + "_" + System.currentTimeMillis();
