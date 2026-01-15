@@ -65,11 +65,16 @@ public class MercadoPagoService {
      */
     public Preference createSubscriptionPreference(Long userId, String planId) throws MPException, MPApiException {
         // DEBUG CRÍTICO: Verificar variáveis de ambiente "cruas"
-        String rawEnvToken = System.getenv("MP_ACCESS_TOKEN");
+        String rawEnvToken = System.getenv("_MP_ACCESS_TOKEN");
         if (rawEnvToken == null) {
-            LOG.warn("DEBUG: System.getenv('MP_ACCESS_TOKEN') retornou NULL!");
+            // Tenta sem o underline também, por via das dúvidas
+            rawEnvToken = System.getenv("MP_ACCESS_TOKEN");
+        }
+
+        if (rawEnvToken == null) {
+            LOG.warn("DEBUG: System.getenv('_MP_ACCESS_TOKEN') e System.getenv('MP_ACCESS_TOKEN') retornaram NULL!");
         } else {
-            LOG.info("DEBUG: System.getenv('MP_ACCESS_TOKEN') = {}...",
+            LOG.info("DEBUG: System.getenv com/sem underline = {}...",
                     rawEnvToken.substring(0, Math.min(rawEnvToken.length(), 5)));
         }
 
