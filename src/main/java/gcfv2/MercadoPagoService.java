@@ -64,8 +64,17 @@ public class MercadoPagoService {
      * Cria preferência de pagamento para assinatura de plano
      */
     public Preference createSubscriptionPreference(Long userId, String planId) throws MPException, MPApiException {
+        // DEBUG CRÍTICO: Verificar variáveis de ambiente "cruas"
+        String rawEnvToken = System.getenv("MP_ACCESS_TOKEN");
+        if (rawEnvToken == null) {
+            LOG.warn("DEBUG: System.getenv('MP_ACCESS_TOKEN') retornou NULL!");
+        } else {
+            LOG.info("DEBUG: System.getenv('MP_ACCESS_TOKEN') = {}...",
+                    rawEnvToken.substring(0, Math.min(rawEnvToken.length(), 5)));
+        }
+
         if (accessToken == null || accessToken.trim().isEmpty()) {
-            LOG.warn("MERCADOPAGO ACCESS TOKEN ESTÁ VAZIO OU NULO!");
+            LOG.warn("MERCADOPAGO ACCESS TOKEN (Injected) ESTÁ VAZIO OU NULO! Valor: '{}'", accessToken);
         } else {
             LOG.info("MercadoPago Access Token configurado: {}...",
                     accessToken.substring(0, Math.min(accessToken.length(), 5)));
