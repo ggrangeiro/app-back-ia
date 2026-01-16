@@ -147,8 +147,12 @@ public class MercadoPagoService {
                 .externalReference(externalReference);
 
         // Adiciona webhook URL se configurado
+        // Adiciona webhook URL se configurado
         if (webhookUrl != null && !webhookUrl.isEmpty()) {
+            LOG.info("Configurando notificationUrl na preferência: {}", webhookUrl);
             requestBuilder.notificationUrl(webhookUrl);
+        } else {
+            LOG.warn("webhookUrl está vazio ou nulo! Notificações não serão enviadas.");
         }
 
         PreferenceClient client = new PreferenceClient();
@@ -212,8 +216,12 @@ public class MercadoPagoService {
                 .autoReturn("approved")
                 .externalReference(externalReference);
 
+        // Adiciona webhook URL se configurado
         if (webhookUrl != null && !webhookUrl.isEmpty()) {
+            LOG.info("Configurando notificationUrl na preferência: {}", webhookUrl);
             requestBuilder.notificationUrl(webhookUrl);
+        } else {
+            LOG.warn("webhookUrl está vazio ou nulo! Notificações não serão enviadas.");
         }
 
         PreferenceClient client = new PreferenceClient();
