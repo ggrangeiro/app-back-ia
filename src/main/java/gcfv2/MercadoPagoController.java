@@ -198,36 +198,51 @@ public class MercadoPagoController {
         LOG.info("Webhook recebido do MercadoPago: {}", payload);
 
         String type = (String) payload.get("type");
+        String topic = (String) payload.get("topic");
+        String dataId = null;
 
-        // Apenas processar notificações de pagamento
-        if (!"payment".equals(type)) {
-            LOG.info("Ignorando notificação não-pagamento: type={}", type);
+        // Estratégia 1: Webhook V1 (type=payment)
+        if ("payment".equals(type)) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> data = (Map<String, Object>) payload.get("data");
+            if (data != null && data.get("id") != null) {
+                dataId = data.get("id").toString();
+            }
+        }
+        // Estratégia 2: IPN Legacy (topic=payment)
+        else if ("payment".equals(topic)) {
+            Object resource = payload.get("resource");
+            if (resource != null) {
+                String resourceStr = resource.toString();
+                // Se for URL completa, extrai o ID do final
+                if (resourceStr.contains("/")) {
+                    dataId = resourceStr.substring(resourceStr.lastIndexOf("/") + 1);
+                } else {
+                    dataId = resourceStr;
+                }
+            }
+        }
+
+        if (dataId == null) {
+            LOG.info("Ignorando notificação: não é pagamento ou sem ID (type={}, topic={})", type, topic);
             return HttpResponse.ok(Map.of("message", "Notificação ignorada"));
         }
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> data = (Map<String, Object>) payload.get("data");
-        if (data == null || data.get("id") == null) {
-            LOG.warn("Webhook sem data.id");
-            return HttpResponse.badRequest(Map.of("message", "Webhook inválido: sem data.id"));
-        }
-
-        String dataId = data.get("id").toString();
-
-        // Validar assinatura (quando configurada)
+        // Validar assinatura (APENAS se for Webhook V1 com headers de assinatura)
         String xSignature = request.getHeaders().get("x-signature");
         String xRequestId = request.getHeaders().get("x-request-id");
 
-        // DOCUMENTAÇÃO MP: id deve vir da Query String (data.id) para validação da
-        // assinatura
-        String queryDataId = request.getParameters().get("data.id");
-        String dataIdToValidate = queryDataId != null ? queryDataId : dataId;
+        if (xSignature != null) {
+            // DOCUMENTAÇÃO MP: id deve vir da Query String (data.id) para validação da
+            // assinatura
+            String queryDataId = request.getParameters().get("data.id");
+            String dataIdToValidate = queryDataId != null ? queryDataId : dataId;
 
-        if (xSignature != null
-                && !mercadoPagoService.validateWebhookSignature(xSignature, xRequestId, dataIdToValidate)) {
-            LOG.error("Assinatura inválida no webhook");
-            return HttpResponse.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("message", "Assinatura inválida"));
+            if (!mercadoPagoService.validateWebhookSignature(xSignature, xRequestId, dataIdToValidate)) {
+                LOG.error("Assinatura inválida no webhook");
+                return HttpResponse.status(HttpStatus.UNAUTHORIZED)
+                        .body(Map.of("message", "Assinatura inválida"));
+            }
         }
 
         try {

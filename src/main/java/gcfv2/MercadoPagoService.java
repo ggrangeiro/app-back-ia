@@ -336,6 +336,7 @@ public class MercadoPagoService {
 
             // Monta o manifest template
             String manifest = "id:" + dataId + ";request-id:" + xRequestId + ";ts:" + ts + ";";
+            LOG.info("DEBUG Assinatura: Manifest='{}'", manifest); // LOG PARA DEBUG
 
             // Calcula HMAC SHA256
             Mac hmacSha256 = Mac.getInstance("HmacSHA256");
