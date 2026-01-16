@@ -52,7 +52,7 @@ app:
 mercadopago:
   access-token: ${MP_ACCESS_TOKEN:${_MP_ACCESS_TOKEN:}}
   secret-key: ${MP_SECRET_KEY:${_MP_SECRET_KEY:}}
-  webhook-url: ${MP_WEBHOOK_URL:}
+  webhook-url: ${MP_WEBHOOK_URL:${_MP_WEBHOOK_URL:}}
   back-url:
     success: ${MP_SUCCESS_URL:https://fitai-analyzer-732767853162.us-west1.run.app/checkout/success}
     failure: ${MP_FAILURE_URL:https://fitai-analyzer-732767853162.us-west1.run.app/checkout/failure}
