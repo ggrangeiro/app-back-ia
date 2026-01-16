@@ -324,7 +324,25 @@ public class MercadoPagoController {
                 if (planInfo != null) {
                     int newCredits = (int) planInfo.get("credits");
                     LocalDateTime now = LocalDateTime.now();
-                    LocalDateTime endDate = now.plusMonths(1);
+                    LocalDateTime endDate;
+
+                    // Verificar se é renovação do MESMO plano e se ainda está ATIVO
+                    boolean isRenewal = planId.equals(user.getPlanType()) &&
+                            "ACTIVE".equals(user.getSubscriptionStatus()) &&
+                            user.getSubscriptionEndDate() != null &&
+                            user.getSubscriptionEndDate().isAfter(now);
+
+                    if (isRenewal) {
+                        // Extensão: Adiciona 1 mês ao final da vigência atual
+                        endDate = user.getSubscriptionEndDate().plusMonths(1);
+                        LOG.info("Renovação de assinatura (Extensão): userId={}, planId={}, novaDataFim={}",
+                                userId, planId, endDate);
+                    } else {
+                        // Nova assinatura ou Upgrade/Downgrade: Começa agora
+                        endDate = now.plusMonths(1);
+                        LOG.info("Nova assinatura ou Upgrade: userId={}, planId={}, novaDataFim={}",
+                                userId, planId, endDate);
+                    }
 
                     String oldPlan = user.getPlanType();
 
@@ -333,10 +351,17 @@ public class MercadoPagoController {
                     usuarioRepository.resetSubscriptionCredits(userId, newCredits);
 
                     // Registrar histórico
-                    String reason = oldPlan == null || "FREE".equals(oldPlan) ? "SUBSCRIPTION" : "UPGRADE";
+                    String reason;
+                    if (isRenewal) {
+                        reason = "RENEWAL";
+                    } else {
+                        reason = oldPlan == null || "FREE".equals(oldPlan) ? "SUBSCRIPTION" : "UPGRADE";
+                    }
+
                     subscriptionHistoryRepository.save(new SubscriptionHistory(userId, oldPlan, planId, reason));
 
-                    LOG.info("Assinatura ativada: userId={}, planId={}, credits={}", userId, planId, newCredits);
+                    LOG.info("Assinatura ativada/renovada: userId={}, planId={}, credits={}", userId, planId,
+                            newCredits);
                 }
 
             } else if ("CREDITS".equals(transaction.getPaymentType())) {
