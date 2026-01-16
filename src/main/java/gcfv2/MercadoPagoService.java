@@ -91,11 +91,39 @@ public class MercadoPagoService {
     }
 
     /**
+     * Helper para resolver a Webhook URL, tentando injeção e depois variáveis de
+     * ambiente
+     */
+    private String getResolvedWebhookUrl() {
+        // 1. Tenta o valor injetado pelo Micronaut
+        if (webhookUrl != null && !webhookUrl.trim().isEmpty()) {
+            return webhookUrl;
+        }
+
+        // 2. Tenta _MP_WEBHOOK_URL (novo padrão)
+        String envUrl = System.getenv("_MP_WEBHOOK_URL");
+        if (envUrl != null && !envUrl.trim().isEmpty()) {
+            LOG.info("Recuperado webhook url de variável de ambiente: _MP_WEBHOOK_URL");
+            return envUrl;
+        }
+
+        // 3. Tenta MP_WEBHOOK_URL (antigo)
+        envUrl = System.getenv("MP_WEBHOOK_URL");
+        if (envUrl != null && !envUrl.trim().isEmpty()) {
+            LOG.info("Recuperado webhook url de variável de ambiente: MP_WEBHOOK_URL");
+            return envUrl;
+        }
+
+        return null;
+    }
+
+    /**
      * Cria preferência de pagamento para assinatura de plano
      */
     public Preference createSubscriptionPreference(Long userId, String planId) throws MPException, MPApiException {
         // Logs de debug para ver o que está acontecendo
         String resolvedToken = getResolvedAccessToken();
+        String resolvedWebhookUrl = getResolvedWebhookUrl();
 
         // DEBUG CRÍTICO: Logar o que encontramos
         String rawEnvTokenWithUnder = System.getenv("_MP_ACCESS_TOKEN");
@@ -147,10 +175,9 @@ public class MercadoPagoService {
                 .externalReference(externalReference);
 
         // Adiciona webhook URL se configurado
-        // Adiciona webhook URL se configurado
-        if (webhookUrl != null && !webhookUrl.isEmpty()) {
-            LOG.info("Configurando notificationUrl na preferência: {}", webhookUrl);
-            requestBuilder.notificationUrl(webhookUrl);
+        if (resolvedWebhookUrl != null && !resolvedWebhookUrl.isEmpty()) {
+            LOG.info("Configurando notificationUrl na preferência: {}", resolvedWebhookUrl);
+            requestBuilder.notificationUrl(resolvedWebhookUrl);
         } else {
             LOG.warn("webhookUrl está vazio ou nulo! Notificações não serão enviadas.");
         }
@@ -168,6 +195,7 @@ public class MercadoPagoService {
     public Preference createCreditsPreference(Long userId, Integer creditsAmount) throws MPException, MPApiException {
         // Logs de debug para ver o que está acontecendo
         String resolvedToken = getResolvedAccessToken();
+        String resolvedWebhookUrl = getResolvedWebhookUrl();
 
         // DEBUG CRÍTICO: Logar o que encontramos
         String rawEnvTokenWithUnder = System.getenv("_MP_ACCESS_TOKEN");
@@ -217,9 +245,9 @@ public class MercadoPagoService {
                 .externalReference(externalReference);
 
         // Adiciona webhook URL se configurado
-        if (webhookUrl != null && !webhookUrl.isEmpty()) {
-            LOG.info("Configurando notificationUrl na preferência: {}", webhookUrl);
-            requestBuilder.notificationUrl(webhookUrl);
+        if (resolvedWebhookUrl != null && !resolvedWebhookUrl.isEmpty()) {
+            LOG.info("Configurando notificationUrl na preferência: {}", resolvedWebhookUrl);
+            requestBuilder.notificationUrl(resolvedWebhookUrl);
         } else {
             LOG.warn("webhookUrl está vazio ou nulo! Notificações não serão enviadas.");
         }
