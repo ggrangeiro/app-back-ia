@@ -8,4 +8,6 @@ import java.util.List;
 @JdbcRepository(dialect = Dialect.MYSQL)
 public interface DietaRepository extends CrudRepository<Dieta, Long> {
     List<Dieta> findByUserIdOrderByCreatedAtDesc(String userId);
+
+    void deleteByUserId(String userId);
 }

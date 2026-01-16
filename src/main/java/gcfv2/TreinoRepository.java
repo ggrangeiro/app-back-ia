@@ -8,4 +8,6 @@ import java.util.List;
 @JdbcRepository(dialect = Dialect.MYSQL)
 public interface TreinoRepository extends CrudRepository<Treino, Long> {
     List<Treino> findByUserIdOrderByCreatedAtDesc(String userId);
+
+    void deleteByUserId(String userId);
 }

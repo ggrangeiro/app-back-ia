@@ -10,4 +10,6 @@ import java.util.List;
 public interface SubscriptionHistoryRepository extends CrudRepository<SubscriptionHistory, Long> {
 
     List<SubscriptionHistory> findByUserIdOrderByCreatedAtDesc(Long userId);
+
+    void deleteByUserId(Long userId);
 }

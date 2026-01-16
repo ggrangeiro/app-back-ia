@@ -23,4 +23,6 @@ public interface PaymentTransactionRepository extends CrudRepository<PaymentTran
 
     @Query("UPDATE payment_transactions SET status = :status, mp_payment_id = :mpPaymentId, payment_method = :paymentMethod, updated_at = NOW() WHERE id = :id")
     void updatePaymentStatus(Long id, String status, String mpPaymentId, String paymentMethod);
+
+    void deleteByUserId(Long userId);
 }

@@ -16,5 +16,8 @@ public interface HistoricoRepository extends CrudRepository<Historico, Long> {
 
     // Métodos para o Delete
     void deleteByIdAndUserId(Long id, String userId);
+
     boolean existsByIdAndUserId(Long id, String userId);
+
+    void deleteByUserId(String userId);
 }

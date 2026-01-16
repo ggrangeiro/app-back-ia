@@ -9,4 +9,6 @@ import java.util.List;
 public interface UsuarioExercicioRepository extends CrudRepository<UsuarioExercicio, Long> {
     // O Micronaut usará o ID do objeto usuário automaticamente
     List<UsuarioExercicio> findByUsuario(Usuario usuario);
+
+    void deleteByUsuario(Usuario usuario);
 }

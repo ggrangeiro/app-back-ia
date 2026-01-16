@@ -601,6 +601,96 @@ public class TesteController {
         }).orElse(HttpResponse.notFound());
     }
 
+    // Injecting missing repositories for deletion
+    @Inject
+    private DietaRepository dietaRepository;
+    @Inject
+    private StructuredTreinoRepository structuredTreinoRepository;
+    @Inject
+    private StructuredDietaRepository structuredDietaRepository;
+    @Inject
+    private CheckinRepository checkinRepository;
+    @Inject
+    private HistoricoRepository historicoRepository;
+    @Inject
+    private SubscriptionHistoryRepository subscriptionHistoryRepository;
+    @Inject
+    private PaymentTransactionRepository paymentTransactionRepository;
+
+    /**
+     * EXCLUSÃO DE CONTA (LGPD)
+     * Rota: DELETE /api/usuarios/{id}
+     */
+    @Delete("/{id}")
+    @Transactional
+    public HttpResponse<?> deleteUser(
+            @PathVariable Long id,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+
+        // 1. Validação de Segurança
+        // Permite se for ADMIN ou se o próprio usuário estiver solicitando
+        boolean isAdmin = "ADMIN".equalsIgnoreCase(requesterRole);
+        boolean isOwner = id.equals(requesterId);
+
+        if (!isAdmin && !isOwner) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Você não tem permissão para excluir este usuário."));
+        }
+
+        return usuarioRepository.findById(id).map(user -> {
+            try {
+                String userIdStr = String.valueOf(id);
+
+                // 2. Remover Associações (Ordem importa para evitar FK constraints se houver,
+                // mas JPA/JDBC deve lidar com deletes simples)
+
+                // Treinos V1
+                treinoRepository.deleteByUserId(userIdStr);
+
+                // Dietas V1
+                dietaRepository.deleteByUserId(userIdStr);
+
+                // Treinos V2
+                structuredTreinoRepository.deleteByUserId(userIdStr);
+
+                // Dietas V2
+                structuredDietaRepository.deleteByUserId(userIdStr);
+
+                // Checkins
+                checkinRepository.deleteByUserId(userIdStr);
+
+                // Histórico de Evolução
+                historicoRepository.deleteByUserId(userIdStr);
+
+                // Histórico de Consumo de Créditos
+                creditHistoryRepository.deleteByUserId(id);
+
+                // Exercícios do Usuário
+                usuarioExercicioRepository.deleteByUsuario(user);
+
+                // Transações de Pagamento (Opicional: Manter para auditoria? Spec diz "Remover
+                // dados sensíveis")
+                // Vamos deletar para cumprir "Exclusão total" pedido pelo usuário
+                paymentTransactionRepository.deleteByUserId(id);
+
+                // Tokens de Reset de Senha
+                passwordResetTokenRepository.deleteByUserId(id);
+
+                // Histórico de Assinaturas
+                subscriptionHistoryRepository.deleteByUserId(id);
+
+                // 3. Deletar Usuário
+                usuarioRepository.delete(user);
+
+                return HttpResponse.ok(Map.of("message", "Conta excluída com sucesso."));
+
+            } catch (Exception e) {
+                return HttpResponse.serverError(Map.of("message", "Erro ao excluir conta: " + e.getMessage()));
+            }
+        }).orElse(HttpResponse.notFound(Map.of("message", "Usuário não encontrado.")));
+    }
+
     /**
      * Verifica se a senha informada corresponde à senha armazenada.
      * Suporta tanto senhas em texto puro (legado) quanto senhas com hash BCrypt.

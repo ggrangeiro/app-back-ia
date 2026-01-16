@@ -17,4 +17,6 @@ public interface StructuredDietaRepository extends CrudRepository<StructuredDiet
     List<StructuredDieta> findByUserId(String userId);
 
     long countByUserId(String userId);
+
+    void deleteByUserId(String userId);
 }

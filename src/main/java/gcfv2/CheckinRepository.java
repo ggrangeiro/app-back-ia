@@ -8,4 +8,6 @@ import java.util.List;
 @JdbcRepository(dialect = Dialect.MYSQL)
 public interface CheckinRepository extends CrudRepository<Checkin, Long> {
     List<Checkin> findByUserId(String userId);
+
+    void deleteByUserId(String userId);
 }

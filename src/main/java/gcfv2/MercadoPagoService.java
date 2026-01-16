@@ -441,4 +441,24 @@ public class MercadoPagoService {
     public Map<Integer, BigDecimal> getCreditPrices() {
         return CREDIT_PRICES;
     }
+
+    /**
+     * Cancela uma assinatura (preapproval) no Mercado Pago
+     */
+    public void cancelSubscription(String preapprovalId) throws MPException, MPApiException {
+        String token = getResolvedAccessToken();
+        if (token == null) {
+            throw new MPException("Access Token do Mercado Pago não encontrado!");
+        }
+        MercadoPagoConfig.setAccessToken(token);
+
+        com.mercadopago.client.preapproval.PreapprovalClient client = new com.mercadopago.client.preapproval.PreapprovalClient();
+        com.mercadopago.client.preapproval.PreapprovalUpdateRequest request = com.mercadopago.client.preapproval.PreapprovalUpdateRequest
+                .builder()
+                .status("cancelled")
+                .build();
+
+        client.update(preapprovalId, request);
+        LOG.info("Assinatura cancelada no Mercado Pago: {}", preapprovalId);
+    }
 }

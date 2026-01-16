@@ -19,4 +19,6 @@ public interface StructuredTreinoRepository extends CrudRepository<StructuredTre
     long countByUserId(String userId);
 
     List<StructuredTreino> findByUserIdAndLevel(String userId, String level);
+
+    void deleteByUserId(String userId);
 }
