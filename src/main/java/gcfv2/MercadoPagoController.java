@@ -218,7 +218,13 @@ public class MercadoPagoController {
         String xSignature = request.getHeaders().get("x-signature");
         String xRequestId = request.getHeaders().get("x-request-id");
 
-        if (xSignature != null && !mercadoPagoService.validateWebhookSignature(xSignature, xRequestId, dataId)) {
+        // DOCUMENTAÇÃO MP: id deve vir da Query String (data.id) para validação da
+        // assinatura
+        String queryDataId = request.getParameters().get("data.id");
+        String dataIdToValidate = queryDataId != null ? queryDataId : dataId;
+
+        if (xSignature != null
+                && !mercadoPagoService.validateWebhookSignature(xSignature, xRequestId, dataIdToValidate)) {
             LOG.error("Assinatura inválida no webhook");
             return HttpResponse.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("message", "Assinatura inválida"));
