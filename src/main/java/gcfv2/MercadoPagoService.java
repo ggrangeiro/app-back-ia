@@ -91,6 +91,31 @@ public class MercadoPagoService {
     }
 
     /**
+     * Helper para resolver a Secret Key, tentando injeção e depois variáveis de
+     * ambiente
+     */
+    private String getResolvedSecretKey() {
+        // 1. Tenta o valor injetado pelo Micronaut
+        if (secretKey != null && !secretKey.trim().isEmpty()) {
+            return secretKey;
+        }
+
+        // 2. Tenta _MP_SECRET_KEY (novo padrão)
+        String envKey = System.getenv("_MP_SECRET_KEY");
+        if (envKey != null && !envKey.trim().isEmpty()) {
+            return envKey;
+        }
+
+        // 3. Tenta MP_SECRET_KEY (antigo)
+        envKey = System.getenv("MP_SECRET_KEY");
+        if (envKey != null && !envKey.trim().isEmpty()) {
+            return envKey;
+        }
+
+        return null;
+    }
+
+    /**
      * Helper para resolver a Webhook URL, tentando injeção e depois variáveis de
      * ambiente
      */
@@ -264,7 +289,13 @@ public class MercadoPagoService {
      * Busca detalhes de um pagamento pelo ID
      */
     public Payment getPayment(Long paymentId) throws MPException, MPApiException {
-        MercadoPagoConfig.setAccessToken(accessToken);
+        // CORREÇÃO CRÍTICA: Usar getResolvedAccessToken() em vez de injected
+        // accessToken
+        String token = getResolvedAccessToken();
+        if (token == null) {
+            throw new MPException("Access Token do Mercado Pago não encontrado!");
+        }
+        MercadoPagoConfig.setAccessToken(token);
         PaymentClient client = new PaymentClient();
         return client.get(paymentId);
     }
@@ -273,7 +304,9 @@ public class MercadoPagoService {
      * Valida a assinatura HMAC do webhook do MercadoPago
      */
     public boolean validateWebhookSignature(String xSignature, String xRequestId, String dataId) {
-        if (secretKey == null || secretKey.isEmpty()) {
+        String resolvedSecretKey = getResolvedSecretKey();
+
+        if (resolvedSecretKey == null || resolvedSecretKey.isEmpty()) {
             LOG.warn("Secret key não configurada - ignorando validação de assinatura");
             return true; // Em desenvolvimento, pode aceitar sem validação
         }
@@ -306,7 +339,8 @@ public class MercadoPagoService {
 
             // Calcula HMAC SHA256
             Mac hmacSha256 = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secretKeySpec = new SecretKeySpec(secretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
+            SecretKeySpec secretKeySpec = new SecretKeySpec(resolvedSecretKey.getBytes(StandardCharsets.UTF_8),
+                    "HmacSHA256");
             hmacSha256.init(secretKeySpec);
             byte[] hash = hmacSha256.doFinal(manifest.getBytes(StandardCharsets.UTF_8));
 
