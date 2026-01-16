@@ -77,14 +77,14 @@ public class MercadoPagoService {
         String envToken = System.getenv("_MP_ACCESS_TOKEN");
         if (envToken != null && !envToken.trim().isEmpty()) {
             LOG.info("Recuperado access token de variável de ambiente: _MP_ACCESS_TOKEN");
-            return envToken;
+            return envToken.trim();
         }
 
         // 3. Tenta MP_ACCESS_TOKEN (antigo)
         envToken = System.getenv("MP_ACCESS_TOKEN");
         if (envToken != null && !envToken.trim().isEmpty()) {
             LOG.info("Recuperado access token de variável de ambiente: MP_ACCESS_TOKEN");
-            return envToken;
+            return envToken.trim();
         }
 
         return null;
@@ -103,13 +103,13 @@ public class MercadoPagoService {
         // 2. Tenta _MP_SECRET_KEY (novo padrão)
         String envKey = System.getenv("_MP_SECRET_KEY");
         if (envKey != null && !envKey.trim().isEmpty()) {
-            return envKey;
+            return envKey.trim();
         }
 
         // 3. Tenta MP_SECRET_KEY (antigo)
         envKey = System.getenv("MP_SECRET_KEY");
         if (envKey != null && !envKey.trim().isEmpty()) {
-            return envKey;
+            return envKey.trim();
         }
 
         return null;
@@ -129,14 +129,14 @@ public class MercadoPagoService {
         String envUrl = System.getenv("_MP_WEBHOOK_URL");
         if (envUrl != null && !envUrl.trim().isEmpty()) {
             LOG.info("Recuperado webhook url de variável de ambiente: _MP_WEBHOOK_URL");
-            return envUrl;
+            return envUrl.trim();
         }
 
         // 3. Tenta MP_WEBHOOK_URL (antigo)
         envUrl = System.getenv("MP_WEBHOOK_URL");
         if (envUrl != null && !envUrl.trim().isEmpty()) {
             LOG.info("Recuperado webhook url de variável de ambiente: MP_WEBHOOK_URL");
-            return envUrl;
+            return envUrl.trim();
         }
 
         return null;
