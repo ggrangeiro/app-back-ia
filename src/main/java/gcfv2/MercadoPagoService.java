@@ -37,10 +37,9 @@ public class MercadoPagoService {
 
     // Preços por pacote de créditos
     private static final Map<Integer, BigDecimal> CREDIT_PRICES = Map.of(
-            10, new BigDecimal("19.90"),
-            30, new BigDecimal("49.90"),
-            50, new BigDecimal("79.90"),
-            100, new BigDecimal("149.90"));
+            10, new BigDecimal("29"),
+            30, new BigDecimal("49"),
+            50, new BigDecimal("79"));
 
     @Value("${mercadopago.access-token:}")
     private String accessToken;
