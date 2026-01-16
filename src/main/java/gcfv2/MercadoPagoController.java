@@ -286,6 +286,9 @@ public class MercadoPagoController {
             }
 
             if (transaction != null) {
+                // IDEMPOTÊNCIA: Se já estava aprovado, não processa novamente os benefícios
+                boolean alreadyApproved = "APPROVED".equalsIgnoreCase(transaction.getStatus());
+
                 // Atualizar status da transação
                 transaction.setStatus(status.toUpperCase());
                 transaction.setMpPaymentId(payment.getId().toString());
@@ -295,9 +298,14 @@ public class MercadoPagoController {
                 transaction.setUpdatedAt(LocalDateTime.now());
                 paymentTransactionRepository.update(transaction);
 
-                // Processar pagamento aprovado
+                // Processar pagamento aprovado (APENAS se não estava aprovado antes)
                 if ("approved".equalsIgnoreCase(status)) {
-                    processApprovedPayment(transaction);
+                    if (!alreadyApproved) {
+                        processApprovedPayment(transaction);
+                    } else {
+                        LOG.info("Pagamento já processado anteriormente. Ignorando efeitos colaterais. ExtRef={}",
+                                externalReference);
+                    }
                 }
             }
 
