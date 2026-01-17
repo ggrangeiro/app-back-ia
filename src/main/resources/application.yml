@@ -1,4 +1,7 @@
 micronaut:
+  serde:
+    deserialization:
+      ignore-unknown: true
   server:
     cors:
       enabled: true

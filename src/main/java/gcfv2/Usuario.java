@@ -7,7 +7,7 @@ import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.Transient;
 import io.micronaut.serde.annotation.Serdeable; // IMPORTANTE: Adicione este import
 
-@Serdeable // ISSO RESOLVE O ERRO DE CODEC/JSON
+@Serdeable
 @MappedEntity("usuario")
 public class Usuario {
 
