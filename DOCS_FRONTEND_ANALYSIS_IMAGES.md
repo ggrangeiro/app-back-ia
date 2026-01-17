@@ -34,7 +34,7 @@ The workflow requires two steps:
 ```json
 {
   "success": true,
-  "imageUrl": "https://storage.googleapis.com/imagem-ai/uploads/users/123/analysis/1705512345678_uuid.jpg"
+  "imageUrl": "/api/assets/uploads/users/123/analysis/1705512345678_uuid.jpg"
 }
 ```
 
@@ -52,6 +52,9 @@ async function uploadAnalysisImage(userId: string, file: File): Promise<string> 
     }
   });
 
+  // Returns something like: /api/assets/uploads/users/123/analysis/...
+  // You might want to prepend the BASE_URL if needed for display, 
+  // or the backend handling already supports relative paths if using same domain.
   return response.data.imageUrl;
 }
 ```
@@ -72,7 +75,7 @@ async function uploadAnalysisImage(userId: string, file: File): Promise<string> 
   "result": {
     "score": 85,
     "feedback": [{ "message": "Good posture", "score": 90 }],
-    "imageUrl": "https://storage.googleapis.com/.../analysis_evidence.jpg" // <--- NEW FIELD
+    "imageUrl": "/api/assets/uploads/users/123/analysis/1705512345678_uuid.jpg" // <--- NEW FIELD
   }
 }
 ```

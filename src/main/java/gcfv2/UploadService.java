@@ -94,8 +94,8 @@ public class UploadService {
 
         LOG.info("Analysis evidence uploaded to GCS: {}/{}", bucketName, fileName);
 
-        // Return the full public URL as requested
-        return "https://storage.googleapis.com/" + bucketName + "/" + fileName;
+        // Return the Proxy URL to avoid 403 on Frontend (same as Avatar/Logo)
+        return "/api/assets/" + fileName;
     }
 
     /**
