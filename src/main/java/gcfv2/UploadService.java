@@ -56,7 +56,20 @@ public class UploadService {
 
         LOG.info("File uploaded to GCS: {}/{}", bucketName, fileName);
 
-        // Public URL for Google Cloud Storage
-        return String.format("https://storage.googleapis.com/%s/%s", bucketName, fileName);
+        // Return the API Proxy URL instead of GCS direct URL
+        // The frontend will request /api/assets/{fileName}
+        // which will be handled by AssetController
+        return "/api/assets/" + fileName;
+    }
+
+    /**
+     * Downloads an asset from Google Cloud Storage.
+     * 
+     * @param fileName The path/name of the file in the bucket
+     * @return The file bytes
+     */
+    public byte[] downloadAsset(String fileName) {
+        BlobId blobId = BlobId.of(bucketName, fileName);
+        return storage.readAllBytes(blobId);
     }
 }

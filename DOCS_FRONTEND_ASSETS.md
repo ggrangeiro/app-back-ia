@@ -29,7 +29,7 @@ Utilize este endpoint para realizar o upload de fotos de perfil ou logos de marc
 ```json
 {
   "success": true,
-  "imageUrl": "https://storage.googleapis.com/imagem-ai/assets/avatar/hash_gerado.png"
+  "imageUrl": "/api/assets/assets/avatar/hash_gerado.png"
 }
 ```
 
@@ -37,7 +37,7 @@ Utilize este endpoint para realizar o upload de fotos de perfil ou logos de marc
 
 ## 2. Consulta de Perfil e Branding
 
-Dois endpoints foram atualizados para incluir as informações de branding.
+O backend agora serve as imagens diretamente (Proxy) para evitar problemas de CORS.
 
 ### 2.1. Endpoint de Perfil Logado (`/api/me`)
 Retorna os dados do usuário atual enriquecidos com a foto de perfil e a logo da marca aplicada.
@@ -54,9 +54,9 @@ Retorna os detalhes de um usuário específico.
 O backend agora automatiza a lógica de "Mestre x Aluno".
 
 ### Comportamento do Campo `brandLogo`:
-1. **Para Personais:** Retorna a logo que ele mesmo subiu.
+1. **Para Personais:** Retorna a path da imagem que ele mesmo subiu.
 2. **Para Alunos (`role: 'USER'`):** 
-    - Se o personal vinculado tiver uma logo cadastrada, o backend retornará essa logo no campo `brandLogo` do payload do aluno.
+    - Se o personal vinculado tiver uma logo cadastrada, o backend retornará essa path no campo `brandLogo` do payload do aluno.
     - Se não houver personal ou logo cadastrada, retornará uma string vazia `""`.
 
 ### Estrutura do Payload Atualizada:
@@ -65,8 +65,8 @@ O backend agora automatiza a lógica de "Mestre x Aluno".
   "id": 123,
   "name": "João Silva",
   "role": "USER",
-  "avatar": "https://storage.googleapis.com/...", // Foto de perfil do usuário
-  "brandLogo": "https://storage.googleapis.com/...", // Logo do Personal (White Label)
+  "avatar": "/api/assets/assets/avatar/...", // Proxy Path
+  "brandLogo": "/api/assets/assets/logo/...", // Proxy Path
   "personalId": 456,
   "plan": { ... },
   "usage": { ... }
@@ -77,8 +77,9 @@ O backend agora automatiza a lógica de "Mestre x Aluno".
 
 ## 4. Recomendações para o Frontend
 
-1. **Prioridade de Header:**
-   - Exibir `brandLogo` no topo da página. Se `brandLogo` estiver vazio, utilize a logo padrão do sistema (FitAI).
+1. **Proxy Backend:**
+   - As imagens agora são servidas pelo próprio backend na rota `/api/assets/...`.
+   - Você pode usar o valor retornado diretamente no `src` da tag `<img>` (ex: `<img src="https://api.domain.com/api/assets/..." />`).
 2. **Componentes de Avatar:**
    - Substitua ícones genéricos (ex: `UserCircle`) pela imagem do campo `avatar`. Se `avatar` estiver vazio, mantenha o fallback visual.
 3. **Cache:**
