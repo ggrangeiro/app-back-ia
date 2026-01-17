@@ -54,6 +54,18 @@ public class Usuario {
     @Transient
     private Object latestWorkout;
 
+    @Transient
+    private java.util.List<String> assignedExercises;
+
+    // Getter/Setter for assignedExercises
+    public java.util.List<String> getAssignedExercises() {
+        return assignedExercises;
+    }
+
+    public void setAssignedExercises(java.util.List<String> assignedExercises) {
+        this.assignedExercises = assignedExercises;
+    }
+
     // Construtor padrão vazio é obrigatório para o Micronaut
     public Usuario() {
     }
