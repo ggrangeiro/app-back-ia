@@ -5,7 +5,6 @@ import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.server.cors.CrossOrigin;
 import io.micronaut.transaction.annotation.Transactional;
-import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
@@ -43,13 +42,24 @@ public class ExerciseController {
         }
 
         // 2. Extrair dados do corpo
-        Number userIdNum = (Number) body.get("userId");
+        // 2. Extrair dados do corpo
+        Object userIdObj = body.get("userId");
         String exerciseName = (String) body.get("exerciseName");
 
-        if (userIdNum == null || exerciseName == null || exerciseName.isBlank()) {
+        if (userIdObj == null || exerciseName == null || exerciseName.isBlank()) {
             return HttpResponse.badRequest(Map.of("message", "userId e exerciseName são obrigatórios."));
         }
-        Long userId = userIdNum.longValue();
+
+        Long userId;
+        try {
+            if (userIdObj instanceof Number) {
+                userId = ((Number) userIdObj).longValue();
+            } else {
+                userId = Long.parseLong(userIdObj.toString());
+            }
+        } catch (NumberFormatException e) {
+            return HttpResponse.badRequest(Map.of("message", "userId inválido."));
+        }
 
         // 3. Se for PERSONAL, verificar se o aluno pertence a ele
         if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
