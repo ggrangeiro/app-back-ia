@@ -122,10 +122,15 @@ public class TesteController {
     public HttpResponse<?> atualizar(
             @PathVariable Long id,
             @Body Usuario atualizacao,
-            @QueryValue Long requesterId,
-            @QueryValue String requesterRole) {
+            @Nullable @QueryValue Long requesterId,
+            @Nullable @QueryValue String requesterRole) {
 
         try {
+            if (requesterId == null || requesterRole == null) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "requesterId e requesterRole são obrigatórios."));
+            }
+
             if (!usuarioRepository.hasPermission(requesterId, requesterRole, id.toString())) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Acesso negado."));
             }
