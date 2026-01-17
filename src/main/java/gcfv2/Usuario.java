@@ -26,7 +26,7 @@ public class Usuario {
     private Long personalId;
 
     @MappedProperty("access_level")
-    private String accessLevel;
+    private String accessLevel = "FULL";
 
     private Integer credits;
 

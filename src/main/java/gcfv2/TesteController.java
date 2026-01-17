@@ -457,6 +457,29 @@ public class TesteController {
     }
 
     /**
+     * DETALHES DO USUÁRIO
+     */
+    @Get("/{id}")
+    public HttpResponse<?> obterUsuario(
+            @PathVariable Long id,
+            @Nullable @QueryValue Long requesterId,
+            @Nullable @QueryValue String requesterRole) {
+
+        if (requesterId != null && requesterRole != null) {
+            if (!usuarioRepository.hasPermission(requesterId, requesterRole, id.toString())) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Acesso negado."));
+            }
+        }
+
+        return usuarioRepository.findById(id).map(user -> {
+            // Garantir valor default se nulo (embora a entidade já trate)
+            if (user.getAccessLevel() == null)
+                user.setAccessLevel("FULL");
+            return HttpResponse.ok(user);
+        }).orElse(HttpResponse.notFound());
+    }
+
+    /**
      * LISTAR EXERCÍCIOS DO USUÁRIO
      */
     @Get("/exercises/{userId}")
