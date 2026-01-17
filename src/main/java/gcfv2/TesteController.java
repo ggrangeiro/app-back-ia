@@ -82,7 +82,11 @@ public class TesteController {
                 usuario.setPlanType("FREE");
             }
             if (usuario.getAccessLevel() == null) {
-                usuario.setAccessLevel("FULL");
+                if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
+                    usuario.setAccessLevel("READONLY");
+                } else {
+                    usuario.setAccessLevel("FULL");
+                }
             }
             if (usuario.getSubscriptionStatus() == null) {
                 usuario.setSubscriptionStatus("INACTIVE");
