@@ -54,6 +54,9 @@ public class Usuario {
     @Transient
     private Object latestWorkout;
 
+    @MappedProperty(converter = gcfv2.converter.AnamnesisConverter.class)
+    private gcfv2.dto.anamnese.AnamnesisDTO anamnesis;
+
     @Transient
     private java.util.List<String> assignedExercises;
 
@@ -223,5 +226,13 @@ public class Usuario {
         int sub = subscriptionCredits != null ? subscriptionCredits : 0;
         int pur = purchasedCredits != null ? purchasedCredits : 0;
         return sub + pur;
+    }
+
+    public gcfv2.dto.anamnese.AnamnesisDTO getAnamnesis() {
+        return anamnesis;
+    }
+
+    public void setAnamnesis(gcfv2.dto.anamnese.AnamnesisDTO anamnesis) {
+        this.anamnesis = anamnesis;
     }
 }
