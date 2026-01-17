@@ -2,6 +2,11 @@ micronaut:
   serde:
     deserialization:
       ignore-unknown: true
+  security:
+    intercept-url-map:
+      - pattern: /**
+        access:
+          - isAnonymous()
   server:
     cors:
       enabled: true
