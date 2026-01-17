@@ -62,6 +62,13 @@ public class StructuredDietaController {
             if (userOpt.isPresent()) {
                 var user = userOpt.get();
 
+                // Check Access Level (Leitura vs Escrita)
+                if ("USER".equalsIgnoreCase(requesterRole) && "READONLY".equalsIgnoreCase(user.getAccessLevel())) {
+                    return HttpResponse.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message",
+                                    "Seu plano atual não permite gerar dietas estruturadas. Solicite ao seu Personal."));
+                }
+
                 String planTypeToCheck = user.getPlanType() != null ? user.getPlanType() : "FREE";
                 boolean isPrivileged = "PERSONAL".equalsIgnoreCase(requesterRole)
                         || "ADMIN".equalsIgnoreCase(requesterRole);

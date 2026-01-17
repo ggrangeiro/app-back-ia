@@ -47,6 +47,20 @@ public class HistoricoController {
                 return HttpResponse.badRequest(Map.of("message", "Os campos exercise (ID) e userId são obrigatórios."));
             }
 
+            // Check Access Level (Leitura vs Escrita)
+            try {
+                var userOpt = usuarioRepository.findById(Long.parseLong(historico.getUserId()));
+                if (userOpt.isPresent()) {
+                    var user = userOpt.get();
+                    if ("USER".equalsIgnoreCase(requesterRole) && "READONLY".equalsIgnoreCase(user.getAccessLevel())) {
+                        return HttpResponse.status(HttpStatus.FORBIDDEN)
+                                .body(Map.of("message",
+                                        "Seu nível de acesso não permite registrar auto-análises. Solicite ao seu Personal."));
+                    }
+                }
+            } catch (NumberFormatException ignored) {
+            }
+
             // Garante que o timestamp seja gerado se o front não enviar
             if (historico.getTimestamp() == null || historico.getTimestamp() == 0) {
                 historico.setTimestamp(System.currentTimeMillis());

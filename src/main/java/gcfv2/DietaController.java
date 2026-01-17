@@ -43,6 +43,13 @@ public class DietaController {
             if (userOpt.isPresent()) {
                 var user = userOpt.get();
 
+                // Check Access Level (Leitura vs Escrita)
+                if ("USER".equalsIgnoreCase(requesterRole) && "READONLY".equalsIgnoreCase(user.getAccessLevel())) {
+                    return HttpResponse.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message",
+                                    "Seu plano atual não permite gerar dietas. Solicite ao seu Personal."));
+                }
+
                 // Determinar plano a verificar:
                 // Se requester é PERSONAL/ADMIN, usar plano do requester (não do aluno)
                 String planTypeToCheck = user.getPlanType() != null ? user.getPlanType() : "FREE";

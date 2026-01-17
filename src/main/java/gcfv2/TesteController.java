@@ -79,6 +79,9 @@ public class TesteController {
             if (usuario.getPlanType() == null) {
                 usuario.setPlanType("FREE");
             }
+            if (usuario.getAccessLevel() == null) {
+                usuario.setAccessLevel("FULL");
+            }
             if (usuario.getSubscriptionStatus() == null) {
                 usuario.setSubscriptionStatus("INACTIVE");
             }
@@ -99,8 +102,51 @@ public class TesteController {
 
             return HttpResponse.created(novoUsuario);
 
-        } catch (Exception e) {
+        }
+
+        catch (Exception e) {
             return HttpResponse.serverError(Map.of("message", "Erro ao cadastrar: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * ATUALIZAR USUÁRIO
+     */
+    @Put("/{id}")
+    @Transactional
+    public HttpResponse<?> atualizar(
+            @PathVariable Long id,
+            @Body Usuario atualizacao,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+
+        try {
+            if (!usuarioRepository.hasPermission(requesterId, requesterRole, id.toString())) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Acesso negado."));
+            }
+
+            return usuarioRepository.findById(id).map(user -> {
+                if (atualizacao.getNome() != null)
+                    user.setNome(atualizacao.getNome());
+
+                // Apenas ADMIN muda Role
+                if (atualizacao.getRole() != null && "ADMIN".equalsIgnoreCase(requesterRole)) {
+                    user.setRole(atualizacao.getRole());
+                }
+
+                // Personal/Admin mudam AccessLevel
+                boolean isPrivileged = "PERSONAL".equalsIgnoreCase(requesterRole)
+                        || "ADMIN".equalsIgnoreCase(requesterRole);
+                if (isPrivileged && atualizacao.getAccessLevel() != null) {
+                    user.setAccessLevel(atualizacao.getAccessLevel());
+                }
+
+                Usuario salvo = usuarioRepository.update(user);
+                return HttpResponse.ok(salvo);
+            }).orElse(HttpResponse.notFound());
+
+        } catch (Exception e) {
+            return HttpResponse.serverError(Map.of("message", "Erro ao atualizar: " + e.getMessage()));
         }
     }
 
@@ -140,6 +186,13 @@ public class TesteController {
         }
 
         return usuarioRepository.findById(userId).map(user -> {
+            // Check Access Level
+            if ("USER".equalsIgnoreCase(requesterRole) && "READONLY".equalsIgnoreCase(user.getAccessLevel())) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message",
+                                "Seu nível de acesso não permite esta ação. Solicite ao seu Personal."));
+            }
+
             // Determinar o plano a considerar:
             // Se o requester é PERSONAL/ADMIN gerando para aluno, usar plano do requester
             String planTypeToCheck = user.getPlanType() != null ? user.getPlanType() : "FREE";
@@ -357,6 +410,7 @@ public class TesteController {
                         "name", usuario.getNome() != null ? usuario.getNome() : "",
                         "email", usuario.getEmail() != null ? usuario.getEmail() : "",
                         "role", usuario.getRole() != null ? usuario.getRole() : "USER",
+                        "accessLevel", usuario.getAccessLevel() != null ? usuario.getAccessLevel() : "FULL",
                         "plan", Map.of(
                                 "type", usuario.getPlanType() != null ? usuario.getPlanType() : "FREE",
                                 "status",

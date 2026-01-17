@@ -25,6 +25,9 @@ public class Usuario {
     @MappedProperty("personal_id")
     private Long personalId;
 
+    @MappedProperty("access_level")
+    private String accessLevel;
+
     private Integer credits;
 
     @MappedProperty("plan_type")
@@ -118,6 +121,14 @@ public class Usuario {
 
     public void setPersonalId(Long personalId) {
         this.personalId = personalId;
+    }
+
+    public String getAccessLevel() {
+        return accessLevel;
+    }
+
+    public void setAccessLevel(String accessLevel) {
+        this.accessLevel = accessLevel;
     }
 
     public Integer getCredits() {
