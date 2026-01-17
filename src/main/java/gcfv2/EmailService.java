@@ -18,7 +18,7 @@ public class EmailService {
     @Value("${resend.api-key:}")
     private String resendApiKey;
 
-    @Value("${resend.from-email:noreply@resend.dev}")
+    @Value("${resend.from-email:onboarding@fitanalizer.com.br}")
     private String fromEmail;
 
     @Value("${app.frontend-url:http://localhost:5173}")
