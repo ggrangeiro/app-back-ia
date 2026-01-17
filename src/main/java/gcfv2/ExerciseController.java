@@ -15,6 +15,8 @@ import java.util.Optional;
         "http://localhost:5173" })
 public class ExerciseController {
 
+    private static final org.slf4j.Logger LOG = org.slf4j.LoggerFactory.getLogger(ExerciseController.class);
+
     @Inject
     private UsuarioRepository usuarioRepository;
 
@@ -34,6 +36,8 @@ public class ExerciseController {
             @QueryValue Long requesterId,
             @QueryValue String requesterRole) {
 
+        LOG.info("Recebendo requisição de atribuição. Body: {}", body);
+
         // 1. Validar Permissões (Apenas ADMIN ou PERSONAL)
         boolean isPrivileged = "ADMIN".equalsIgnoreCase(requesterRole) || "PERSONAL".equalsIgnoreCase(requesterRole);
         if (!isPrivileged) {
@@ -42,9 +46,10 @@ public class ExerciseController {
         }
 
         // 2. Extrair dados do corpo
-        // 2. Extrair dados do corpo
         Object userIdObj = body.get("userId");
         String exerciseName = (String) body.get("exerciseName");
+
+        LOG.info("Parsed: userIdObj={}, exerciseName={}", userIdObj, exerciseName);
 
         if (userIdObj == null || exerciseName == null || exerciseName.isBlank()) {
             return HttpResponse.badRequest(Map.of("message", "userId e exerciseName são obrigatórios."));
