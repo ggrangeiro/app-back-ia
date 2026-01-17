@@ -63,6 +63,42 @@ public class UploadService {
     }
 
     /**
+     * Uploads an analysis evidence image to Google Cloud Storage.
+     * Path: uploads/users/{userId}/analysis/{timestamp}_{filename}
+     *
+     * @param file   The file to upload
+     * @param userId The ID of the user owning the analysis
+     * @return The public URL of the uploaded image
+     * @throws IOException If upload fails
+     */
+    public String uploadUserAnalysisEvidence(CompletedFileUpload file, Long userId) throws IOException {
+        String originalFilename = file.getFilename();
+        String extension = "";
+
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        } else {
+            // Default extension if missing
+            extension = ".jpg";
+        }
+
+        String fileName = "uploads/users/" + userId + "/analysis/" + System.currentTimeMillis() + "_"
+                + UUID.randomUUID().toString() + extension;
+
+        BlobId blobId = BlobId.of(bucketName, fileName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(file.getContentType().map(io.micronaut.http.MediaType::toString).orElse("image/jpeg"))
+                .build();
+
+        storage.create(blobInfo, file.getBytes());
+
+        LOG.info("Analysis evidence uploaded to GCS: {}/{}", bucketName, fileName);
+
+        // Return the full public URL as requested
+        return "https://storage.googleapis.com/" + bucketName + "/" + fileName;
+    }
+
+    /**
      * Downloads an asset from Google Cloud Storage.
      * 
      * @param fileName The path/name of the file in the bucket

@@ -49,8 +49,11 @@ public class UploadController {
                     return HttpResponse.status(HttpStatus.FORBIDDEN)
                             .body(Map.of("message", "Apenas Personais ou Admins podem subir logos."));
                 }
+            } else if ("analysis_evidence".equalsIgnoreCase(type)) {
+                // Permitido para todos que tem permissão sobre o usuário (já validado acima)
             } else if (!"avatar".equalsIgnoreCase(type)) {
-                return HttpResponse.badRequest(Map.of("message", "Tipo de asset inválido. Use 'avatar' ou 'logo'."));
+                return HttpResponse.badRequest(
+                        Map.of("message", "Tipo de asset inválido. Use 'avatar', 'logo' ou 'analysis_evidence'."));
             }
 
             // 3. Validar Arquivo (Tamanho máximo 2MB)
@@ -64,14 +67,20 @@ public class UploadController {
             }
 
             // 4. Upload para o "Storage"
-            String imageUrl = uploadService.uploadAsset(file, type);
+            String imageUrl;
+            if ("analysis_evidence".equalsIgnoreCase(type)) {
+                imageUrl = uploadService.uploadUserAnalysisEvidence(file, id);
+            } else {
+                imageUrl = uploadService.uploadAsset(file, type);
+            }
 
-            // 5. Atualizar Banco de Dados
+            // 5. Atualizar Banco de Dados (Apenas para Avatar e Logo)
             if ("avatar".equalsIgnoreCase(type)) {
                 usuarioRepository.updateAvatar(id, imageUrl);
-            } else {
+            } else if ("logo".equalsIgnoreCase(type)) {
                 usuarioRepository.updateBrandLogo(id, imageUrl);
             }
+            // analysis_evidence não atualiza coluna no usuário
 
             return HttpResponse.ok(Map.of(
                     "success", true,
