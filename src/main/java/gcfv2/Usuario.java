@@ -246,4 +246,26 @@ public class Usuario {
     public void setAnamnesis(gcfv2.dto.anamnese.AnamnesisDTO anamnesis) {
         this.anamnesis = anamnesis;
     }
+
+    @MappedProperty("methodology")
+    private String methodology;
+
+    @MappedProperty("communication_style")
+    private String communicationStyle;
+
+    public String getMethodology() {
+        return methodology;
+    }
+
+    public void setMethodology(String methodology) {
+        this.methodology = methodology;
+    }
+
+    public String getCommunicationStyle() {
+        return communicationStyle;
+    }
+
+    public void setCommunicationStyle(String communicationStyle) {
+        this.communicationStyle = communicationStyle;
+    }
 }

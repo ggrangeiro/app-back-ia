@@ -145,6 +145,12 @@ public class TesteController {
                 if (atualizacao.getNome() != null)
                     user.setNome(atualizacao.getNome());
 
+                if (atualizacao.getMethodology() != null)
+                    user.setMethodology(atualizacao.getMethodology());
+
+                if (atualizacao.getCommunicationStyle() != null)
+                    user.setCommunicationStyle(atualizacao.getCommunicationStyle());
+
                 // Apenas ADMIN muda Role
                 if (atualizacao.getRole() != null && "ADMIN".equalsIgnoreCase(requesterRole)) {
                     user.setRole(atualizacao.getRole());
