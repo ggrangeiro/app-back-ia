@@ -23,11 +23,15 @@ public class ExerciseController {
     @Inject
     private UsuarioExercicioRepository usuarioExercicioRepository;
 
+    @Inject
+    private ExerciseRepository exerciseRepository;
+
     /**
      * ATRIBUIR EXERCÍCIO A UM USUÁRIO
      * Endpoint: POST /api/exercises/assign
      * Query Params: requesterId, requesterRole
-     * Body: { "userId": 123, "exerciseName": "Supino Reto" }
+     * Body: { "userId": 123, "exerciseName": "Supino Reto" } OR { "userId": 123,
+     * "exerciseId": "1" }
      */
     @Post("/assign")
     @Transactional
@@ -47,12 +51,32 @@ public class ExerciseController {
 
         // 2. Extrair dados do corpo
         Object userIdObj = body.get("userId");
-        String exerciseName = (String) body.get("exerciseName");
+        Object exerciseIdObj = body.get("exerciseId");
+        String exerciseNameRaw = (String) body.get("exerciseName");
 
-        LOG.info("Parsed: userIdObj={}, exerciseName={}", userIdObj, exerciseName);
+        LOG.info("Parsed: userIdObj={}, exerciseIdObj={}, exerciseNameRaw={}", userIdObj, exerciseIdObj,
+                exerciseNameRaw);
 
-        if (userIdObj == null || exerciseName == null || exerciseName.isBlank()) {
-            return HttpResponse.badRequest(Map.of("message", "userId e exerciseName são obrigatórios."));
+        if (userIdObj == null) {
+            return HttpResponse.badRequest(Map.of("message", "userId é obrigatório."));
+        }
+
+        String resolvedExerciseName = exerciseNameRaw;
+
+        // Resolução do Nome do Exercício
+        if (exerciseIdObj != null) {
+            String exId = exerciseIdObj.toString();
+            Optional<Exercise> exOpt = exerciseRepository.findById(exId);
+            if (exOpt.isPresent()) {
+                resolvedExerciseName = exOpt.get().getName();
+            } else {
+                return HttpResponse.notFound(Map.of("message", "Exercício não encontrado com o ID fornecido: " + exId));
+            }
+        }
+
+        if (resolvedExerciseName == null || resolvedExerciseName.isBlank()) {
+            return HttpResponse
+                    .badRequest(Map.of("message", "É necessário fornecer exerciseId ou exerciseName válido."));
         }
 
         Long userId;
@@ -81,9 +105,11 @@ public class ExerciseController {
         }
         Usuario usuario = userOpt.get();
 
+        final String finalExerciseName = resolvedExerciseName;
+
         // 5. Verificar se já existe
         boolean exists = usuarioExercicioRepository.findByUsuario(usuario).stream()
-                .anyMatch(ue -> ue.getExercicio().equalsIgnoreCase(exerciseName));
+                .anyMatch(ue -> ue.getExercicio().equalsIgnoreCase(finalExerciseName));
 
         if (exists) {
             return HttpResponse.status(HttpStatus.CONFLICT)
@@ -94,13 +120,13 @@ public class ExerciseController {
         try {
             UsuarioExercicio novoExercicio = new UsuarioExercicio();
             novoExercicio.setUsuario(usuario);
-            novoExercicio.setExercicio(exerciseName);
+            novoExercicio.setExercicio(finalExerciseName);
 
             usuarioExercicioRepository.save(novoExercicio);
 
             return HttpResponse.created(Map.of(
                     "message", "Exercício atribuído com sucesso.",
-                    "exercise", exerciseName,
+                    "exercise", finalExerciseName,
                     "userId", userId));
 
         } catch (Exception e) {
