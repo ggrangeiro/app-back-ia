@@ -100,6 +100,9 @@ public class TesteController {
                 }
             }
 
+            // Enviar e-mail de boas-vindas
+            emailService.sendWelcomeEmail(novoUsuario.getEmail(), novoUsuario.getNome(), novoUsuario.getRole());
+
             return HttpResponse.created(novoUsuario);
 
         }

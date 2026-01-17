@@ -303,6 +303,156 @@ public class EmailService {
         }
     }
 
+    /**
+     * Envia e-mail de boas-vindas com resumo de funcionalidades
+     */
+    public boolean sendWelcomeEmail(String toEmail, String userName, String role) {
+        if (resendApiKey == null || resendApiKey.isEmpty()) {
+            LOG.warn("Resend API key não configurada. E-mail de boas-vindas não será enviado.");
+            return false;
+        }
+
+        String featuresHtml = "";
+        String welcomeMessage = "";
+
+        if ("PERSONAL".equalsIgnoreCase(role)) {
+            welcomeMessage = "É um prazer ter você como parceiro! Prepare-se para elevar o nível da sua consultoria.";
+            featuresHtml = """
+                    <div class="feature-item">
+                        <div class="icon">👥</div>
+                        <div class="text"><strong>Gestão Completa de Alunos</strong><br>Organize e monitore todos os seus alunos em um só lugar.</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="icon">💪</div>
+                        <div class="text"><strong>Prescrição Inteligente</strong><br>Crie treinos e dietas personalizados com auxílio da nossa IA.</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="icon">📊</div>
+                        <div class="text"><strong>Relatórios de Progresso</strong><br>Acompanhe a evolução de cada aluno com gráficos detalhados.</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="icon">🤖</div>
+                        <div class="text"><strong>IA Avançada</strong><br>Acesso total às ferramentas de análise biomecânica e correção.</div>
+                    </div>
+                    """;
+        } else {
+            welcomeMessage = "Sua jornada para uma vida mais saudável começa agora! Estamos aqui para te guiar.";
+            featuresHtml = """
+                    <div class="feature-item">
+                        <div class="icon">🏋️</div>
+                        <div class="text"><strong>Treinos Personalizados</strong><br>Fichas de treino adaptadas ao seu objetivo e nível.</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="icon">🥗</div>
+                        <div class="text"><strong>Consultoria Nutricional AI</strong><br>Dietas flexíveis com substituições e cálculo de macros.</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="icon">📈</div>
+                        <div class="text"><strong>Evolução Corporal</strong><br>Registre e visualize seu progresso semana a semana.</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="icon">🎥</div>
+                        <div class="text"><strong>Análise de Execução</strong><br>Use nossa IA para corrigir sua postura nos exercícios.</div>
+                    </div>
+                    """;
+        }
+
+        String htmlContent = String.format(
+                """
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <style>
+                                body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 0; margin: 0; }
+                                .wrapper { width: 100%%; table-layout: fixed; background-color: #f0f2f5; padding-bottom: 40px; }
+                                .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+                                .header { background: linear-gradient(135deg, #6366f1 0%%, #8b5cf6 100%%); padding: 40px 20px; text-align: center; color: white; }
+                                .header h1 { margin: 0; font-size: 28px; font-weight: 700; margin-bottom: 10px; }
+                                .header p { margin: 0; font-size: 16px; opacity: 0.9; }
+                                .content { padding: 40px 30px; color: #334155; line-height: 1.6; }
+                                .welcome-text { font-size: 18px; margin-bottom: 30px; text-align: center; color: #1e293b; }
+                                .features-box { background: #f8fafc; border-radius: 12px; padding: 25px; margin: 30px 0; border: 1px solid #e2e8f0; }
+                                .features-title { font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: 700; margin-bottom: 20px; text-align: center; }
+                                .feature-item { display: flex; align-items: flex-start; margin-bottom: 20px; }
+                                .feature-item:last-child { margin-bottom: 0; }
+                                .feature-item .icon { background: #e0e7ff; color: #4f46e5; width: 40px; height: 40px; border-radius: 50%%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 15px; flex-shrink: 0; }
+                                .feature-item .text { font-size: 15px; color: #475569; }
+                                .cta-button { display: block; width: fit-content; margin: 35px auto 0; background: #4f46e5; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 16px; text-align: center; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); transition: transform 0.2s; }
+                                .cta-button:hover { background: #4338ca; transform: translateY(-2px); }
+                                .footer { background: #f8fafc; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px; border-top: 1px solid #e2e8f0; }
+                                .social-links { margin-top: 10px; }
+                                .social-links a { color: #64748b; text-decoration: none; margin: 0 5px; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="wrapper">
+                                <div class="container">
+                                    <div class="header">
+                                        <h1>Bem-vindo(a) à FitAI! 🚀</h1>
+                                        <p>%s</p>
+                                    </div>
+                                    <div class="content">
+                                        <p class="welcome-text">Olá, <strong>%s</strong>! Estamos muito felizes em ter você conosco.</p>
+                                       \s
+                                        <div class="features-box">
+                                            <div class="features-title">✨ O que você pode fazer agora</div>
+                                            %s
+                                        </div>
+
+                                        <p style="text-align: center; margin-top: 30px;">
+                                            Para começar, acesse sua conta clicando no botão abaixo:
+                                        </p>
+
+                                        <a href="https://analisa-exercicio-732767853162.southamerica-east1.run.app/" class="cta-button">Acessar Plataforma</a>
+                                    </div>
+                                    <div class="footer">
+                                        <p>© 2026 FitAI - Tecnologia em Performance</p>
+                                        <p>Você recebeu este e-mail porque se cadastrou na FitAI.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                        """,
+                welcomeMessage,
+                userName,
+                featuresHtml);
+
+        String jsonBody = String.format("""
+                {
+                    "from": "%s",
+                    "to": ["%s"],
+                    "subject": "🚀 Bem-vindo(a) à FitAI - Vamos começar?",
+                    "html": %s
+                }
+                """, fromEmail, toEmail, escapeJson(htmlContent));
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .header("Authorization", "Bearer " + resendApiKey)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200 || response.statusCode() == 201) {
+                LOG.info("✅ E-mail de boas-vindas enviado para: {}", toEmail);
+                return true;
+            } else {
+                LOG.error("❌ Erro ao enviar welcome email. Status: {}, Response: {}",
+                        response.statusCode(), response.body());
+                return false;
+            }
+        } catch (Exception e) {
+            LOG.error("❌ Exceção ao enviar welcome email: {}", e.getMessage());
+            return false;
+        }
+    }
+
     private String escapeJson(String text) {
         return "\"" + text
                 .replace("\\", "\\\\")
