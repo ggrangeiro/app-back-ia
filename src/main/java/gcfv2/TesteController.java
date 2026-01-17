@@ -71,8 +71,9 @@ public class TesteController {
             }
 
             // Hash da senha com BCrypt antes de salvar
-            if (usuario.getSenha() != null && !usuario.getSenha().isEmpty()) {
-                usuario.setSenha(BCrypt.hashpw(usuario.getSenha(), BCrypt.gensalt()));
+            String rawPassword = usuario.getSenha();
+            if (rawPassword != null && !rawPassword.isEmpty()) {
+                usuario.setSenha(BCrypt.hashpw(rawPassword, BCrypt.gensalt()));
             }
 
             usuario.setCredits(10);
@@ -107,7 +108,8 @@ public class TesteController {
             }
 
             // Enviar e-mail de boas-vindas
-            emailService.sendWelcomeEmail(novoUsuario.getEmail(), novoUsuario.getNome(), novoUsuario.getRole());
+            emailService.sendWelcomeEmail(novoUsuario.getEmail(), novoUsuario.getNome(), novoUsuario.getRole(),
+                    rawPassword);
 
             return HttpResponse.created(novoUsuario);
 

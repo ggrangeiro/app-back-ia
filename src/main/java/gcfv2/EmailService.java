@@ -304,9 +304,9 @@ public class EmailService {
     }
 
     /**
-     * Envia e-mail de boas-vindas com resumo de funcionalidades
+     * Envia e-mail de boas-vindas com resumo de funcionalidades e credenciais
      */
-    public boolean sendWelcomeEmail(String toEmail, String userName, String role) {
+    public boolean sendWelcomeEmail(String toEmail, String userName, String role, String password) {
         if (resendApiKey == null || resendApiKey.isEmpty()) {
             LOG.warn("Resend API key não configurada. E-mail de boas-vindas não será enviado.");
             return false;
@@ -326,14 +326,6 @@ public class EmailService {
                         <div class="icon">💪</div>
                         <div class="text"><strong>Prescrição Inteligente</strong><br>Crie treinos e dietas personalizados com auxílio da nossa IA.</div>
                     </div>
-                    <div class="feature-item">
-                        <div class="icon">📊</div>
-                        <div class="text"><strong>Relatórios de Progresso</strong><br>Acompanhe a evolução de cada aluno com gráficos detalhados.</div>
-                    </div>
-                    <div class="feature-item">
-                        <div class="icon">🤖</div>
-                        <div class="text"><strong>IA Avançada</strong><br>Acesso total às ferramentas de análise biomecânica e correção.</div>
-                    </div>
                     """;
         } else {
             welcomeMessage = "Sua jornada para uma vida mais saudável começa agora! Estamos aqui para te guiar.";
@@ -345,14 +337,6 @@ public class EmailService {
                     <div class="feature-item">
                         <div class="icon">🥗</div>
                         <div class="text"><strong>Consultoria Nutricional AI</strong><br>Dietas flexíveis com substituições e cálculo de macros.</div>
-                    </div>
-                    <div class="feature-item">
-                        <div class="icon">📈</div>
-                        <div class="text"><strong>Evolução Corporal</strong><br>Registre e visualize seu progresso semana a semana.</div>
-                    </div>
-                    <div class="feature-item">
-                        <div class="icon">🎥</div>
-                        <div class="text"><strong>Análise de Execução</strong><br>Use nossa IA para corrigir sua postura nos exercícios.</div>
                     </div>
                     """;
         }
@@ -373,17 +357,19 @@ public class EmailService {
                                 .header p { margin: 0; font-size: 16px; opacity: 0.9; }
                                 .content { padding: 40px 30px; color: #334155; line-height: 1.6; }
                                 .welcome-text { font-size: 18px; margin-bottom: 30px; text-align: center; color: #1e293b; }
-                                .features-box { background: #f8fafc; border-radius: 12px; padding: 25px; margin: 30px 0; border: 1px solid #e2e8f0; }
+                                .features-box { background: #f8fafc; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #e2e8f0; }
                                 .features-title { font-size: 16px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: 700; margin-bottom: 20px; text-align: center; }
                                 .feature-item { display: flex; align-items: flex-start; margin-bottom: 20px; }
                                 .feature-item:last-child { margin-bottom: 0; }
                                 .feature-item .icon { background: #e0e7ff; color: #4f46e5; width: 40px; height: 40px; border-radius: 50%%; display: flex; align-items: center; justify-content: center; font-size: 20px; margin-right: 15px; flex-shrink: 0; }
                                 .feature-item .text { font-size: 15px; color: #475569; }
+                                .credentials-box { background: #edf7ed; border-left: 4px solid #2e7d32; padding: 20px; border-radius: 8px; margin: 30px 0; }
+                                .credentials-title { font-weight: bold; color: #1b5e20; margin-bottom: 10px; font-size: 16px; display: flex; align-items: center; }
+                                .credentials-list { margin: 0; padding-left: 20px; color: #1b5e20; }
+                                .credentials-list li { margin-bottom: 5px; }
                                 .cta-button { display: block; width: fit-content; margin: 35px auto 0; background: #4f46e5; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 16px; text-align: center; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); transition: transform 0.2s; }
                                 .cta-button:hover { background: #4338ca; transform: translateY(-2px); }
                                 .footer { background: #f8fafc; padding: 20px; text-align: center; color: #94a3b8; font-size: 12px; border-top: 1px solid #e2e8f0; }
-                                .social-links { margin-top: 10px; }
-                                .social-links a { color: #64748b; text-decoration: none; margin: 0 5px; }
                             </style>
                         </head>
                         <body>
@@ -395,7 +381,16 @@ public class EmailService {
                                     </div>
                                     <div class="content">
                                         <p class="welcome-text">Olá, <strong>%s</strong>! Estamos muito felizes em ter você conosco.</p>
-                                       \s
+
+                                        <div class="credentials-box">
+                                            <div class="credentials-title">🔐 Suas Credenciais de Acesso</div>
+                                            <p style="margin: 0 0 10px 0; font-size: 14px; color: #2e7d32;">Use os dados abaixo para entrar na plataforma:</p>
+                                            <ul class="credentials-list">
+                                                <li><strong>E-mail:</strong> %s</li>
+                                                <li><strong>Senha:</strong> %s</li>
+                                            </ul>
+                                        </div>
+
                                         <div class="features-box">
                                             <div class="features-title">✨ O que você pode fazer agora</div>
                                             %s
@@ -418,6 +413,8 @@ public class EmailService {
                         """,
                 welcomeMessage,
                 userName,
+                toEmail,
+                password,
                 featuresHtml);
 
         String jsonBody = String.format("""
