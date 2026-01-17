@@ -6,14 +6,11 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.server.cors.CrossOrigin;
-import io.micronaut.security.annotation.Secured;
-import io.micronaut.security.rules.SecurityRule;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Controller("/api/assets")
-@Secured(SecurityRule.IS_ANONYMOUS)
 @CrossOrigin({ "https://fitai-analyzer-732767853162.us-west1.run.app",
         "https://analisa-exercicio-732767853162.southamerica-east1.run.app",
         "http://localhost:3000",
