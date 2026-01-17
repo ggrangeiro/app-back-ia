@@ -450,6 +450,242 @@ public class EmailService {
         }
     }
 
+    /**
+     * Envia e-mail notificando que um novo treino foi gerado.
+     */
+    public boolean sendWorkoutGeneratedEmail(String toEmail, String userName, String workoutGoal) {
+        if (resendApiKey == null || resendApiKey.isEmpty()) {
+            LOG.warn("Resend API key não configurada. E-mail de treino não será enviado.");
+            return false;
+        }
+
+        String htmlContent = String.format(
+                """
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <style>
+                                body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 0; margin: 0; }
+                                .wrapper { width: 100%%; background-color: #f0f2f5; padding: 40px 20px; }
+                                .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+                                .header { background: linear-gradient(135deg, #4f46e5 0%%, #7c3aed 100%%); padding: 40px 20px; text-align: center; color: white; }
+                                .header .icon { font-size: 48px; margin-bottom: 10px; }
+                                .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+                                .content { padding: 40px 30px; color: #334155; line-height: 1.6; }
+                                .highlight-box { background: #f8fafc; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #e2e8f0; text-align: center; }
+                                .highlight-box h2 { color: #4f46e5; margin: 0 0 10px 0; font-size: 18px; }
+                                .highlight-box p { margin: 0; font-size: 16px; font-weight: 600; color: #1e293b; }
+                                .cta-button { display: block; width: fit-content; margin: 30px auto 0; background: #4f46e5; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2); }
+                                .footer { text-align: center; color: #94a3b8; font-size: 12px; padding: 20px; border-top: 1px solid #f1f5f9; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="wrapper">
+                                <div class="container">
+                                    <div class="header">
+                                        <div class="icon">🏋️‍♂️</div>
+                                        <h1>Seu Novo Treino está Pronto!</h1>
+                                    </div>
+                                    <div class="content">
+                                        <p>Olá <strong>%s</strong>,</p>
+                                        <p>Ótimas notícias! Nossa inteligência artificial acabou de gerar um novo plano de treinamento personalizado para você.</p>
+
+                                        <div class="highlight-box">
+                                            <h2>🎯 Foco do Treino</h2>
+                                            <p>%s</p>
+                                        </div>
+
+                                        <p>Cada exercício foi selecionado para ajudar você a atingir seus objetivos de forma eficiente e segura. O segredo da evolução é a constância!</p>
+
+                                        <a href="%s" class="cta-button">Ver Meu Treino Agora</a>
+                                    </div>
+                                    <div class="footer">
+                                        <p>© 2026 FitAI - Tecnologia em Performance</p>
+                                        <p>Você recebeu este e-mail porque um novo treino foi gerado para sua conta.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                        """,
+                userName, workoutGoal, frontendUrl);
+
+        return sendEmail(toEmail, "🏋️‍♂️ Seu novo treino personalizado chegou! - FitAI", htmlContent);
+    }
+
+    /**
+     * Envia e-mail notificando que uma nova dieta foi gerada.
+     */
+    public boolean sendDietGeneratedEmail(String toEmail, String userName, String dietGoal) {
+        if (resendApiKey == null || resendApiKey.isEmpty()) {
+            LOG.warn("Resend API key não configurada. E-mail de dieta não será enviado.");
+            return false;
+        }
+
+        String htmlContent = String.format(
+                """
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <style>
+                                body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 0; margin: 0; }
+                                .wrapper { width: 100%%; background-color: #f0f2f5; padding: 40px 20px; }
+                                .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+                                .header { background: linear-gradient(135deg, #10b981 0%%, #059669 100%%); padding: 40px 20px; text-align: center; color: white; }
+                                .header .icon { font-size: 48px; margin-bottom: 10px; }
+                                .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+                                .content { padding: 40px 30px; color: #334155; line-height: 1.6; }
+                                .highlight-box { background: #f8fafc; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #e2e8f0; text-align: center; }
+                                .highlight-box h2 { color: #10b981; margin: 0 0 10px 0; font-size: 18px; }
+                                .highlight-box p { margin: 0; font-size: 16px; font-weight: 600; color: #1e293b; }
+                                .cta-button { display: block; width: fit-content; margin: 30px auto 0; background: #10b981; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); }
+                                .footer { text-align: center; color: #94a3b8; font-size: 12px; padding: 20px; border-top: 1px solid #f1f5f9; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="wrapper">
+                                <div class="container">
+                                    <div class="header">
+                                        <div class="icon">🥗</div>
+                                        <h1>Seu Plano Alimentar está Pronto!</h1>
+                                    </div>
+                                    <div class="content">
+                                        <p>Olá <strong>%s</strong>,</p>
+                                        <p>Sua nutrição acaba de ganhar um novo aliado! Geramos uma dieta personalizada baseada nos seus objetivos e necessidades.</p>
+
+                                        <div class="highlight-box">
+                                            <h2>🎯 Objetivo Nutricional</h2>
+                                            <p>%s</p>
+                                        </div>
+
+                                        <p>Lembre-se: uma boa alimentação é o combustível necessário para transformar seus treinos em resultados reais.</p>
+
+                                        <a href="%s" class="cta-button">Ver Minha Dieta Agora</a>
+                                    </div>
+                                    <div class="footer">
+                                        <p>© 2026 FitAI - Tecnologia em Performance</p>
+                                        <p>Você recebeu este e-mail porque uma nova dieta foi gerada para sua conta.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                        """,
+                userName, dietGoal, frontendUrl);
+
+        return sendEmail(toEmail, "🥗 Sua nova dieta personalizada está pronta! - FitAI", htmlContent);
+    }
+
+    /**
+     * Envia e-mail notificando que uma nova análise de exercício foi concluída.
+     */
+    public boolean sendAnalysisGeneratedEmail(String toEmail, String userName, String exerciseName, int score) {
+        if (resendApiKey == null || resendApiKey.isEmpty()) {
+            LOG.warn("Resend API key não configurada. E-mail de análise não será enviado.");
+            return false;
+        }
+
+        String scoreColor = score >= 80 ? "#10b981" : (score >= 50 ? "#f59e0b" : "#ef4444");
+        String scoreEmoji = score >= 80 ? "🌟" : (score >= 50 ? "📈" : "⚠️");
+
+        String htmlContent = String.format(
+                """
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <style>
+                                body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 0; margin: 0; }
+                                .wrapper { width: 100%%; background-color: #f0f2f5; padding: 40px 20px; }
+                                .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+                                .header { background: linear-gradient(135deg, #3b82f6 0%%, #2563eb 100%%); padding: 40px 20px; text-align: center; color: white; }
+                                .header .icon { font-size: 48px; margin-bottom: 10px; }
+                                .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+                                .content { padding: 40px 30px; color: #334155; line-height: 1.6; }
+                                .score-container { text-align: center; margin: 30px 0; }
+                                .score-circle { display: inline-block; width: 120px; height: 120px; line-height: 120px; border-radius: 50%%; background: #f8fafc; border: 8px solid %s; color: %s; font-size: 32px; font-weight: 800; margin-bottom: 15px; }
+                                .exercise-name { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
+                                .cta-button { display: block; width: fit-content; margin: 30px auto 0; background: #3b82f6; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2); }
+                                .footer { text-align: center; color: #94a3b8; font-size: 12px; padding: 20px; border-top: 1px solid #f1f5f9; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="wrapper">
+                                <div class="container">
+                                    <div class="header">
+                                        <div class="icon">🔬</div>
+                                        <h1>Nova Análise de Técnica</h1>
+                                    </div>
+                                    <div class="content">
+                                        <p>Olá <strong>%s</strong>,</p>
+                                        <p>Sua análise de execução acaba de ser processada! Veja como foi seu desempenho técnico:</p>
+
+                                        <div class="score-container">
+                                            <div class="exercise-name">%s</div>
+                                            <div class="score-circle">%d%%</div>
+                                            <p style="margin: 0; color: %s; font-weight: 600;">%s Resultado Processado</p>
+                                        </div>
+
+                                        <p>Confira os detalhes da análise para ver pontos de melhoria e garantir que seus treinos sejam sempre seguros e eficazes.</p>
+
+                                        <a href="%s" class="cta-button">Ver Detalhes da Análise</a>
+                                    </div>
+                                    <div class="footer">
+                                        <p>© 2026 FitAI - Tecnologia em Performance</p>
+                                        <p>Você recebeu este e-mail porque uma nova análise foi realizada na sua conta.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                        """,
+                scoreColor, scoreColor, userName, exerciseName, score, scoreColor, scoreEmoji, frontendUrl);
+
+        return sendEmail(toEmail, "🔬 Sua análise de técnica está pronta! - FitAI", htmlContent);
+    }
+
+    /**
+     * Helper genérico para envio de e-mail via Resend
+     */
+    private boolean sendEmail(String toEmail, String subject, String htmlContent) {
+        String jsonBody = String.format("""
+                {
+                    "from": "%s",
+                    "to": ["%s"],
+                    "subject": "%s",
+                    "html": %s
+                }
+                """, fromEmail, toEmail, subject, escapeJson(htmlContent));
+
+        try {
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.resend.com/emails"))
+                    .header("Authorization", "Bearer " + resendApiKey)
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonBody))
+                    .build();
+
+            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() == 200 || response.statusCode() == 201) {
+                LOG.info("✅ E-mail '{}' enviado com sucesso para: {}", subject, toEmail);
+                return true;
+            } else {
+                LOG.error("❌ Erro ao enviar e-mail '{}'. Status: {}, Response: {}",
+                        subject, response.statusCode(), response.body());
+                return false;
+            }
+        } catch (Exception e) {
+            LOG.error("❌ Exceção ao enviar e-mail '{}': {}", subject, e.getMessage());
+            return false;
+        }
+    }
+
     private String escapeJson(String text) {
         return "\"" + text
                 .replace("\\", "\\\\")

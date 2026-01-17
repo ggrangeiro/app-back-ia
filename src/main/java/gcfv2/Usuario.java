@@ -25,6 +25,9 @@ public class Usuario {
     @MappedProperty("personal_id")
     private Long personalId;
 
+    @MappedProperty("brand_logo")
+    private String brandLogo;
+
     @MappedProperty("access_level")
     private String accessLevel;
 
@@ -136,6 +139,14 @@ public class Usuario {
 
     public void setPersonalId(Long personalId) {
         this.personalId = personalId;
+    }
+
+    public String getBrandLogo() {
+        return brandLogo;
+    }
+
+    public void setBrandLogo(String brandLogo) {
+        this.brandLogo = brandLogo;
     }
 
     public String getAccessLevel() {

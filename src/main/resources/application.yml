@@ -62,3 +62,8 @@ mercadopago:
     success: ${MP_SUCCESS_URL:https://analisa-exercicio-732767853162.southamerica-east1.run.app/checkout/success}
     failure: ${MP_FAILURE_URL:https://analisa-exercicio-732767853162.southamerica-east1.run.app/checkout/failure}
     pending: ${MP_PENDING_URL:https://analisa-exercicio-732767853162.southamerica-east1.run.app/checkout/pending}
+
+# GCP Configuration
+gcp:
+  storage:
+    bucket: ${GCS_BUCKET:imagem-ai}

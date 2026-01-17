@@ -59,6 +59,12 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     @Query("UPDATE usuario SET plan_type = 'FREE', subscription_status = 'INACTIVE', generations_used_cycle = 0, subscription_credits = 0 WHERE id = :id")
     void executeDowngradeToFree(Long id);
 
+    @Query("UPDATE usuario SET avatar = :avatar WHERE id = :id")
+    void updateAvatar(Long id, String avatar);
+
+    @Query("UPDATE usuario SET brand_logo = :logo WHERE id = :id")
+    void updateBrandLogo(Long id, String logo);
+
     default boolean hasPermission(Long requesterId, String requesterRole, String targetUserId) {
         // CORREÇÃO: Usando equalsIgnoreCase para aceitar "admin", "personal", etc.
         if ("ADMIN".equalsIgnoreCase(requesterRole))

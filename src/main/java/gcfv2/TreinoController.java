@@ -25,6 +25,9 @@ public class TreinoController {
     @Inject
     private UsuarioRepository usuarioRepository;
 
+    @Inject
+    private EmailService emailService;
+
     @Post("/")
     @Transactional
     public HttpResponse<?> salvar(@Body Treino treino,
@@ -80,6 +83,20 @@ public class TreinoController {
 
             // Incrementar contador de gerações
             usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(treino.getUserId()));
+
+            // Enviar e-mail de notificação (assíncrono/fire-and-forget logicamente)
+            try {
+                var userOptEmail = usuarioRepository.findById(Long.parseLong(treino.getUserId()));
+                if (userOptEmail.isPresent()) {
+                    var user = userOptEmail.get();
+                    String subject = (treino.getGoal() != null && !treino.getGoal().isEmpty()) ? treino.getGoal()
+                            : "Treino Personalizado";
+                    emailService.sendWorkoutGeneratedEmail(user.getEmail(), user.getNome(), subject);
+                }
+            } catch (Exception e) {
+                // Log and continue, don't fail the request because email failed
+                System.err.println("Erro ao enviar email de treino: " + e.getMessage());
+            }
 
             return HttpResponse.created(salvo);
         } catch (Exception e) {

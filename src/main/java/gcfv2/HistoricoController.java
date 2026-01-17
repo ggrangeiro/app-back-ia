@@ -18,11 +18,14 @@ public class HistoricoController {
 
     private final HistoricoRepository historicoRepository;
     private final UsuarioRepository usuarioRepository;
+    private final EmailService emailService;
 
     @Inject
-    public HistoricoController(HistoricoRepository historicoRepository, UsuarioRepository usuarioRepository) {
+    public HistoricoController(HistoricoRepository historicoRepository, UsuarioRepository usuarioRepository,
+            EmailService emailService) {
         this.historicoRepository = historicoRepository;
         this.usuarioRepository = usuarioRepository;
+        this.emailService = emailService;
     }
 
     /**
@@ -67,6 +70,20 @@ public class HistoricoController {
             }
 
             Historico salvo = historicoRepository.save(historico);
+
+            // Enviar e-mail de notificação de análise
+            try {
+                var userOptEmail = usuarioRepository.findById(Long.parseLong(historico.getUserId()));
+                if (userOptEmail.isPresent()) {
+                    var user = userOptEmail.get();
+                    String exerciseName = historico.getExercise();
+                    int score = historico.getScore() != null ? historico.getScore() : 0;
+                    emailService.sendAnalysisGeneratedEmail(user.getEmail(), user.getNome(), exerciseName, score);
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao enviar email de análise: " + e.getMessage());
+            }
+
             return HttpResponse.created(salvo);
 
         } catch (Exception e) {

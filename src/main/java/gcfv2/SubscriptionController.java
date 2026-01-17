@@ -72,11 +72,23 @@ public class SubscriptionController {
                         int purCredits = user.getPurchasedCredits() != null ? user.getPurchasedCredits() : 0;
                         int totalCredits = subCredits + purCredits;
 
+                        // Se for aluno, buscar a logo do personal
+                        String brandLogo = user.getBrandLogo();
+                        if ("USER".equalsIgnoreCase(user.getRole()) && user.getPersonalId() != null
+                                        && brandLogo == null) {
+                                brandLogo = usuarioRepository.findById(user.getPersonalId())
+                                                .map(Usuario::getBrandLogo)
+                                                .orElse(null);
+                        }
+
                         return HttpResponse.ok(Map.of(
                                         "id", user.getId(),
                                         "name", user.getNome() != null ? user.getNome() : "",
                                         "email", user.getEmail() != null ? user.getEmail() : "",
                                         "role", user.getRole() != null ? user.getRole() : "USER",
+                                        "avatar", user.getAvatar() != null ? user.getAvatar() : "",
+                                        "brandLogo", brandLogo != null ? brandLogo : "",
+                                        "personalId", user.getPersonalId() != null ? user.getPersonalId() : "",
                                         "plan", Map.of(
                                                         "type",
                                                         user.getPlanType() != null ? user.getPlanType() : "FREE",

@@ -37,6 +37,9 @@ public class StructuredTreinoController {
     @Inject
     private UsuarioRepository usuarioRepository;
 
+    @Inject
+    private EmailService emailService;
+
     /**
      * CREATE - Save a new structured training plan
      * 
@@ -96,6 +99,19 @@ public class StructuredTreinoController {
 
             // Increment generation counter
             usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(treino.getUserId()));
+
+            // Enviar e-mail de notificação
+            try {
+                var userOptEmail = usuarioRepository.findById(Long.parseLong(treino.getUserId()));
+                if (userOptEmail.isPresent()) {
+                    var user = userOptEmail.get();
+                    String subject = (treino.getGoal() != null && !treino.getGoal().isEmpty()) ? treino.getGoal()
+                            : "Treino Estruturado";
+                    emailService.sendWorkoutGeneratedEmail(user.getEmail(), user.getNome(), subject);
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao enviar email de treino estruturado: " + e.getMessage());
+            }
 
             return HttpResponse.created(salvo);
         } catch (Exception e) {

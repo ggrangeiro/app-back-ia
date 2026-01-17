@@ -26,6 +26,9 @@ public class DietaController {
     @Inject
     private UsuarioRepository usuarioRepository;
 
+    @Inject
+    private EmailService emailService;
+
     @Post("/")
     @Transactional
     public HttpResponse<?> salvar(@Body Dieta dieta,
@@ -79,6 +82,19 @@ public class DietaController {
 
             // Incrementar contador de gerações
             usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(dieta.getUserId()));
+
+            // Enviar e-mail de notificação
+            try {
+                var userOptEmail = usuarioRepository.findById(Long.parseLong(dieta.getUserId()));
+                if (userOptEmail.isPresent()) {
+                    var user = userOptEmail.get();
+                    String goal = (dieta.getGoal() != null && !dieta.getGoal().isEmpty()) ? dieta.getGoal()
+                            : "Dieta Personalizada";
+                    emailService.sendDietGeneratedEmail(user.getEmail(), user.getNome(), goal);
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao enviar email de dieta: " + e.getMessage());
+            }
 
             return HttpResponse.created(salva);
         } catch (Exception e) {

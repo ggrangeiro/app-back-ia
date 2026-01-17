@@ -421,11 +421,22 @@ public class TesteController {
                 int purCredits = usuario.getPurchasedCredits() != null ? usuario.getPurchasedCredits() : 0;
                 int totalCredits = subCredits + purCredits;
 
+                // Se for aluno, buscar a logo do personal para o login
+                String brandLogo = usuario.getBrandLogo();
+                if ("USER".equalsIgnoreCase(usuario.getRole()) && usuario.getPersonalId() != null
+                        && brandLogo == null) {
+                    brandLogo = usuarioRepository.findById(usuario.getPersonalId())
+                            .map(Usuario::getBrandLogo)
+                            .orElse(null);
+                }
+
                 Map<String, Object> response = Map.of(
                         "id", usuario.getId(),
                         "name", usuario.getNome() != null ? usuario.getNome() : "",
                         "email", usuario.getEmail() != null ? usuario.getEmail() : "",
                         "role", usuario.getRole() != null ? usuario.getRole() : "USER",
+                        "avatar", usuario.getAvatar() != null ? usuario.getAvatar() : "",
+                        "brandLogo", brandLogo != null ? brandLogo : "",
                         "accessLevel", usuario.getAccessLevel() != null ? usuario.getAccessLevel() : "FULL",
                         "plan", Map.of(
                                 "type", usuario.getPlanType() != null ? usuario.getPlanType() : "FREE",
