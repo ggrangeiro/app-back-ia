@@ -10,12 +10,15 @@ import jakarta.inject.Inject;
 import org.mindrot.jbcrypt.BCrypt;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.UUID;
+
+import gcfv2.dto.ProfessorDTO;
 
 @Controller("/api/usuarios")
 @CrossOrigin({ "https://fitai-analyzer-732767853162.us-west1.run.app",
@@ -45,8 +48,20 @@ public class TesteController {
     @Inject
     private CreditConsumptionHistoryRepository creditHistoryRepository;
 
+    @Inject
+    private ActivityLogService activityLogService;
+
+    @Inject
+    private AtividadeProfessorRepository atividadeProfessorRepository;
+
     /**
      * CADASTRO DE USUÁRIO
+     * Suporta criação de alunos (USER) e professores (PROFESSOR)
+     * 
+     * Para criar professor:
+     * - requesterRole deve ser PERSONAL ou ADMIN
+     * - body.role deve ser "professor"
+     * - body.managerId deve ser o ID do personal (ou requesterId se PERSONAL)
      */
     @Post("/")
     @Transactional
@@ -60,9 +75,34 @@ public class TesteController {
                         .body(Map.of("message", "Este e-mail já está em uso."));
             }
 
-            if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
+            // Lógica para criação de PROFESSOR
+            if ("PROFESSOR".equalsIgnoreCase(usuario.getRole())) {
+                // Apenas PERSONAL ou ADMIN podem criar professores
+                if (!"PERSONAL".equalsIgnoreCase(requesterRole) && !"ADMIN".equalsIgnoreCase(requesterRole)) {
+                    return HttpResponse.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message",
+                                    "Apenas Personal Trainers ou Administradores podem cadastrar professores."));
+                }
+
+                // Definir managerId
+                if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
+                    usuario.setManagerId(requesterId);
+                } else if (usuario.getManagerId() == null) {
+                    return HttpResponse.badRequest(Map.of("message", "managerId é obrigatório para criar professor."));
+                }
+
+                usuario.setRole("PROFESSOR");
+                usuario.setAccessLevel("FULL");
+            }
+            // Lógica para criação de USER (aluno)
+            else if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
                 usuario.setRole("USER");
                 usuario.setPersonalId(requesterId);
+            }
+            // Professor criando aluno
+            else if ("PROFESSOR".equalsIgnoreCase(requesterRole)) {
+                usuario.setRole("USER");
+                usuario.setPersonalId(requesterId); // Aluno vinculado ao professor
             } else if ("ADMIN".equalsIgnoreCase(requesterRole)) {
                 if (usuario.getRole() == null)
                     usuario.setRole("USER");
@@ -83,7 +123,7 @@ public class TesteController {
                 usuario.setPlanType("FREE");
             }
             if (usuario.getAccessLevel() == null) {
-                if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
+                if ("PERSONAL".equalsIgnoreCase(requesterRole) && !"PROFESSOR".equalsIgnoreCase(usuario.getRole())) {
                     usuario.setAccessLevel("READONLY");
                 } else {
                     usuario.setAccessLevel("FULL");
@@ -95,16 +135,31 @@ public class TesteController {
 
             Usuario novoUsuario = usuarioRepository.save(usuario);
 
-            List<Exercise> exerciciosCatalogo = exerciseRepository.findByActiveTrueOrderByNameAsc();
-            Set<String> processedExercises = new HashSet<>();
-            for (Exercise ex : exerciciosCatalogo) {
-                if (ex.getName() != null && !processedExercises.contains(ex.getName())) {
-                    UsuarioExercicio ue = new UsuarioExercicio();
-                    ue.setExercicio(ex.getName());
-                    ue.setUsuario(novoUsuario);
-                    usuarioExercicioRepository.save(ue);
-                    processedExercises.add(ex.getName());
+            // Não copia exercícios para professores
+            if (!"PROFESSOR".equalsIgnoreCase(novoUsuario.getRole())) {
+                List<Exercise> exerciciosCatalogo = exerciseRepository.findByActiveTrueOrderByNameAsc();
+                Set<String> processedExercises = new HashSet<>();
+                for (Exercise ex : exerciciosCatalogo) {
+                    if (ex.getName() != null && !processedExercises.contains(ex.getName())) {
+                        UsuarioExercicio ue = new UsuarioExercicio();
+                        ue.setExercicio(ex.getName());
+                        ue.setUsuario(novoUsuario);
+                        usuarioExercicioRepository.save(ue);
+                        processedExercises.add(ex.getName());
+                    }
                 }
+            }
+
+            // Registrar atividade se professor criou aluno
+            if ("PROFESSOR".equalsIgnoreCase(requesterRole) && "USER".equalsIgnoreCase(novoUsuario.getRole())) {
+                activityLogService.logActivity(
+                        requesterId,
+                        requesterRole,
+                        "STUDENT_CREATED",
+                        novoUsuario.getId(),
+                        novoUsuario.getNome(),
+                        "USER",
+                        novoUsuario.getId());
             }
 
             // Enviar e-mail de boas-vindas
@@ -467,6 +522,9 @@ public class TesteController {
 
     /**
      * LISTAGEM DE USUÁRIOS
+     * 
+     * Para PROFESSOR: retorna todos os alunos do ecossistema do seu Personal
+     * (alunos diretos do personal + alunos de todos os professores do personal)
      */
     @Get("/")
     public HttpResponse<?> listar(
@@ -474,9 +532,95 @@ public class TesteController {
             @QueryValue String requesterRole) {
         if ("ADMIN".equalsIgnoreCase(requesterRole))
             return HttpResponse.ok(usuarioRepository.findAll());
+
         if ("PERSONAL".equalsIgnoreCase(requesterRole))
             return HttpResponse.ok(usuarioRepository.findByPersonalId(requesterId));
+
+        if ("PROFESSOR".equalsIgnoreCase(requesterRole)) {
+            // Professor vê todos os alunos do ecossistema do seu Personal
+            var professorOpt = usuarioRepository.findById(requesterId);
+            if (professorOpt.isEmpty() || professorOpt.get().getManagerId() == null) {
+                return HttpResponse.ok(usuarioRepository.findByPersonalId(requesterId));
+            }
+
+            Long managerId = professorOpt.get().getManagerId();
+
+            // Buscar todos os alunos: do personal + de todos os professores do personal
+            List<Usuario> todosAlunos = new ArrayList<>();
+
+            // Alunos diretos do personal
+            todosAlunos.addAll(usuarioRepository.findByPersonalId(managerId));
+
+            // Alunos de todos os professores do mesmo personal
+            List<Usuario> professores = usuarioRepository.findProfessorsByManagerId(managerId);
+            for (Usuario prof : professores) {
+                List<Usuario> alunosProf = usuarioRepository.findByPersonalId(prof.getId());
+                todosAlunos.addAll(alunosProf);
+            }
+
+            return HttpResponse.ok(todosAlunos);
+        }
+
         return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Sem permissão."));
+    }
+
+    /**
+     * LISTAGEM DE PROFESSORES DE UM PERSONAL
+     * 
+     * GET /api/usuarios/professors?managerId={personalId}
+     * 
+     * Retorna lista de professores com estatísticas:
+     * - studentsCount: número de alunos
+     * - lastActivity: última atividade registrada
+     */
+    @Get("/professors")
+    public HttpResponse<?> listarProfessores(
+            @QueryValue Long managerId,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+
+        // Apenas o próprio personal ou admin pode listar seus professores
+        if (!"ADMIN".equalsIgnoreCase(requesterRole)) {
+            if (!"PERSONAL".equalsIgnoreCase(requesterRole) || !requesterId.equals(managerId)) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Acesso negado."));
+            }
+        }
+
+        try {
+            List<Usuario> professors = usuarioRepository.findProfessorsByManagerId(managerId);
+
+            List<ProfessorDTO> result = new ArrayList<>();
+            for (Usuario prof : professors) {
+                long studentsCount = usuarioRepository.countStudentsByProfessorId(prof.getId());
+
+                String lastActivity = null;
+                var lastAct = atividadeProfessorRepository.findLastActivityByProfessorId(prof.getId());
+                if (lastAct.isPresent() && lastAct.get().getCreatedAt() != null) {
+                    lastActivity = lastAct.get().getCreatedAt().toString();
+                }
+
+                ProfessorDTO dto = new ProfessorDTO(
+                        prof.getId(),
+                        prof.getNome(),
+                        prof.getEmail(),
+                        prof.getRole(),
+                        prof.getManagerId(),
+                        prof.getCredits(),
+                        studentsCount,
+                        lastActivity,
+                        prof.getAvatar());
+
+                result.add(dto);
+            }
+
+            return HttpResponse.ok(Map.of(
+                    "professors", result,
+                    "total", result.size()));
+
+        } catch (Exception e) {
+            return HttpResponse.serverError(Map.of("message", "Erro ao listar professores: " + e.getMessage()));
+        }
     }
 
     /**

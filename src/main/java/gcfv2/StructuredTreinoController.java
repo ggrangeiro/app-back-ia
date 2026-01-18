@@ -40,6 +40,9 @@ public class StructuredTreinoController {
     @Inject
     private EmailService emailService;
 
+    @Inject
+    private ActivityLogService activityLogService;
+
     /**
      * CREATE - Save a new structured training plan
      * 
@@ -63,8 +66,10 @@ public class StructuredTreinoController {
             // Plan type check (same logic as V1)
             Long targetUserId = Long.parseLong(treino.getUserId());
             var userOpt = usuarioRepository.findById(targetUserId);
+            String targetUserName = null;
             if (userOpt.isPresent()) {
                 var user = userOpt.get();
+                targetUserName = user.getNome();
 
                 // Check Access Level (Leitura vs Escrita)
                 if ("USER".equalsIgnoreCase(requesterRole) && "READONLY".equalsIgnoreCase(user.getAccessLevel())) {
@@ -75,7 +80,8 @@ public class StructuredTreinoController {
 
                 String planTypeToCheck = user.getPlanType() != null ? user.getPlanType() : "FREE";
                 boolean isPrivileged = "PERSONAL".equalsIgnoreCase(requesterRole)
-                        || "ADMIN".equalsIgnoreCase(requesterRole);
+                        || "ADMIN".equalsIgnoreCase(requesterRole)
+                        || "PROFESSOR".equalsIgnoreCase(requesterRole);
 
                 if (isPrivileged && !requesterId.equals(targetUserId)) {
                     var requesterOpt = usuarioRepository.findById(requesterId);
@@ -99,6 +105,16 @@ public class StructuredTreinoController {
 
             // Increment generation counter
             usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(treino.getUserId()));
+
+            // Log de atividade para professor
+            activityLogService.logActivity(
+                    requesterId,
+                    requesterRole,
+                    "WORKOUT_GENERATED",
+                    targetUserId,
+                    targetUserName,
+                    "TRAINING",
+                    salvo.getId());
 
             // Enviar e-mail de notificação
             try {

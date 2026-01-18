@@ -21,6 +21,9 @@ public class HistoricoController {
     private final EmailService emailService;
 
     @Inject
+    private ActivityLogService activityLogService;
+
+    @Inject
     public HistoricoController(HistoricoRepository historicoRepository, UsuarioRepository usuarioRepository,
             EmailService emailService) {
         this.historicoRepository = historicoRepository;
@@ -51,10 +54,13 @@ public class HistoricoController {
             }
 
             // Check Access Level (Leitura vs Escrita)
+            Long targetUserId = Long.parseLong(historico.getUserId());
+            String targetUserName = null;
             try {
-                var userOpt = usuarioRepository.findById(Long.parseLong(historico.getUserId()));
+                var userOpt = usuarioRepository.findById(targetUserId);
                 if (userOpt.isPresent()) {
                     var user = userOpt.get();
+                    targetUserName = user.getNome();
                     if ("USER".equalsIgnoreCase(requesterRole) && "READONLY".equalsIgnoreCase(user.getAccessLevel())) {
                         return HttpResponse.status(HttpStatus.FORBIDDEN)
                                 .body(Map.of("message",
@@ -70,6 +76,16 @@ public class HistoricoController {
             }
 
             Historico salvo = historicoRepository.save(historico);
+
+            // Log de atividade para professor
+            activityLogService.logActivity(
+                    requesterId,
+                    requesterRole,
+                    "ANALYSIS_PERFORMED",
+                    targetUserId,
+                    targetUserName,
+                    "ANALYSIS",
+                    salvo.getId());
 
             // Enviar e-mail de notificação de análise
             try {

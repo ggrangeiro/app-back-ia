@@ -268,4 +268,15 @@ public class Usuario {
     public void setCommunicationStyle(String communicationStyle) {
         this.communicationStyle = communicationStyle;
     }
+
+    @MappedProperty("manager_id")
+    private Long managerId;
+
+    public Long getManagerId() {
+        return managerId;
+    }
+
+    public void setManagerId(Long managerId) {
+        this.managerId = managerId;
+    }
 }

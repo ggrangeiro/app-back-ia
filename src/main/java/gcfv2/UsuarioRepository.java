@@ -18,6 +18,33 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
 
     List<Usuario> findByRole(String role);
 
+    // === QUERIES PARA PROFESSORES ===
+
+    /**
+     * Buscar professores de um personal (manager)
+     */
+    List<Usuario> findByManagerId(Long managerId);
+
+    /**
+     * Buscar professor por ID e verificar se pertence ao manager
+     */
+    @Query("SELECT * FROM usuario WHERE id = :professorId AND manager_id = :managerId AND role = 'professor'")
+    Optional<Usuario> findProfessorByIdAndManagerId(Long professorId, Long managerId);
+
+    /**
+     * Contar alunos de um professor
+     */
+    @Query("SELECT COUNT(*) FROM usuario WHERE personal_id = :professorId AND role = 'user'")
+    long countStudentsByProfessorId(Long professorId);
+
+    /**
+     * Buscar todos os professores com role = 'professor' de um manager
+     */
+    @Query("SELECT * FROM usuario WHERE manager_id = :managerId AND role = 'professor'")
+    List<Usuario> findProfessorsByManagerId(Long managerId);
+
+    // === QUERIES EXISTENTES ===
+
     @Query("UPDATE usuario SET credits = credits - 1 WHERE id = :id AND credits > 0")
     void executeConsumeCredit(Long id);
 
@@ -65,23 +92,115 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     @Query("UPDATE usuario SET brand_logo = :logo WHERE id = :id")
     void updateBrandLogo(Long id, String logo);
 
+    /**
+     * Verifica permissão de acesso a um usuário alvo.
+     * 
+     * Regras:
+     * - ADMIN: acesso total
+     * - PERSONAL: acesso a si mesmo, seus alunos (personalId), seus professores e
+     * alunos de seus professores
+     * - PROFESSOR: acesso a si mesmo e a TODOS os alunos do ecossistema do seu
+     * Personal
+     * (alunos do personal, alunos próprios, alunos de outros professores do mesmo
+     * personal)
+     * - USER: apenas a si mesmo
+     */
     default boolean hasPermission(Long requesterId, String requesterRole, String targetUserId) {
-        // CORREÇÃO: Usando equalsIgnoreCase para aceitar "admin", "personal", etc.
+        // ADMIN tem acesso total
         if ("ADMIN".equalsIgnoreCase(requesterRole))
             return true;
 
+        // Acesso a si mesmo
         if (requesterId.toString().equals(targetUserId))
             return true;
 
-        if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
-            try {
-                return findById(Long.parseLong(targetUserId))
-                        .map(aluno -> requesterId.equals(aluno.getPersonalId()))
-                        .orElse(false);
-            } catch (NumberFormatException e) {
+        try {
+            Long targetId = Long.parseLong(targetUserId);
+            Optional<Usuario> targetOpt = findById(targetId);
+
+            if (targetOpt.isEmpty()) {
                 return false;
             }
+
+            Usuario target = targetOpt.get();
+
+            // PERSONAL pode acessar:
+            // 1. Seus alunos diretos (target.personalId == requesterId)
+            // 2. Seus professores (target.managerId == requesterId && target.role ==
+            // 'professor')
+            // 3. Alunos de seus professores
+            if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
+                // Alunos diretos do personal
+                if (requesterId.equals(target.getPersonalId())) {
+                    return true;
+                }
+
+                // Professor é subordinado do personal
+                if ("PROFESSOR".equalsIgnoreCase(target.getRole()) && requesterId.equals(target.getManagerId())) {
+                    return true;
+                }
+
+                // Aluno de um professor subordinado
+                if (target.getPersonalId() != null) {
+                    Optional<Usuario> professorOpt = findById(target.getPersonalId());
+                    if (professorOpt.isPresent()) {
+                        Usuario professor = professorOpt.get();
+                        if ("PROFESSOR".equalsIgnoreCase(professor.getRole()) &&
+                                requesterId.equals(professor.getManagerId())) {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            // PROFESSOR pode acessar:
+            // 1. Seus próprios alunos (target.personalId == requesterId)
+            // 2. Alunos diretos do seu Manager (Personal)
+            // 3. Alunos de outros professores do mesmo Personal
+            // Ou seja: TODOS os alunos do ecossistema do seu Personal
+            if ("PROFESSOR".equalsIgnoreCase(requesterRole)) {
+                // Alunos próprios do professor
+                if (requesterId.equals(target.getPersonalId())) {
+                    return true;
+                }
+
+                // Buscar o managerId do professor requisitante
+                Optional<Usuario> requesterOpt = findById(requesterId);
+                if (requesterOpt.isEmpty()) {
+                    return false;
+                }
+                Usuario requester = requesterOpt.get();
+                Long managerId = requester.getManagerId();
+
+                if (managerId == null) {
+                    return false;
+                }
+
+                // Aluno é direto do Personal (manager do professor)
+                if (managerId.equals(target.getPersonalId())) {
+                    return true;
+                }
+
+                // Aluno é de outro professor subordinado ao mesmo Personal
+                if (target.getPersonalId() != null) {
+                    Optional<Usuario> outroProfOpt = findById(target.getPersonalId());
+                    if (outroProfOpt.isPresent()) {
+                        Usuario outroProf = outroProfOpt.get();
+                        if ("PROFESSOR".equalsIgnoreCase(outroProf.getRole()) &&
+                                managerId.equals(outroProf.getManagerId())) {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            return false;
+        } catch (NumberFormatException e) {
+            return false;
         }
-        return false;
     }
 }

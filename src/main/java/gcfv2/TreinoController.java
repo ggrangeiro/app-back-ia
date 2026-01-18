@@ -28,6 +28,9 @@ public class TreinoController {
     @Inject
     private EmailService emailService;
 
+    @Inject
+    private ActivityLogService activityLogService;
+
     @Post("/")
     @Transactional
     public HttpResponse<?> salvar(@Body Treino treino,
@@ -42,8 +45,10 @@ public class TreinoController {
             // GATEKEEPER: Verificar limites de geração do plano
             Long targetUserId = Long.parseLong(treino.getUserId());
             var userOpt = usuarioRepository.findById(targetUserId);
+            String targetUserName = null;
             if (userOpt.isPresent()) {
                 var user = userOpt.get();
+                targetUserName = user.getNome();
 
                 // Check Access Level (Leitura vs Escrita)
                 if ("USER".equalsIgnoreCase(requesterRole) && "READONLY".equalsIgnoreCase(user.getAccessLevel())) {
@@ -56,7 +61,8 @@ public class TreinoController {
                 // Se requester é PERSONAL/ADMIN, usar plano do requester (não do aluno)
                 String planTypeToCheck = user.getPlanType() != null ? user.getPlanType() : "FREE";
                 boolean isPrivileged = "PERSONAL".equalsIgnoreCase(requesterRole)
-                        || "ADMIN".equalsIgnoreCase(requesterRole);
+                        || "ADMIN".equalsIgnoreCase(requesterRole)
+                        || "PROFESSOR".equalsIgnoreCase(requesterRole);
 
                 if (isPrivileged && !requesterId.equals(targetUserId)) {
                     var requesterOpt = usuarioRepository.findById(requesterId);
@@ -83,6 +89,16 @@ public class TreinoController {
 
             // Incrementar contador de gerações
             usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(treino.getUserId()));
+
+            // Log de atividade para professor
+            activityLogService.logActivity(
+                    requesterId,
+                    requesterRole,
+                    "WORKOUT_GENERATED",
+                    targetUserId,
+                    targetUserName,
+                    "TRAINING",
+                    salvo.getId());
 
             // Enviar e-mail de notificação (assíncrono/fire-and-forget logicamente)
             try {

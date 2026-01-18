@@ -29,6 +29,9 @@ public class DietaController {
     @Inject
     private EmailService emailService;
 
+    @Inject
+    private ActivityLogService activityLogService;
+
     @Post("/")
     @Transactional
     public HttpResponse<?> salvar(@Body Dieta dieta,
@@ -43,8 +46,10 @@ public class DietaController {
             // GATEKEEPER: Verificar limites de geração do plano
             Long targetUserId = Long.parseLong(dieta.getUserId());
             var userOpt = usuarioRepository.findById(targetUserId);
+            String targetUserName = null;
             if (userOpt.isPresent()) {
                 var user = userOpt.get();
+                targetUserName = user.getNome();
 
                 // Check Access Level (Leitura vs Escrita)
                 if ("USER".equalsIgnoreCase(requesterRole) && "READONLY".equalsIgnoreCase(user.getAccessLevel())) {
@@ -57,7 +62,8 @@ public class DietaController {
                 // Se requester é PERSONAL/ADMIN, usar plano do requester (não do aluno)
                 String planTypeToCheck = user.getPlanType() != null ? user.getPlanType() : "FREE";
                 boolean isPrivileged = "PERSONAL".equalsIgnoreCase(requesterRole)
-                        || "ADMIN".equalsIgnoreCase(requesterRole);
+                        || "ADMIN".equalsIgnoreCase(requesterRole)
+                        || "PROFESSOR".equalsIgnoreCase(requesterRole);
 
                 if (isPrivileged && !requesterId.equals(targetUserId)) {
                     var requesterOpt = usuarioRepository.findById(requesterId);
@@ -82,6 +88,16 @@ public class DietaController {
 
             // Incrementar contador de gerações
             usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(dieta.getUserId()));
+
+            // Log de atividade para professor
+            activityLogService.logActivity(
+                    requesterId,
+                    requesterRole,
+                    "DIET_GENERATED",
+                    targetUserId,
+                    targetUserName,
+                    "DIET",
+                    salva.getId());
 
             // Enviar e-mail de notificação
             try {
