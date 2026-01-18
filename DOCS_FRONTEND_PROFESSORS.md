@@ -26,6 +26,25 @@ Admin
 2. O Professor pode gerar treino/dieta/análise para qualquer aluno do ecossistema
 3. A listagem de alunos (`GET /api/usuarios/`) retorna todos os alunos compartilhados
 
+### 💰 Créditos Compartilhados
+
+**Professores usam os créditos do Personal (manager)**:
+
+- No **Login**: Professores recebem `plan` e `usage` (créditos) do Personal
+- No **Consume-Credit**: Créditos são debitados da conta do Personal, não do professor
+- O campo `managerId` é retornado no login para identificar o Personal responsável
+
+**Resposta de login para professor inclui:**
+```json
+{
+  "id": 210,
+  "role": "PROFESSOR",
+  "managerId": 105,
+  "plan": { /* dados do Personal */ },
+  "usage": { /* créditos do Personal */ }
+}
+```
+
 ---
 
 ## Tipos Atualizados
