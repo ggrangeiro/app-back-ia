@@ -1090,4 +1090,43 @@ public class TesteController {
         // Caso contrário, é texto puro (legado) - compara diretamente
         return rawPassword.equals(storedPassword);
     }
+
+    /**
+     * ATUALIZAR META SEMANAL DE TREINOS
+     * PUT /api/usuarios/{userId}/weekly-goal
+     * Body: { "weeklyGoal": 5 }
+     * 
+     * Apenas o próprio usuário pode alterar sua meta.
+     */
+    @Put("/{userId}/weekly-goal")
+    @Transactional
+    public HttpResponse<?> updateWeeklyGoal(
+            @PathVariable Long userId,
+            @Body gcfv2.dto.checkin.WeeklyGoalRequest body,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+
+        try {
+            // Apenas o próprio usuário pode alterar sua meta
+            if (!requesterId.equals(userId)) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Apenas o próprio usuário pode alterar sua meta semanal."));
+            }
+
+            Integer weeklyGoal = body.getWeeklyGoal();
+            if (weeklyGoal == null || weeklyGoal < 1 || weeklyGoal > 7) {
+                return HttpResponse.badRequest(Map.of("message", "A meta semanal deve estar entre 1 e 7 dias."));
+            }
+
+            return usuarioRepository.findById(userId).map(user -> {
+                usuarioRepository.updateWeeklyGoal(userId, weeklyGoal);
+                return HttpResponse.ok(Map.of(
+                        "success", true,
+                        "weeklyGoal", weeklyGoal));
+            }).orElse(HttpResponse.notFound());
+
+        } catch (Exception e) {
+            return HttpResponse.serverError(Map.of("message", "Erro ao atualizar meta semanal: " + e.getMessage()));
+        }
+    }
 }

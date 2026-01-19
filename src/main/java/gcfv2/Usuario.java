@@ -279,4 +279,15 @@ public class Usuario {
     public void setManagerId(Long managerId) {
         this.managerId = managerId;
     }
+
+    @MappedProperty("weekly_goal")
+    private Integer weeklyGoal = 5;
+
+    public Integer getWeeklyGoal() {
+        return weeklyGoal != null ? weeklyGoal : 5;
+    }
+
+    public void setWeeklyGoal(Integer weeklyGoal) {
+        this.weeklyGoal = weeklyGoal;
+    }
 }

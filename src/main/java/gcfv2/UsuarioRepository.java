@@ -92,6 +92,9 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     @Query("UPDATE usuario SET brand_logo = :logo WHERE id = :id")
     void updateBrandLogo(Long id, String logo);
 
+    @Query("UPDATE usuario SET weekly_goal = :weeklyGoal WHERE id = :id")
+    void updateWeeklyGoal(Long id, Integer weeklyGoal);
+
     /**
      * Verifica permissão de acesso a um usuário alvo.
      * 
