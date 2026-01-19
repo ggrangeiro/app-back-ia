@@ -675,6 +675,12 @@ public class EmailService {
             LOG.info("E-mail ignorado para @teste.com: {}", toEmail);
             return true;
         }
+        // Formatar o remetente com nome amigável se ainda não estiver formatado
+        String sender = fromEmail;
+        if (!sender.contains("<") && !sender.contains("FitAI")) {
+            sender = "FitAI <" + fromEmail + ">";
+        }
+
         String jsonBody = String.format("""
                 {
                     "from": "%s",
@@ -682,7 +688,7 @@ public class EmailService {
                     "subject": "%s",
                     "html": %s
                 }
-                """, fromEmail, toEmail, subject, escapeJson(htmlContent));
+                """, sender, toEmail, subject, escapeJson(htmlContent));
 
         try {
             HttpRequest request = HttpRequest.newBuilder()
