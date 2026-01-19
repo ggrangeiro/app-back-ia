@@ -418,7 +418,7 @@ public class EmailService {
                                             Para começar, acesse sua conta clicando no botão abaixo:
                                         </p>
 
-                                        <a href="https://analisa-exercicio-732767853162.southamerica-east1.run.app/" class="cta-button">Acessar Plataforma</a>
+                                        <a href="https://fitanalizer.com.br/" class="cta-button">Acessar Plataforma</a>
                                     </div>
                                     <div class="footer">
                                         <p>© 2026 FitAI - Tecnologia em Performance</p>

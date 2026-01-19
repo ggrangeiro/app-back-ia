@@ -60,9 +60,9 @@ mercadopago:
   secret-key: ${MP_SECRET_KEY:${_MP_SECRET_KEY:}}
   webhook-url: ${MP_WEBHOOK_URL:${_MP_WEBHOOK_URL:}}
   back-url:
-    success: ${MP_SUCCESS_URL:https://analisa-exercicio-732767853162.southamerica-east1.run.app/checkout/success}
-    failure: ${MP_FAILURE_URL:https://analisa-exercicio-732767853162.southamerica-east1.run.app/checkout/failure}
-    pending: ${MP_PENDING_URL:https://analisa-exercicio-732767853162.southamerica-east1.run.app/checkout/pending}
+    success: ${MP_SUCCESS_URL:https://fitanalizer.com.br/checkout/success}
+    failure: ${MP_FAILURE_URL:https://fitanalizer.com.br/checkout/failure}
+    pending: ${MP_PENDING_URL:https://fitanalizer.com.br/checkout/pending}
 
 # GCP Configuration
 gcp:

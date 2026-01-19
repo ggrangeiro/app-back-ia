@@ -47,13 +47,13 @@ public class MercadoPagoService {
     @Value("${mercadopago.secret-key:}")
     private String secretKey;
 
-    @Value("${mercadopago.back-url.success:https://analisa-exercicio-732767853162.southamerica-east1.run.app/checkout/success}")
+    @Value("${mercadopago.back-url.success:https://fitanalizer.com.br/checkout/success}")
     private String successUrl;
 
-    @Value("${mercadopago.back-url.failure:https://analisa-exercicio-732767853162.southamerica-east1.run.app/checkout/failure}")
+    @Value("${mercadopago.back-url.failure:https://fitanalizer.com.br/checkout/failure}")
     private String failureUrl;
 
-    @Value("${mercadopago.back-url.pending:https://analisa-exercicio-732767853162.southamerica-east1.run.app/checkout/pending}")
+    @Value("${mercadopago.back-url.pending:https://fitanalizer.com.br/checkout/pending}")
     private String pendingUrl;
 
     @Value("${mercadopago.webhook-url:}")
