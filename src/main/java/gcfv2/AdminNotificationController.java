@@ -68,8 +68,15 @@ public class AdminNotificationController {
 
         // Usar a URL configurada explicitamente (backendUrl injetada)
         // Isso remove a complexidade de tentar adivinhar a URL em ambientes cloud/proxy
-        final String requestBaseUrl = backendUrl;
-        LOG.info("🌐 URL base configurada: {}", requestBaseUrl);
+        String sanitizedUrl = backendUrl;
+        if (sanitizedUrl.startsWith("//")) {
+            sanitizedUrl = "https:" + sanitizedUrl;
+        } else if (!sanitizedUrl.startsWith("http")) {
+            sanitizedUrl = "https://" + sanitizedUrl;
+        }
+
+        final String requestBaseUrl = sanitizedUrl;
+        LOG.info("🌐 URL base configurada (sanitizada): {}", requestBaseUrl);
 
         // 1. Verificar autorização - apenas ADMIN pode usar esta feature
         if (requesterRole == null || !"ADMIN".equalsIgnoreCase(requesterRole)) {

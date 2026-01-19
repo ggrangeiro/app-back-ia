@@ -786,6 +786,13 @@ public class EmailService {
                     targetBaseUrl = targetBaseUrl.substring(0, targetBaseUrl.length() - 1);
                 }
 
+                // Force https if protocol is missing (fixes //domain issues)
+                if (targetBaseUrl.startsWith("//")) {
+                    targetBaseUrl = "https:" + targetBaseUrl;
+                } else if (!targetBaseUrl.startsWith("http")) {
+                    targetBaseUrl = "https://" + targetBaseUrl;
+                }
+
                 absoluteImageUrl = targetBaseUrl + imageUrl;
             }
             imageBlock = String.format(
