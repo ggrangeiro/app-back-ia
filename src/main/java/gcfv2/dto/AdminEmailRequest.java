@@ -80,4 +80,19 @@ public class AdminEmailRequest {
     public void setBody(String body) {
         this.body = body;
     }
+
+    /**
+     * URL opcional da imagem a ser exibida no e-mail.
+     * Deve ser uma URL pública acessível (ex: retorno do upload-asset com
+     * type=email_image)
+     */
+    private String imageUrl;
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
 }

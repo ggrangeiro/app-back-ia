@@ -715,6 +715,21 @@ public class EmailService {
      * @return true se o envio foi bem-sucedido
      */
     public boolean sendAdminBroadcastEmail(String toEmail, String subject, String bodyContent) {
+        return sendAdminBroadcastEmail(toEmail, subject, bodyContent, null);
+    }
+
+    /**
+     * Envia e-mail de broadcast administrativo com template personalizado e imagem
+     * opcional.
+     * Usado pelo painel admin para enviar comunicações em massa.
+     * 
+     * @param toEmail     E-mail do destinatário
+     * @param subject     Assunto do e-mail
+     * @param bodyContent Corpo do e-mail (pode conter HTML básico ou texto)
+     * @param imageUrl    URL opcional da imagem a ser exibida no topo do e-mail
+     * @return true se o envio foi bem-sucedido
+     */
+    public boolean sendAdminBroadcastEmail(String toEmail, String subject, String bodyContent, String imageUrl) {
         if (toEmail != null && toEmail.endsWith("@teste.com")) {
             LOG.info("Broadcast ignorado para @teste.com: {}", toEmail);
             return true;
@@ -729,6 +744,23 @@ public class EmailService {
         String formattedBody = bodyContent;
         if (!bodyContent.contains("<") && !bodyContent.contains(">")) {
             formattedBody = bodyContent.replace("\n", "<br>");
+        }
+
+        // Construir bloco de imagem se imageUrl estiver presente
+        String imageBlock = "";
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            // Converter URLs relativas da API para URLs absolutas
+            String absoluteImageUrl = imageUrl;
+            if (imageUrl.startsWith("/api/")) {
+                absoluteImageUrl = frontendUrl.replace("/app", "") + imageUrl;
+            }
+            imageBlock = String.format(
+                    """
+                            <div style="text-align: center; margin-bottom: 25px;">
+                                <img src="%s" style="max-width: 100%%; height: auto; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);" alt="Imagem do comunicado" />
+                            </div>
+                            """,
+                    absoluteImageUrl);
         }
 
         String htmlContent = String.format(
@@ -813,6 +845,7 @@ public class EmailService {
                                     <div class="badge">📢 Comunicado Oficial</div>
                                     <h1>%s</h1>
                                 </div>
+                                %s
                                 <div class="content">
                                     %s
                                 </div>
@@ -827,7 +860,7 @@ public class EmailService {
                         </body>
                         </html>
                         """,
-                subject, formattedBody, frontendUrl);
+                subject, imageBlock, formattedBody, frontendUrl);
 
         return sendEmail(toEmail, "📢 " + subject + " - FitAI", htmlContent);
     }

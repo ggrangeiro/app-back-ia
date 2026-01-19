@@ -163,6 +163,7 @@ public class AdminNotificationController {
         // 4. Enviar e-mails (fire-and-forget para não bloquear a requisição)
         final String subject = request.getSubject().trim();
         final String body = request.getBody().trim();
+        final String imageUrl = request.getImageUrl() != null ? request.getImageUrl().trim() : null;
         final int totalRecipients = emails.size();
 
         // Fire-and-forget: Enviar em background
@@ -172,7 +173,7 @@ public class AdminNotificationController {
 
             for (String email : emails) {
                 try {
-                    boolean sent = emailService.sendAdminBroadcastEmail(email, subject, body);
+                    boolean sent = emailService.sendAdminBroadcastEmail(email, subject, body, imageUrl);
                     if (sent) {
                         successCount++;
                     } else {

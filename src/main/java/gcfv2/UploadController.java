@@ -51,9 +51,16 @@ public class UploadController {
                 }
             } else if ("analysis_evidence".equalsIgnoreCase(type)) {
                 // Permitido para todos que tem permissão sobre o usuário (já validado acima)
+            } else if ("email_image".equalsIgnoreCase(type)) {
+                // Apenas ADMIN pode fazer upload de imagens para e-mails
+                if (!"ADMIN".equalsIgnoreCase(requesterRole)) {
+                    return HttpResponse.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message", "Apenas administradores podem subir imagens para e-mails."));
+                }
             } else if (!"avatar".equalsIgnoreCase(type)) {
                 return HttpResponse.badRequest(
-                        Map.of("message", "Tipo de asset inválido. Use 'avatar', 'logo' ou 'analysis_evidence'."));
+                        Map.of("message",
+                                "Tipo de asset inválido. Use 'avatar', 'logo', 'analysis_evidence' ou 'email_image'."));
             }
 
             // 3. Validar Arquivo (Tamanho máximo 2MB)
