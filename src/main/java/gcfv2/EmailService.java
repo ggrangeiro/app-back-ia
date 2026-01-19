@@ -10,6 +10,10 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 
+import java.math.BigDecimal;
+import java.text.NumberFormat;
+import java.util.Locale;
+
 @Singleton
 public class EmailService {
 
@@ -665,6 +669,111 @@ public class EmailService {
                 scoreColor, scoreColor, userName, exerciseName, score, scoreColor, scoreEmoji, frontendUrl);
 
         return sendEmail(toEmail, "🔬 Sua análise de técnica está pronta! - FitAI", htmlContent);
+    }
+
+    /**
+     * Envia e-mail de confirmação de pagamento.
+     */
+    public boolean sendPaymentConfirmationEmail(String toEmail, String userName, String planName, BigDecimal amount,
+            String currency) {
+        if (toEmail != null && toEmail.endsWith("@teste.com")) {
+            LOG.info("E-mail de confirmação de pagamento ignorado para @teste.com: {}", toEmail);
+            return true;
+        }
+
+        if (resendApiKey == null || resendApiKey.isEmpty()) {
+            LOG.warn("Resend API key não configurada. E-mail de confirmação de pagamento não será enviado.");
+            return false;
+        }
+
+        // Formatar valor
+        NumberFormat currencyFormatter = NumberFormat.getCurrencyInstance(new Locale("pt", "BR"));
+        String formattedAmount = currencyFormatter.format(amount);
+
+        // Definir cor e emoji baseados no plano (opcional, usando padrão genérico de
+        // sucesso)
+
+        String htmlContent = String.format(
+                """
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <style>
+                                body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; padding: 0; margin: 0; }
+                                .wrapper { width: 100%%; background-color: #f0f2f5; padding: 40px 20px; }
+                                .container { max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+                                .header { background: linear-gradient(135deg, #10b981 0%%, #059669 100%%); padding: 40px 20px; text-align: center; color: white; }
+                                .header .icon { font-size: 48px; margin-bottom: 10px; }
+                                .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+                                .content { padding: 40px 30px; color: #334155; line-height: 1.6; }
+                                .receipt-box { background: #f8fafc; border-radius: 12px; padding: 25px; margin: 20px 0; border: 1px solid #e2e8f0; }
+                                .receipt-row { display: flex; justify-content: space-between; margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px dashed #cbd5e1; }
+                                .receipt-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+                                .receipt-label { color: #64748b; font-size: 14px; }
+                                .receipt-value { color: #1e293b; font-weight: 600; font-size: 16px; }
+                                .total-row { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 2px solid #e2e8f0; font-weight: 700; font-size: 18px; color: #1e293b; }
+                                .footer { text-align: center; color: #94a3b8; font-size: 12px; padding: 20px; border-top: 1px solid #f1f5f9; }
+                                .cta-button { display: block; width: fit-content; margin: 30px auto 0; background: #10b981; color: #ffffff !important; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 600; font-size: 16px; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.2); text-align: center; }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="wrapper">
+                                <div class="container">
+                                    <div class="header">
+                                        <div class="icon">✅</div>
+                                        <h1>Pagamento Confirmado!</h1>
+                                    </div>
+                                    <div class="content">
+                                        <p>Olá <strong>%s</strong>,</p>
+                                        <p>Recebemos a confirmação do seu pagamento com sucesso. Obrigado por investir na sua jornada com a FitAI!</p>
+
+                                        <div class="receipt-box">
+                                            <div class="receipt-row">
+                                                <span class="receipt-label">Plano/Serviço</span>
+                                                <span class="receipt-value">%s</span>
+                                            </div>
+                                            <div class="receipt-row">
+                                                <span class="receipt-label">Data</span>
+                                                <span class="receipt-value">%s</span>
+                                            </div>
+                                            <div class="total-row">
+                                                <span>Total</span>
+                                                <span>%s</span>
+                                            </div>
+                                        </div>
+
+                                        <p>Seus benefícios já estão ativos e prontos para uso.</p>
+
+                                        <a href="%s" class="cta-button">Acessar Plataforma</a>
+                                    </div>
+                                    <div class="footer">
+                                        <p>© 2026 FitAI - Tecnologia em Performance</p>
+                                        <p>Este e-mail serve como recibo do seu pagamento.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                        """,
+                userName,
+                planName,
+                java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy").format(java.time.LocalDate.now()),
+                formattedAmount,
+                frontendUrl);
+
+        String subject = "✅ Pagamento confirmado - FitAI";
+
+        // Enviar para o usuário
+        boolean userEmailSent = sendEmail(toEmail, subject, htmlContent);
+
+        // Enviar cópia oculta (ou separada) para o admin
+        String adminEmail = "ggrangeiro@me.com";
+        String adminSubject = "[CÓPIA] " + subject + " - " + userName;
+        sendEmail(adminEmail, adminSubject, htmlContent);
+
+        return userEmailSent;
     }
 
     /**

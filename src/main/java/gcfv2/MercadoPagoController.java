@@ -40,6 +40,9 @@ public class MercadoPagoController {
     private MercadoPagoService mercadoPagoService;
 
     @Inject
+    private EmailService emailService;
+
+    @Inject
     private UsuarioRepository usuarioRepository;
 
     @Inject
@@ -325,6 +328,8 @@ public class MercadoPagoController {
         Long userId = transaction.getUserId();
 
         usuarioRepository.findById(userId).ifPresent(user -> {
+            boolean success = false;
+
             if ("SUBSCRIPTION".equals(transaction.getPaymentType())) {
                 // Ativar assinatura
                 String planId = transaction.getPlanId();
@@ -371,6 +376,7 @@ public class MercadoPagoController {
 
                     LOG.info("Assinatura ativada/renovada: userId={}, planId={}, credits={}", userId, planId,
                             newCredits);
+                    success = true;
                 }
 
             } else if ("CREDITS".equals(transaction.getPaymentType())) {
@@ -379,6 +385,27 @@ public class MercadoPagoController {
                 if (creditsAmount != null && creditsAmount > 0) {
                     usuarioRepository.addPurchasedCredits(userId, creditsAmount);
                     LOG.info("Créditos adicionados: userId={}, amount={}", userId, creditsAmount);
+                    success = true;
+                }
+            }
+
+            if (success) {
+                // Enviar e-mail de confirmação
+                try {
+                    String planOrServiceName = "SUBSCRIPTION".equals(transaction.getPaymentType())
+                            ? (PLANS.containsKey(transaction.getPlanId())
+                                    ? (String) PLANS.get(transaction.getPlanId()).get("name")
+                                    : transaction.getPlanId())
+                            : "Pacote de " + transaction.getCreditsAmount() + " créditos";
+
+                    emailService.sendPaymentConfirmationEmail(
+                            user.getEmail(),
+                            user.getNome(),
+                            planOrServiceName,
+                            transaction.getAmount(),
+                            "BRL");
+                } catch (Exception e) {
+                    LOG.error("Erro ao enviar e-mail de confirmação de pagamento: {}", e.getMessage());
                 }
             }
         });
