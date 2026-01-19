@@ -12,7 +12,8 @@ import java.util.List;
 
 @Controller("/api/dietas")
 @CrossOrigin(allowedOrigins = { "https://fitai-analyzer-732767853162.us-west1.run.app",
-        "https://analisa-exercicio-732767853162.southamerica-east1.run.app" }, allowedMethods = {
+        "https://analisa-exercicio-732767853162.southamerica-east1.run.app",
+        "https://fitanalizer.com.br" }, allowedMethods = {
                 HttpMethod.GET,
                 HttpMethod.POST,
                 HttpMethod.DELETE,

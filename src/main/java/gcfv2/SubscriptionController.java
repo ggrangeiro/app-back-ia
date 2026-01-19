@@ -13,7 +13,8 @@ import java.util.Map;
 
 @Controller("/api")
 @CrossOrigin({ "https://fitai-analyzer-732767853162.us-west1.run.app",
-                "https://analisa-exercicio-732767853162.southamerica-east1.run.app" })
+                "https://analisa-exercicio-732767853162.southamerica-east1.run.app",
+                "https://fitanalizer.com.br" })
 public class SubscriptionController {
 
         @Inject

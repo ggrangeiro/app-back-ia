@@ -11,7 +11,8 @@ import org.slf4j.LoggerFactory;
 
 @Controller("/api/pdf")
 @CrossOrigin(allowedOrigins = { "https://fitai-analyzer-732767853162.us-west1.run.app",
-        "https://analisa-exercicio-732767853162.southamerica-east1.run.app" }, allowedMethods = {
+        "https://analisa-exercicio-732767853162.southamerica-east1.run.app",
+        "https://fitanalizer.com.br" }, allowedMethods = {
                 HttpMethod.POST,
                 HttpMethod.OPTIONS
         })
