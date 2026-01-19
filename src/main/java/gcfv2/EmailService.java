@@ -732,7 +732,26 @@ public class EmailService {
      * @param imageUrl    URL opcional da imagem a ser exibida no topo do e-mail
      * @return true se o envio foi bem-sucedido
      */
+
     public boolean sendAdminBroadcastEmail(String toEmail, String subject, String bodyContent, String imageUrl) {
+        return sendAdminBroadcastEmail(toEmail, subject, bodyContent, imageUrl, null);
+    }
+
+    /**
+     * Envia e-mail de broadcast administrativo com template personalizado e imagem
+     * opcional.
+     * Permite especificar a URL base para resolver imagens relativas.
+     * 
+     * @param toEmail     E-mail do destinatário
+     * @param subject     Assunto do e-mail
+     * @param bodyContent Corpo do e-mail (pode conter HTML básico ou texto)
+     * @param imageUrl    URL opcional da imagem
+     * @param baseUrl     URL base do servidor (opcional) para resolver links
+     *                    relativos
+     * @return true se o envio foi bem-sucedido
+     */
+    public boolean sendAdminBroadcastEmail(String toEmail, String subject, String bodyContent, String imageUrl,
+            String baseUrl) {
         if (toEmail != null && toEmail.endsWith("@teste.com")) {
             LOG.info("Broadcast ignorado para @teste.com: {}", toEmail);
             return true;
@@ -752,13 +771,22 @@ public class EmailService {
         // Construir bloco de imagem se imageUrl estiver presente
         String imageBlock = "";
         if (imageUrl != null && !imageUrl.isEmpty()) {
-            // Converter URLs relativas da API para URLs absolutas usando a URL do backend
+            // Converter URLs relativas da API para URLs absolutas
             String absoluteImageUrl = imageUrl;
             if (imageUrl.startsWith("/api/")) {
-                // Remove trailing slash from backendUrl if present to avoid double slash
-                String baseUrl = backendUrl.endsWith("/") ? backendUrl.substring(0, backendUrl.length() - 1)
-                        : backendUrl;
-                absoluteImageUrl = baseUrl + imageUrl;
+                // Definir qual URL base usar (prioridade: baseUrl passado > backendUrl config >
+                // frontendUrl config)
+                String targetBaseUrl = backendUrl;
+                if (baseUrl != null && !baseUrl.isEmpty()) {
+                    targetBaseUrl = baseUrl;
+                }
+
+                // Remove trailing slash if present
+                if (targetBaseUrl.endsWith("/")) {
+                    targetBaseUrl = targetBaseUrl.substring(0, targetBaseUrl.length() - 1);
+                }
+
+                absoluteImageUrl = targetBaseUrl + imageUrl;
             }
             imageBlock = String.format(
                     """

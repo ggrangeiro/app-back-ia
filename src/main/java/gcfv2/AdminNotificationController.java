@@ -55,10 +55,34 @@ public class AdminNotificationController {
     public HttpResponse<AdminEmailResponse> sendAdminEmail(
             @Body AdminEmailRequest request,
             @QueryValue Long requesterId,
-            @QueryValue String requesterRole) {
+            @QueryValue String requesterRole,
+            io.micronaut.http.HttpRequest<?> httpRequest) {
 
         LOG.info("📧 Recebendo requisição de envio de e-mail administrativo de userId={}, role={}",
                 requesterId, requesterRole);
+
+        // Capturar a URL base da requisição atual para usar nos links de imagem
+        String serverScheme = httpRequest.getUri().getScheme();
+        String serverHost = httpRequest.getServerName();
+        int serverPort = httpRequest.getUri().getPort();
+
+        // Montar a URL base (ex: https://meu-backend.run.app)
+        String finalScheme = serverScheme != null ? serverScheme : "http";
+        if (httpRequest.getHeaders().contains("X-Forwarded-Proto")) {
+            finalScheme = httpRequest.getHeaders().get("X-Forwarded-Proto");
+        }
+
+        StringBuilder baseUrlBuilder = new StringBuilder();
+        baseUrlBuilder.append(finalScheme).append("://").append(serverHost);
+
+        // Adicionar porta apenas se não for padrão (80/443) e se não estivermos num
+        // ambiente cloud que omite a porta na URL pública
+        if (serverPort != 80 && serverPort != 443 && serverPort != -1 && !serverHost.endsWith("run.app")) {
+            baseUrlBuilder.append(":").append(serverPort);
+        }
+
+        final String requestBaseUrl = baseUrlBuilder.toString();
+        LOG.info("🌐 URL base detectada da requisição: {}", requestBaseUrl);
 
         // 1. Verificar autorização - apenas ADMIN pode usar esta feature
         if (requesterRole == null || !"ADMIN".equalsIgnoreCase(requesterRole)) {
@@ -173,7 +197,7 @@ public class AdminNotificationController {
 
             for (String email : emails) {
                 try {
-                    boolean sent = emailService.sendAdminBroadcastEmail(email, subject, body, imageUrl);
+                    boolean sent = emailService.sendAdminBroadcastEmail(email, subject, body, imageUrl, requestBaseUrl);
                     if (sent) {
                         successCount++;
                     } else {
