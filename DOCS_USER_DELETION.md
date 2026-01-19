@@ -23,8 +23,9 @@ A API utiliza os seguintes parâmetros via Query String para validar a permissã
 | `requesterId`   | Integer| Sim         | ID do usuário logado que está fazendo a requisição. |
 | `requesterRole` | String | Sim         | Role do usuário logado (ex: `USER`, `ADMIN`, `PERSONAL`). |
 
-**Regra de Permissão:**
+**Regras de Permissão:**
 - O `requesterId` deve ser **igual** ao `id` da URL (o usuário excluindo a si mesmo).
+- OU o `requesterId` deve ser o **Personal Trainer atrelado ao usuário** (`personalId` do usuário alvo deve ser igual ao `requesterId`).
 - OU o `requesterRole` deve ser `ADMIN` (administrador excluindo qualquer usuário).
 
 ## Exemplo de Requisição

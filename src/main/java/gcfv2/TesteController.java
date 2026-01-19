@@ -1002,6 +1002,11 @@ public class TesteController {
     /**
      * EXCLUSÃO DE CONTA (LGPD)
      * Rota: DELETE /api/usuarios/{id}
+     * 
+     * Permissões de exclusão:
+     * - O próprio usuário pode excluir sua conta
+     * - O Personal Trainer atrelado ao usuário pode excluí-lo
+     * - Administradores podem excluir qualquer usuário
      */
     @Delete("/{id}")
     @Transactional
@@ -1010,17 +1015,29 @@ public class TesteController {
             @QueryValue Long requesterId,
             @QueryValue String requesterRole) {
 
-        // 1. Validação de Segurança
-        // Permite se for ADMIN ou se o próprio usuário estiver solicitando
+        // 1. Buscar o usuário alvo
+        Optional<Usuario> targetUserOpt = usuarioRepository.findById(id);
+        if (targetUserOpt.isEmpty()) {
+            return HttpResponse.notFound(Map.of("message", "Usuário não encontrado."));
+        }
+        Usuario targetUser = targetUserOpt.get();
+
+        // 2. Validação de Segurança
         boolean isAdmin = "ADMIN".equalsIgnoreCase(requesterRole);
         boolean isOwner = id.equals(requesterId);
 
-        if (!isAdmin && !isOwner) {
+        // Verifica se o requester é o Personal Trainer atrelado ao usuário alvo
+        boolean isPersonalOfUser = targetUser.getPersonalId() != null
+                && targetUser.getPersonalId().equals(requesterId);
+
+        if (!isAdmin && !isOwner && !isPersonalOfUser) {
             return HttpResponse.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Você não tem permissão para excluir este usuário."));
         }
 
-        return usuarioRepository.findById(id).map(user -> {
+        // Continua com a exclusão usando o usuário já carregado
+        Usuario user = targetUser;
+        {
             try {
                 String userIdStr = String.valueOf(id);
 
@@ -1070,7 +1087,7 @@ public class TesteController {
             } catch (Exception e) {
                 return HttpResponse.serverError(Map.of("message", "Erro ao excluir conta: " + e.getMessage()));
             }
-        }).orElse(HttpResponse.notFound(Map.of("message", "Usuário não encontrado.")));
+        }
     }
 
     /**
