@@ -64,6 +64,16 @@ public class AdminNotificationController {
         // Capturar a URL base da requisição atual para usar nos links de imagem
         String serverScheme = httpRequest.getUri().getScheme();
         String serverHost = httpRequest.getServerName();
+        // Tentar obter o host correto dos headers (Cloud Run/Proxy)
+        // Cloud Run e Load Balancers geralmente enviam X-Forwarded-Host com o domínio
+        // original
+        if (httpRequest.getHeaders().contains("X-Forwarded-Host")) {
+            serverHost = httpRequest.getHeaders().get("X-Forwarded-Host");
+        } else if (httpRequest.getHeaders().contains("Host")) {
+            // Em alguns casos o Host header também pode ser usado
+            serverHost = httpRequest.getHeaders().get("Host");
+        }
+
         int serverPort = httpRequest.getUri().getPort();
 
         // Montar a URL base (ex: https://meu-backend.run.app)
