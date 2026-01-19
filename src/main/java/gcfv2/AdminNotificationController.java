@@ -6,6 +6,7 @@ import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.server.cors.CrossOrigin;
+import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,6 +52,10 @@ public class AdminNotificationController {
      * "body": "Conteúdo do e-mail"
      * }
      */
+    @Inject
+    @Value("${app.backend-url}")
+    private String backendUrl;
+
     @Post("/admin/send-email")
     public HttpResponse<AdminEmailResponse> sendAdminEmail(
             @Body AdminEmailRequest request,
@@ -61,38 +66,10 @@ public class AdminNotificationController {
         LOG.info("📧 Recebendo requisição de envio de e-mail administrativo de userId={}, role={}",
                 requesterId, requesterRole);
 
-        // Capturar a URL base da requisição atual para usar nos links de imagem
-        String serverScheme = httpRequest.getUri().getScheme();
-        String serverHost = httpRequest.getServerName();
-        // Tentar obter o host correto dos headers (Cloud Run/Proxy)
-        // Cloud Run e Load Balancers geralmente enviam X-Forwarded-Host com o domínio
-        // original
-        if (httpRequest.getHeaders().contains("X-Forwarded-Host")) {
-            serverHost = httpRequest.getHeaders().get("X-Forwarded-Host");
-        } else if (httpRequest.getHeaders().contains("Host")) {
-            // Em alguns casos o Host header também pode ser usado
-            serverHost = httpRequest.getHeaders().get("Host");
-        }
-
-        int serverPort = httpRequest.getUri().getPort();
-
-        // Montar a URL base (ex: https://meu-backend.run.app)
-        String finalScheme = serverScheme != null ? serverScheme : "http";
-        if (httpRequest.getHeaders().contains("X-Forwarded-Proto")) {
-            finalScheme = httpRequest.getHeaders().get("X-Forwarded-Proto");
-        }
-
-        StringBuilder baseUrlBuilder = new StringBuilder();
-        baseUrlBuilder.append(finalScheme).append("://").append(serverHost);
-
-        // Adicionar porta apenas se não for padrão (80/443) e se não estivermos num
-        // ambiente cloud que omite a porta na URL pública
-        if (serverPort != 80 && serverPort != 443 && serverPort != -1 && !serverHost.endsWith("run.app")) {
-            baseUrlBuilder.append(":").append(serverPort);
-        }
-
-        final String requestBaseUrl = baseUrlBuilder.toString();
-        LOG.info("🌐 URL base detectada da requisição: {}", requestBaseUrl);
+        // Usar a URL configurada explicitamente (backendUrl injetada)
+        // Isso remove a complexidade de tentar adivinhar a URL em ambientes cloud/proxy
+        final String requestBaseUrl = backendUrl;
+        LOG.info("🌐 URL base configurada: {}", requestBaseUrl);
 
         // 1. Verificar autorização - apenas ADMIN pode usar esta feature
         if (requesterRole == null || !"ADMIN".equalsIgnoreCase(requesterRole)) {
