@@ -686,6 +686,128 @@ public class EmailService {
         }
     }
 
+    /**
+     * Envia e-mail de broadcast administrativo com template personalizado.
+     * Usado pelo painel admin para enviar comunicações em massa.
+     * 
+     * @param toEmail     E-mail do destinatário
+     * @param subject     Assunto do e-mail
+     * @param bodyContent Corpo do e-mail (pode conter HTML básico ou texto)
+     * @return true se o envio foi bem-sucedido
+     */
+    public boolean sendAdminBroadcastEmail(String toEmail, String subject, String bodyContent) {
+        if (resendApiKey == null || resendApiKey.isEmpty()) {
+            LOG.warn("Resend API key não configurada. E-mail administrativo não será enviado.");
+            return false;
+        }
+
+        // Converter quebras de linha para <br> se o conteúdo não parecer HTML
+        String formattedBody = bodyContent;
+        if (!bodyContent.contains("<") && !bodyContent.contains(">")) {
+            formattedBody = bodyContent.replace("\n", "<br>");
+        }
+
+        String htmlContent = String.format(
+                """
+                        <!DOCTYPE html>
+                        <html>
+                        <head>
+                            <meta charset="UTF-8">
+                            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                            <style>
+                                body {
+                                    font-family: 'Segoe UI', Arial, sans-serif;
+                                    background: linear-gradient(135deg, #667eea 0%%, #764ba2 100%%);
+                                    padding: 40px 20px;
+                                    margin: 0;
+                                }
+                                .container {
+                                    max-width: 600px;
+                                    margin: 0 auto;
+                                    background: rgba(255, 255, 255, 0.98);
+                                    border-radius: 24px;
+                                    padding: 40px;
+                                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                                }
+                                .header {
+                                    text-align: center;
+                                    margin-bottom: 30px;
+                                    padding-bottom: 25px;
+                                    border-bottom: 2px solid #e5e7eb;
+                                }
+                                .header .badge {
+                                    display: inline-block;
+                                    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                                    color: white;
+                                    padding: 8px 16px;
+                                    border-radius: 20px;
+                                    font-size: 12px;
+                                    font-weight: 600;
+                                    text-transform: uppercase;
+                                    letter-spacing: 1px;
+                                    margin-bottom: 15px;
+                                }
+                                .header h1 {
+                                    color: #1f2937;
+                                    margin: 0;
+                                    font-size: 24px;
+                                    font-weight: 700;
+                                }
+                                .content {
+                                    color: #374151;
+                                    line-height: 1.8;
+                                    font-size: 16px;
+                                }
+                                .content p {
+                                    margin: 0 0 16px 0;
+                                }
+                                .cta-button {
+                                    display: inline-block;
+                                    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+                                    color: #fff !important;
+                                    padding: 14px 32px;
+                                    border-radius: 12px;
+                                    text-decoration: none;
+                                    font-weight: 600;
+                                    font-size: 15px;
+                                    margin-top: 20px;
+                                    box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+                                }
+                                .footer {
+                                    text-align: center;
+                                    color: #9ca3af;
+                                    font-size: 13px;
+                                    margin-top: 35px;
+                                    padding-top: 20px;
+                                    border-top: 1px solid #e5e7eb;
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <div class="container">
+                                <div class="header">
+                                    <div class="badge">📢 Comunicado Oficial</div>
+                                    <h1>%s</h1>
+                                </div>
+                                <div class="content">
+                                    %s
+                                </div>
+                                <div style="text-align: center; margin-top: 30px;">
+                                    <a href="%s" class="cta-button">Acessar Plataforma</a>
+                                </div>
+                                <div class="footer">
+                                    <p>© 2026 FitAI - Análise de Exercícios</p>
+                                    <p>Este é um comunicado oficial enviado pelo time FitAI.</p>
+                                </div>
+                            </div>
+                        </body>
+                        </html>
+                        """,
+                subject, formattedBody, frontendUrl);
+
+        return sendEmail(toEmail, "📢 " + subject + " - FitAI", htmlContent);
+    }
+
     private String escapeJson(String text) {
         return "\"" + text
                 .replace("\\", "\\\\")
