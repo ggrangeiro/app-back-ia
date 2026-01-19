@@ -53,7 +53,7 @@ public class AdminNotificationController {
      * }
      */
     @Inject
-    @Value("${app.backend-url}")
+    @Value("${app.backend-url:https://app-back-ia-732767853162.southamerica-east1.run.app}")
     private String backendUrl;
 
     @Post("/admin/send-email")
