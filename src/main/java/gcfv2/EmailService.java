@@ -30,6 +30,11 @@ public class EmailService {
      * Envia e-mail de reset de senha usando a API do Resend
      */
     public boolean sendPasswordResetEmail(String toEmail, String token, String userName) {
+        if (toEmail != null && toEmail.endsWith("@teste.com")) {
+            LOG.info("E-mail para @teste.com ignorado: {}", toEmail);
+            return true;
+        }
+
         if (resendApiKey == null || resendApiKey.isEmpty()) {
             LOG.warn("Resend API key não configurada. E-mail não será enviado.");
             LOG.info("Link de reset (para testes): {}/reset-password?token={}", frontendUrl, token);
@@ -115,6 +120,11 @@ public class EmailService {
      * Envia e-mail notificando que o plano expirou e voltou para FREE
      */
     public boolean sendPlanExpiredEmail(String toEmail, String userName, String oldPlan) {
+        if (toEmail != null && toEmail.endsWith("@teste.com")) {
+            LOG.info("E-mail de plano expirado ignorado para @teste.com: {}", toEmail);
+            return true;
+        }
+
         if (resendApiKey == null || resendApiKey.isEmpty()) {
             LOG.warn("Resend API key não configurada. E-mail de expiração não será enviado.");
             return false;
@@ -307,6 +317,11 @@ public class EmailService {
      * Envia e-mail de boas-vindas com resumo de funcionalidades e credenciais
      */
     public boolean sendWelcomeEmail(String toEmail, String userName, String role, String password) {
+        if (toEmail != null && toEmail.endsWith("@teste.com")) {
+            LOG.info("E-mail de boas-vindas ignorado para @teste.com: {}", toEmail);
+            return true;
+        }
+
         if (resendApiKey == null || resendApiKey.isEmpty()) {
             LOG.warn("Resend API key não configurada. E-mail de boas-vindas não será enviado.");
             return false;
@@ -653,6 +668,10 @@ public class EmailService {
      * Helper genérico para envio de e-mail via Resend
      */
     private boolean sendEmail(String toEmail, String subject, String htmlContent) {
+        if (toEmail != null && toEmail.endsWith("@teste.com")) {
+            LOG.info("E-mail ignorado para @teste.com: {}", toEmail);
+            return true;
+        }
         String jsonBody = String.format("""
                 {
                     "from": "%s",
@@ -696,6 +715,11 @@ public class EmailService {
      * @return true se o envio foi bem-sucedido
      */
     public boolean sendAdminBroadcastEmail(String toEmail, String subject, String bodyContent) {
+        if (toEmail != null && toEmail.endsWith("@teste.com")) {
+            LOG.info("Broadcast ignorado para @teste.com: {}", toEmail);
+            return true;
+        }
+
         if (resendApiKey == null || resendApiKey.isEmpty()) {
             LOG.warn("Resend API key não configurada. E-mail administrativo não será enviado.");
             return false;

@@ -116,7 +116,7 @@ public class TesteController {
                 usuario.setSenha(BCrypt.hashpw(rawPassword, BCrypt.gensalt()));
             }
 
-            usuario.setCredits(10);
+            usuario.setCredits(0);
 
             // Definir plano FREE por padrão para novos usuários
             if (usuario.getPlanType() == null) {
