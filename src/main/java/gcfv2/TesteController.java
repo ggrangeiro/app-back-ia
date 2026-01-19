@@ -107,7 +107,11 @@ public class TesteController {
                 if (usuario.getRole() == null)
                     usuario.setRole("USER");
             } else {
-                usuario.setRole("USER");
+                if ("PERSONAL".equalsIgnoreCase(usuario.getRole())) {
+                    usuario.setRole("PERSONAL");
+                } else {
+                    usuario.setRole("USER");
+                }
             }
 
             // Hash da senha com BCrypt antes de salvar
