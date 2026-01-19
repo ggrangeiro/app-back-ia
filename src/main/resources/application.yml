@@ -52,6 +52,7 @@ resend:
 # Application settings
 app:
   frontend-url: ${APP_FRONTEND_URL:http://localhost:5173}
+  backend-url: ${APP_BACKEND_URL:http://localhost:8080}
 
 # MercadoPago configuration
 mercadopago:

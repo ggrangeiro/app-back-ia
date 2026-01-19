@@ -118,4 +118,4 @@ const handleSendEmail = async () => {
 
 1. **Visualização:** A imagem será renderizada centralizada no topo do template de e-mail, com bordas arredondadas e largura máxima de 100%.
 2. **Permissões:** Se um usuário não-ADMIN tentar fazer upload com `type=email_image`, receberá um erro `403 Forbidden`.
-3. **URL Relativa:** O backend aceita tanto URLs relativas (`/api/assets/...`) quanto absolutas. Ele converte automaticamente para absoluta antes de enviar para o provedor de e-mail.
+3. **URL:** O frontend deve enviar a URL **relativa** retornada pelo upload (ex: `/api/assets/...`). O backend automaticamente converte para a URL absoluta correta do servidor antes de enviar o e-mail, garantindo que a imagem carregue corretamente nos clientes de e-mail.

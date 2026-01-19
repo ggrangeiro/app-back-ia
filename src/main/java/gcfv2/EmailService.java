@@ -24,6 +24,9 @@ public class EmailService {
     @Value("${app.frontend-url:http://localhost:5173}")
     private String frontendUrl;
 
+    @Value("${app.backend-url:http://localhost:8080}")
+    private String backendUrl;
+
     private final HttpClient httpClient = HttpClient.newHttpClient();
 
     /**
@@ -749,10 +752,13 @@ public class EmailService {
         // Construir bloco de imagem se imageUrl estiver presente
         String imageBlock = "";
         if (imageUrl != null && !imageUrl.isEmpty()) {
-            // Converter URLs relativas da API para URLs absolutas
+            // Converter URLs relativas da API para URLs absolutas usando a URL do backend
             String absoluteImageUrl = imageUrl;
             if (imageUrl.startsWith("/api/")) {
-                absoluteImageUrl = frontendUrl.replace("/app", "") + imageUrl;
+                // Remove trailing slash from backendUrl if present to avoid double slash
+                String baseUrl = backendUrl.endsWith("/") ? backendUrl.substring(0, backendUrl.length() - 1)
+                        : backendUrl;
+                absoluteImageUrl = baseUrl + imageUrl;
             }
             imageBlock = String.format(
                     """
