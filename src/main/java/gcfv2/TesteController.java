@@ -582,6 +582,68 @@ public class TesteController {
     }
 
     /**
+     * STATUS (PLANO E CRÉDITOS) - REFRESH
+     * Endpoint dedicado para atualizar a UI com dados recentes de plano e créditos
+     * sem a necessidade de fazer logout/login.
+     */
+    @Get("/status")
+    public HttpResponse<?> getStatus(@QueryValue Long requesterId) {
+        return usuarioRepository.findById(requesterId).map(usuario -> {
+
+            // 1. Definição dos Planos (Mesma lógica do Login)
+            Map<String, Map<String, Object>> PLANS = Map.of(
+                    "FREE", Map.of("generationsLimit", 0),
+                    "STARTER", Map.of("generationsLimit", 10),
+                    "PRO", Map.of("generationsLimit", -1),
+                    "STUDIO", Map.of("generationsLimit", -1));
+
+            // 2. Determinar Fonte de Créditos (Professor -> Personal)
+            Usuario creditSource = usuario;
+            if ("PROFESSOR".equalsIgnoreCase(usuario.getRole()) && usuario.getManagerId() != null) {
+                Optional<Usuario> managerOpt = usuarioRepository.findById(usuario.getManagerId());
+                if (managerOpt.isPresent()) {
+                    creditSource = managerOpt.get();
+                }
+            }
+
+            // 3. Calcular Dados
+            String currentPlan = creditSource.getPlanType() != null ? creditSource.getPlanType() : "FREE";
+            Map<String, Object> planInfo = PLANS.getOrDefault(currentPlan, PLANS.get("FREE"));
+            int generationsLimit = (int) planInfo.get("generationsLimit");
+
+            int subCredits = creditSource.getSubscriptionCredits() != null ? creditSource.getSubscriptionCredits() : 0;
+            int purCredits = creditSource.getPurchasedCredits() != null ? creditSource.getPurchasedCredits() : 0;
+            int totalCredits = subCredits + purCredits;
+
+            // 4. Montar Resposta
+            Map<String, Object> response = new java.util.HashMap<>();
+
+            response.put("id", usuario.getId());
+            response.put("role", usuario.getRole());
+            response.put("accessLevel", usuario.getAccessLevel() != null ? usuario.getAccessLevel() : "FULL");
+
+            response.put("plan", Map.of(
+                    "type", currentPlan,
+                    "status",
+                    creditSource.getSubscriptionStatus() != null ? creditSource.getSubscriptionStatus() : "INACTIVE",
+                    "renewsAt",
+                    creditSource.getSubscriptionEndDate() != null ? creditSource.getSubscriptionEndDate().toString()
+                            : ""));
+
+            response.put("usage", Map.of(
+                    "credits", totalCredits,
+                    "subscriptionCredits", subCredits,
+                    "purchasedCredits", purCredits,
+                    "generations",
+                    creditSource.getGenerationsUsedCycle() != null ? creditSource.getGenerationsUsedCycle() : 0,
+                    "generationsLimit", generationsLimit));
+
+            return HttpResponse.ok(response);
+
+        }).orElse(HttpResponse.notFound());
+    }
+
+    /**
      * LISTAGEM DE USUÁRIOS
      * 
      * Para PROFESSOR: retorna todos os alunos do ecossistema do seu Personal
