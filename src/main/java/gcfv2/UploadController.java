@@ -11,6 +11,8 @@ import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Controller("/api/usuarios")
@@ -96,6 +98,80 @@ public class UploadController {
 
         } catch (Exception e) {
             LOG.error("Erro no upload de asset: {}", e.getMessage());
+            return HttpResponse.serverError(Map.of("message", "Erro ao realizar upload: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * UPLOAD DE MÚLTIPLAS IMAGENS PARA ANÁLISE
+     * Permite subir várias fotos de uma vez para compor uma análise
+     * (Postura/Composição Corporal)
+     * 
+     * POST /api/usuarios/{id}/upload-assets-batch?requesterId=X&requesterRole=Y
+     * Content-Type: multipart/form-data
+     * Body: files[] (array de arquivos)
+     * 
+     * Response: { success: true, imageUrls: ["url1", "url2", ...] }
+     */
+    @Post(value = "/{id}/upload-assets-batch", consumes = MediaType.MULTIPART_FORM_DATA)
+    @Transactional
+    public HttpResponse<?> uploadAssetsBatch(
+            @PathVariable Long id,
+            @Part("files") List<CompletedFileUpload> files,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+
+        try {
+            // 1. Validar Permissão
+            if (!usuarioRepository.hasPermission(requesterId, requesterRole, id.toString())) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Acesso negado."));
+            }
+
+            // 2. Validar que há arquivos
+            if (files == null || files.isEmpty()) {
+                return HttpResponse.badRequest(Map.of("message", "Nenhum arquivo enviado."));
+            }
+
+            // 3. Limitar número de arquivos (máximo 10)
+            if (files.size() > 10) {
+                return HttpResponse.badRequest(Map.of("message", "Máximo de 10 imagens por análise."));
+            }
+
+            List<String> uploadedUrls = new ArrayList<>();
+
+            for (CompletedFileUpload file : files) {
+                // Validar tamanho (2MB por arquivo)
+                if (file.getSize() > 2 * 1024 * 1024) {
+                    LOG.warn("Arquivo {} excede limite de 2MB, ignorando.", file.getFilename());
+                    continue;
+                }
+
+                // Validar tipo
+                String contentType = file.getContentType().map(MediaType::toString).orElse("").toLowerCase();
+                if (!contentType.equals("image/jpeg") && !contentType.equals("image/png")) {
+                    LOG.warn("Arquivo {} não é JPG/PNG, ignorando.", file.getFilename());
+                    continue;
+                }
+
+                // Upload
+                String imageUrl = uploadService.uploadUserAnalysisEvidence(file, id);
+                uploadedUrls.add(imageUrl);
+            }
+
+            if (uploadedUrls.isEmpty()) {
+                return HttpResponse.badRequest(Map.of("message", "Nenhum arquivo válido foi enviado."));
+            }
+
+            LOG.info("Upload batch concluído para usuário {}: {} imagens", id, uploadedUrls.size());
+
+            return HttpResponse.ok(Map.of(
+                    "success", true,
+                    "imageUrls", uploadedUrls,
+                    "imageUrl", uploadedUrls.get(0) // Backward compatibility: primeira imagem
+            ));
+
+        } catch (Exception e) {
+            LOG.error("Erro no upload batch de assets: {}", e.getMessage());
             return HttpResponse.serverError(Map.of("message", "Erro ao realizar upload: " + e.getMessage()));
         }
     }
