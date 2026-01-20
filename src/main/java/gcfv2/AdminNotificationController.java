@@ -21,7 +21,14 @@ import java.util.concurrent.CompletableFuture;
  * Permite que administradores enviem e-mails para segmentos específicos de
  * usuários.
  */
-@CrossOrigin("*")
+@CrossOrigin({
+        "https://fitai-analyzer-732767853162.us-west1.run.app",
+        "https://analisa-exercicio-732767853162.southamerica-east1.run.app",
+        "https://fitanalizer.com.br",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://app-back-ia-732767853162.southamerica-east1.run.app"
+})
 @Controller("/api/notifications")
 public class AdminNotificationController {
 
