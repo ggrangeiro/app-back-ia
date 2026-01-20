@@ -234,12 +234,14 @@ public class TesteController {
     }
 
     /**
-     * CONSUMIR CRÉDITO (-1)
+     * CONSUMIR CRÉDITO
      * Lógica por plano:
-     * - PRO/STUDIO: Dieta/Treino GRÁTIS (não debita)
-     * - STARTER: 10 gerações gratuitas de dieta/treino por mês, depois cobra
-     * - FREE: Sempre cobra
-     * - ANALISE: Sempre cobra (independente do plano)
+     * - STARTER: 10 gerações gratuitas de dieta/treino por mês, depois cobra 1
+     * crédito
+     * - PRO: Cada dieta/treino custa 3 créditos
+     * - STUDIO: Cada dieta/treino custa 2 créditos
+     * - FREE: Sempre cobra 1 crédito
+     * - ANALISE: Sempre cobra 1 crédito (independente do plano)
      * 
      * Prioridade de débito: subscription_credits primeiro, depois purchased_credits
      * 
@@ -315,51 +317,67 @@ public class TesteController {
                 }
             }
 
-            boolean shouldCharge = true;
+            int creditsToCharge = 1; // Default: 1 crédito
             boolean wasFree = false;
             String creditSourceType = "FREE";
 
             // Lógica por motivo e plano
             if ("DIETA".equals(reason) || "TREINO".equals(reason)) {
-                // PRO e STUDIO: GRÁTIS para dieta/treino
-                if ("PRO".equalsIgnoreCase(planTypeToCheck) || "STUDIO".equalsIgnoreCase(planTypeToCheck)) {
-                    shouldCharge = false;
-                    wasFree = true;
+                // STUDIO: 2 créditos por geração
+                if ("STUDIO".equalsIgnoreCase(planTypeToCheck)) {
+                    creditsToCharge = 2;
                 }
-                // STARTER: 10 gerações gratuitas por mês
+                // PRO: 3 créditos por geração
+                else if ("PRO".equalsIgnoreCase(planTypeToCheck)) {
+                    creditsToCharge = 3;
+                }
+                // STARTER: 4 créditos por geração
                 else if ("STARTER".equalsIgnoreCase(planTypeToCheck)) {
-                    long freeUsedThisMonth = creditHistoryRepository.countFreeGenerationsThisMonth(creditOwnerId);
-                    if (freeUsedThisMonth < 10) {
-                        shouldCharge = false;
-                        wasFree = true;
-                    }
+                    creditsToCharge = 4;
                 }
-                // FREE: sempre cobra (shouldCharge permanece true)
+                // FREE: sempre 1 crédito
             }
-            // ANALISE: sempre cobra (shouldCharge permanece true)
+            // ANALISE: sempre 1 crédito (já é o default)
 
             int creditsConsumed = 0;
 
-            if (shouldCharge) {
+            if (creditsToCharge > 0) {
                 int subCredits = creditOwner.getSubscriptionCredits() != null ? creditOwner.getSubscriptionCredits()
                         : 0;
                 int purCredits = creditOwner.getPurchasedCredits() != null ? creditOwner.getPurchasedCredits() : 0;
                 int totalCredits = subCredits + purCredits;
 
-                if (totalCredits <= 0) {
+                if (totalCredits < creditsToCharge) {
                     return HttpResponse.status(HttpStatus.PAYMENT_REQUIRED)
-                            .body(Map.of("message", "Saldo insuficiente. Créditos do Personal esgotados."));
+                            .body(Map.of("message", "Saldo insuficiente. Você precisa de " + creditsToCharge
+                                    + " créditos, mas tem apenas " + totalCredits + "."));
                 }
 
-                // Debitar do creditOwner (Personal para professor, ou requester para outros)
-                if (subCredits > 0) {
-                    usuarioRepository.consumeSubscriptionCredit(creditOwnerId);
-                    creditSourceType = "SUBSCRIPTION";
-                } else {
-                    usuarioRepository.consumePurchasedCredit(creditOwnerId);
-                    creditSourceType = "PURCHASED";
+                // Debitar créditos (prioriza subscription, depois purchased)
+                int remaining = creditsToCharge;
+                while (remaining > 0) {
+                    // Recalcular saldos atuais
+                    Optional<Usuario> currentOwner = usuarioRepository.findById(creditOwnerId);
+                    if (currentOwner.isEmpty())
+                        break;
+
+                    int currentSub = currentOwner.get().getSubscriptionCredits() != null
+                            ? currentOwner.get().getSubscriptionCredits()
+                            : 0;
+                    int currentPur = currentOwner.get().getPurchasedCredits() != null
+                            ? currentOwner.get().getPurchasedCredits()
+                            : 0;
+
+                    if (currentSub > 0) {
+                        usuarioRepository.consumeSubscriptionCredit(creditOwnerId);
+                        creditSourceType = "SUBSCRIPTION";
+                    } else if (currentPur > 0) {
+                        usuarioRepository.consumePurchasedCredit(creditOwnerId);
+                        creditSourceType = "PURCHASED";
+                    }
+                    remaining--;
                 }
-                creditsConsumed = 1;
+                creditsConsumed = creditsToCharge;
             }
 
             // Registrar histórico de consumo (sempre no usuário alvo para tracking)
@@ -385,20 +403,12 @@ public class TesteController {
                 novoSaldo = subCredits + purCredits;
             }
 
-            // Contagem de gerações gratuitas restantes (para STARTER)
-            long freeGenerationsUsed = creditHistoryRepository.countFreeGenerationsThisMonth(creditOwnerId);
-            int freeGenerationsRemaining = "STARTER".equalsIgnoreCase(planTypeToCheck)
-                    ? Math.max(0, 10 - (int) freeGenerationsUsed)
-                    : 0;
-
             return HttpResponse.ok(Map.of(
-                    "message", wasFree ? "Geração gratuita utilizada" : "Crédito debitado com sucesso",
+                    "message", creditsConsumed + " crédito(s) debitado(s) com sucesso",
                     "novoSaldo", novoSaldo,
                     "creditsConsumed", creditsConsumed,
-                    "wasFree", wasFree,
                     "reason", reason,
                     "creditSource", creditSourceType,
-                    "freeGenerationsRemaining", freeGenerationsRemaining,
                     "creditOwnerId", creditOwnerId));
         }).orElse(HttpResponse.notFound());
     }
@@ -508,11 +518,13 @@ public class TesteController {
                 }
 
                 // Preparar resposta com Plano e Usage (padronizado com /api/me)
+                // generationsLimit: -1 significa custo em créditos (não ilimitado)
+                // generationCost: custo em créditos por geração
                 Map<String, Map<String, Object>> PLANS = Map.of(
-                        "FREE", Map.of("generationsLimit", 0),
-                        "STARTER", Map.of("generationsLimit", 10),
-                        "PRO", Map.of("generationsLimit", -1),
-                        "STUDIO", Map.of("generationsLimit", -1));
+                        "FREE", Map.of("generationsLimit", 0, "generationCost", 1),
+                        "STARTER", Map.of("generationsLimit", -1, "generationCost", 4),
+                        "PRO", Map.of("generationsLimit", -1, "generationCost", 3),
+                        "STUDIO", Map.of("generationsLimit", -1, "generationCost", 2));
 
                 // PROFESSOR usa créditos do Personal (manager)
                 Usuario creditSource = usuario;
@@ -573,13 +585,16 @@ public class TesteController {
                         creditSource.getSubscriptionEndDate() != null ? creditSource.getSubscriptionEndDate().toString()
                                 : ""));
 
+                int generationCost = (int) planInfo.get("generationCost");
+
                 response.put("usage", Map.of(
                         "credits", totalCredits,
                         "subscriptionCredits", subCredits,
                         "purchasedCredits", purCredits,
                         "generations",
                         creditSource.getGenerationsUsedCycle() != null ? creditSource.getGenerationsUsedCycle() : 0,
-                        "generationsLimit", generationsLimit));
+                        "generationsLimit", generationsLimit,
+                        "generationCost", generationCost));
 
                 return HttpResponse.ok(response);
             }
@@ -597,11 +612,13 @@ public class TesteController {
         return usuarioRepository.findById(requesterId).map(usuario -> {
 
             // 1. Definição dos Planos (Mesma lógica do Login)
+            // generationsLimit: -1 significa custo em créditos (não ilimitado)
+            // generationCost: custo em créditos por geração
             Map<String, Map<String, Object>> PLANS = Map.of(
-                    "FREE", Map.of("generationsLimit", 0),
-                    "STARTER", Map.of("generationsLimit", 10),
-                    "PRO", Map.of("generationsLimit", -1),
-                    "STUDIO", Map.of("generationsLimit", -1));
+                    "FREE", Map.of("generationsLimit", 0, "generationCost", 1),
+                    "STARTER", Map.of("generationsLimit", -1, "generationCost", 4),
+                    "PRO", Map.of("generationsLimit", -1, "generationCost", 3),
+                    "STUDIO", Map.of("generationsLimit", -1, "generationCost", 2));
 
             // 2. Determinar Fonte de Créditos (Professor -> Personal)
             Usuario creditSource = usuario;
@@ -636,13 +653,16 @@ public class TesteController {
                     creditSource.getSubscriptionEndDate() != null ? creditSource.getSubscriptionEndDate().toString()
                             : ""));
 
+            int generationCost = (int) planInfo.get("generationCost");
+
             response.put("usage", Map.of(
                     "credits", totalCredits,
                     "subscriptionCredits", subCredits,
                     "purchasedCredits", purCredits,
                     "generations",
                     creditSource.getGenerationsUsedCycle() != null ? creditSource.getGenerationsUsedCycle() : 0,
-                    "generationsLimit", generationsLimit));
+                    "generationsLimit", generationsLimit,
+                    "generationCost", generationCost));
 
             return HttpResponse.ok(response);
 

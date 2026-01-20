@@ -32,10 +32,13 @@ public class MercadoPagoController {
     private static final Logger LOG = LoggerFactory.getLogger(MercadoPagoController.class);
 
     // Planos com créditos (replicado do SubscriptionController para consistência)
+    // generationCost: custo em créditos por geração de treino/dieta
     private static final Map<String, Map<String, Object>> PLANS = Map.of(
-            "STARTER", Map.of("name", "Starter", "price", 59.90, "credits", 30, "generationsLimit", 10),
-            "PRO", Map.of("name", "Pro", "price", 99.90, "credits", 80, "generationsLimit", -1),
-            "STUDIO", Map.of("name", "Studio", "price", 199.90, "credits", 200, "generationsLimit", -1));
+            "STARTER",
+            Map.of("name", "Starter", "price", 99.00, "credits", 30, "generationsLimit", -1, "generationCost", 4),
+            "PRO", Map.of("name", "Pro", "price", 299.00, "credits", 80, "generationsLimit", -1, "generationCost", 3),
+            "STUDIO",
+            Map.of("name", "Studio", "price", 399.00, "credits", 200, "generationsLimit", -1, "generationCost", 2));
 
     @Inject
     private MercadoPagoService mercadoPagoService;

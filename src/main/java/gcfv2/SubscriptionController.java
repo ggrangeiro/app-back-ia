@@ -27,11 +27,20 @@ public class SubscriptionController {
         private SubscriptionHistoryRepository subscriptionHistoryRepository;
 
         // Definição dos planos
+        // generationCost: custo em créditos por geração de treino/dieta
+        // generationsLimit: -1 = pago por geração
         private static final Map<String, Map<String, Object>> PLANS = Map.of(
-                        "FREE", Map.of("name", "Gratuito", "price", 0.0, "credits", 0, "generationsLimit", 0),
-                        "STARTER", Map.of("name", "Starter", "price", 59.90, "credits", 30, "generationsLimit", 10),
-                        "PRO", Map.of("name", "Pro", "price", 99.90, "credits", 80, "generationsLimit", -1),
-                        "STUDIO", Map.of("name", "Studio", "price", 199.90, "credits", 200, "generationsLimit", -1));
+                        "FREE",
+                        Map.of("name", "Gratuito", "price", 0.0, "credits", 0, "generationsLimit", 0, "generationCost",
+                                        1),
+                        "STARTER",
+                        Map.of("name", "Starter", "price", 99.00, "credits", 30, "generationsLimit", -1,
+                                        "generationCost", 4),
+                        "PRO",
+                        Map.of("name", "Pro", "price", 299.00, "credits", 80, "generationsLimit", -1, "generationCost",
+                                        3),
+                        "STUDIO", Map.of("name", "Studio", "price", 399.00, "credits", 200, "generationsLimit", -1,
+                                        "generationCost", 2));
 
         /**
          * Lista todos os planos disponíveis
@@ -41,25 +50,25 @@ public class SubscriptionController {
                 return HttpResponse.ok(Map.of(
                                 "plans", List.of(
                                                 Map.of("id", "FREE", "name", "Gratuito", "price", 0.0, "credits", 0,
-                                                                "generationsLimit", 0,
+                                                                "generationsLimit", 0, "generationCost", 1,
                                                                 "features", List.of()),
-                                                Map.of("id", "STARTER", "name", "Starter", "price", 59.90, "credits",
-                                                                30, "generationsLimit",
-                                                                10, "features",
+                                                Map.of("id", "STARTER", "name", "Starter", "price", 99.00, "credits",
+                                                                30, "generationsLimit", -1, "generationCost", 4,
+                                                                "features",
                                                                 List.of("30 análises de vídeo/mês",
-                                                                                "10 gerações de treino/dieta")),
-                                                Map.of("id", "PRO", "name", "Pro", "price", 99.90, "credits", 80,
-                                                                "generationsLimit", -1,
+                                                                                "4 créditos por geração")),
+                                                Map.of("id", "PRO", "name", "Pro", "price", 299.00, "credits", 80,
+                                                                "generationsLimit", -1, "generationCost", 3,
                                                                 "features",
                                                                 List.of("80 análises de vídeo/mês",
-                                                                                "Gerações ilimitadas",
-                                                                                "Relatórios PDF")),
-                                                Map.of("id", "STUDIO", "name", "Studio", "price", 199.90, "credits",
-                                                                200, "generationsLimit",
-                                                                -1, "features",
+                                                                                "3 créditos por geração",
+                                                                                "Gerenciar Professores")),
+                                                Map.of("id", "STUDIO", "name", "Studio", "price", 399.00, "credits",
+                                                                200, "generationsLimit", -1, "generationCost", 2,
+                                                                "features",
                                                                 List.of("200 análises de vídeo/mês",
-                                                                                "Gerações ilimitadas",
-                                                                                "White Label")))));
+                                                                                "2 créditos por geração",
+                                                                                "Suporte VIP")))));
         }
 
         /**

@@ -31,9 +31,9 @@ public class MercadoPagoService {
 
     // Planos disponíveis
     private static final Map<String, Map<String, Object>> PLANS = Map.of(
-            "STARTER", Map.of("name", "Plano Starter", "price", 59.90, "credits", 30),
-            "PRO", Map.of("name", "Plano Pro", "price", 99.90, "credits", 80),
-            "STUDIO", Map.of("name", "Plano Studio", "price", 199.90, "credits", 200));
+            "STARTER", Map.of("name", "Plano Starter", "price", 99.00, "credits", 30),
+            "PRO", Map.of("name", "Plano Pro", "price", 299.00, "credits", 80),
+            "STUDIO", Map.of("name", "Plano Studio", "price", 399.00, "credits", 200));
 
     // Preços por pacote de créditos
     private static final Map<Integer, BigDecimal> CREDIT_PRICES = Map.of(
