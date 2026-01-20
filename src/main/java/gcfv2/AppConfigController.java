@@ -1,5 +1,6 @@
 package gcfv2;
 
+import io.micronaut.context.env.Environment;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
@@ -23,9 +24,18 @@ public class AppConfigController {
         @Inject
         private UsuarioRepository usuarioRepository;
 
+        @Inject
+        private Environment environment;
+
+        // Mapeamento de chaves de config para propriedades do application.yml
+        private static final Map<String, String> CONFIG_KEY_TO_PROPERTY = Map.of(
+                        "MP_PUBLIC_KEY", "mercadopago.public-key",
+                        "GEMINI_API_KEY", "gemini.api-key");
+
         /**
          * GET /api/config/{key}
          * Busca uma configuração pela chave.
+         * Primeiro tenta o banco de dados, depois fallback para application.yml.
          * Requer autenticação via query params.
          */
         @Get("/{key}")
@@ -40,13 +50,29 @@ public class AppConfigController {
                                         .body(Map.of("error", "UNAUTHORIZED", "message", "Usuário não encontrado"));
                 }
 
-                return appConfigRepository.findByConfigKey(key)
-                                .map(config -> HttpResponse.ok(Map.of(
-                                                "key", config.getConfigKey(),
-                                                "value", config.getConfigValue())))
-                                .orElse(HttpResponse.notFound(Map.of(
-                                                "error", "CONFIG_NOT_FOUND",
-                                                "message", "Configuração não encontrada")));
+                // 1. Tentar buscar do banco de dados primeiro
+                var dbConfig = appConfigRepository.findByConfigKey(key);
+                if (dbConfig.isPresent()) {
+                        return HttpResponse.ok(Map.of(
+                                        "key", dbConfig.get().getConfigKey(),
+                                        "value", dbConfig.get().getConfigValue()));
+                }
+
+                // 2. Fallback: buscar do application.yml se a chave estiver no mapeamento
+                String propertyPath = CONFIG_KEY_TO_PROPERTY.get(key);
+                if (propertyPath != null) {
+                        String envValue = environment.getProperty(propertyPath, String.class).orElse(null);
+                        if (envValue != null && !envValue.isBlank()) {
+                                return HttpResponse.ok(Map.of(
+                                                "key", key,
+                                                "value", envValue));
+                        }
+                }
+
+                // 3. Não encontrado em nenhum lugar
+                return HttpResponse.notFound(Map.of(
+                                "error", "CONFIG_NOT_FOUND",
+                                "message", "Configuração não encontrada"));
         }
 
         /**

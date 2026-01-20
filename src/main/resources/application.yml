@@ -58,6 +58,7 @@ app:
 mercadopago:
   access-token: ${MP_ACCESS_TOKEN:${_MP_ACCESS_TOKEN:}}
   secret-key: ${MP_SECRET_KEY:${_MP_SECRET_KEY:}}
+  public-key: ${MP_PUBLIC_KEY:APP_USR-d60cd062-292b-4678-89be-16f8bcedc002}
   webhook-url: ${MP_WEBHOOK_URL:${_MP_WEBHOOK_URL:}}
   back-url:
     success: ${MP_SUCCESS_URL:https://fitanalizer.com.br/checkout/success}
