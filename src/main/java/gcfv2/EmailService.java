@@ -769,7 +769,7 @@ public class EmailService {
         boolean userEmailSent = sendEmail(toEmail, subject, htmlContent);
 
         // Enviar cópia oculta (ou separada) para o admin
-        String adminEmail = "ggrangeiro@me.com";
+        String adminEmail = "ggrangeiro@gmail.com";
         String adminSubject = "[CÓPIA] " + subject + " - " + userName;
         sendEmail(adminEmail, adminSubject, htmlContent);
 
