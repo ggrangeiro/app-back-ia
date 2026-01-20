@@ -14,7 +14,8 @@ import org.slf4j.LoggerFactory;
         "https://analisa-exercicio-732767853162.southamerica-east1.run.app",
         "https://fitanalizer.com.br",
         "http://localhost:3000",
-        "http://localhost:5173" }, allowedMethods = {
+        "http://localhost:5173",
+        "https://app-back-ia-732767853162.southamerica-east1.run.app" }, allowedMethods = {
                 HttpMethod.POST,
                 HttpMethod.OPTIONS
         })

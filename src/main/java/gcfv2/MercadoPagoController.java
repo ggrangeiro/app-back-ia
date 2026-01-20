@@ -25,7 +25,8 @@ import java.util.stream.Collectors;
 @CrossOrigin({ "https://fitai-analyzer-732767853162.us-west1.run.app",
         "https://analisa-exercicio-732767853162.southamerica-east1.run.app",
         "https://fitanalizer.com.br",
-        "http://localhost:5173", "http://localhost:3000", "capacitor://localhost" })
+        "http://localhost:5173", "http://localhost:3000", "capacitor://localhost",
+        "https://app-back-ia-732767853162.southamerica-east1.run.app" })
 public class MercadoPagoController {
 
     private static final Logger LOG = LoggerFactory.getLogger(MercadoPagoController.class);
