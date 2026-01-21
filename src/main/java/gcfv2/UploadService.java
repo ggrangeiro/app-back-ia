@@ -99,6 +99,41 @@ public class UploadService {
     }
 
     /**
+     * Uploads an evolution photo to Google Cloud Storage.
+     * Path: uploads/users/{userId}/evolution/{category}/{timestamp}_{filename}
+     *
+     * @param file     The file to upload
+     * @param userId   The ID of the user
+     * @param category The category (FRONT, BACK, LEFT, RIGHT)
+     * @return The proxy URL of the uploaded image
+     * @throws IOException If upload fails
+     */
+    public String uploadEvolutionPhoto(CompletedFileUpload file, Long userId, String category) throws IOException {
+        String originalFilename = file.getFilename();
+        String extension = "";
+
+        if (originalFilename != null && originalFilename.contains(".")) {
+            extension = originalFilename.substring(originalFilename.lastIndexOf("."));
+        } else {
+            extension = ".jpg";
+        }
+
+        String fileName = "uploads/users/" + userId + "/evolution/" + category.toLowerCase() + "/"
+                + System.currentTimeMillis() + "_" + UUID.randomUUID().toString() + extension;
+
+        BlobId blobId = BlobId.of(bucketName, fileName);
+        BlobInfo blobInfo = BlobInfo.newBuilder(blobId)
+                .setContentType(file.getContentType().map(io.micronaut.http.MediaType::toString).orElse("image/jpeg"))
+                .build();
+
+        storage.create(blobInfo, file.getBytes());
+
+        LOG.info("Evolution photo uploaded to GCS: {}/{}", bucketName, fileName);
+
+        return "/api/assets/" + fileName;
+    }
+
+    /**
      * Downloads an asset from Google Cloud Storage.
      * 
      * @param fileName The path/name of the file in the bucket
