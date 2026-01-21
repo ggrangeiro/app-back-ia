@@ -89,11 +89,11 @@ public class StructuredDietaController {
                     }
                 }
 
-                if ("FREE".equalsIgnoreCase(planTypeToCheck) && !isPrivileged) {
-                    return HttpResponse.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("message",
-                                    "Plano gratuito não permite geração de dietas estruturadas. Faça upgrade!"));
-                }
+                // Planos: Verificação de créditos é feita pelo consume-credit no frontend
+                // FREE: 5 créditos por geração
+                // STARTER: 4 créditos por geração
+                // PRO: 3 créditos por geração
+                // STUDIO: 2 créditos por geração
             }
 
             // Save structured diet

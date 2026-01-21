@@ -31,8 +31,8 @@ public class SubscriptionController {
         // generationsLimit: -1 = pago por geração
         private static final Map<String, Map<String, Object>> PLANS = Map.of(
                         "FREE",
-                        Map.of("name", "Gratuito", "price", 0.0, "credits", 0, "generationsLimit", 0, "generationCost",
-                                        1),
+                        Map.of("name", "Gratuito", "price", 0.0, "credits", 0, "generationsLimit", -1, "generationCost",
+                                        5),
                         "STARTER",
                         Map.of("name", "Starter", "price", 99.00, "credits", 30, "generationsLimit", -1,
                                         "generationCost", 4),
@@ -50,8 +50,8 @@ public class SubscriptionController {
                 return HttpResponse.ok(Map.of(
                                 "plans", List.of(
                                                 Map.of("id", "FREE", "name", "Gratuito", "price", 0.0, "credits", 0,
-                                                                "generationsLimit", 0, "generationCost", 1,
-                                                                "features", List.of()),
+                                                                "generationsLimit", -1, "generationCost", 5,
+                                                                "features", List.of("5 créditos por geração")),
                                                 Map.of("id", "STARTER", "name", "Starter", "price", 99.00, "credits",
                                                                 30, "generationsLimit", -1, "generationCost", 4,
                                                                 "features",

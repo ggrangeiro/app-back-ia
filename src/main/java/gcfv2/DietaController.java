@@ -77,15 +77,11 @@ public class DietaController {
                     }
                 }
 
-                // FREE: bloqueado apenas se não for privilegiado com plano pago
-                if ("FREE".equalsIgnoreCase(planTypeToCheck) && !isPrivileged) {
-                    return HttpResponse.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("message", "Plano gratuito não permite geração de dietas. Faça upgrade!"));
-                }
-
-                // PRO e STUDIO: sem limite de gerações
-                // STARTER: limite de 10 (controlado pelo consume-credit)
-                // A verificação do limite agora é feita pelo consume-credit no frontend
+                // Planos: Verificação de créditos é feita pelo consume-credit no frontend
+                // FREE: 5 créditos por geração
+                // STARTER: 4 créditos por geração
+                // PRO: 3 créditos por geração
+                // STUDIO: 2 créditos por geração
             }
 
             Dieta salva = dietaRepository.save(dieta);

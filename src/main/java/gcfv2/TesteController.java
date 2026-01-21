@@ -335,7 +335,10 @@ public class TesteController {
                 else if ("STARTER".equalsIgnoreCase(planTypeToCheck)) {
                     creditsToCharge = 4;
                 }
-                // FREE: sempre 1 crédito
+                // FREE: 5 créditos por geração
+                else {
+                    creditsToCharge = 5;
+                }
             }
             // ANALISE: sempre 1 crédito (já é o default)
 
@@ -521,7 +524,7 @@ public class TesteController {
                 // generationsLimit: -1 significa custo em créditos (não ilimitado)
                 // generationCost: custo em créditos por geração
                 Map<String, Map<String, Object>> PLANS = Map.of(
-                        "FREE", Map.of("generationsLimit", 0, "generationCost", 1),
+                        "FREE", Map.of("generationsLimit", -1, "generationCost", 5),
                         "STARTER", Map.of("generationsLimit", -1, "generationCost", 4),
                         "PRO", Map.of("generationsLimit", -1, "generationCost", 3),
                         "STUDIO", Map.of("generationsLimit", -1, "generationCost", 2));
@@ -615,7 +618,7 @@ public class TesteController {
             // generationsLimit: -1 significa custo em créditos (não ilimitado)
             // generationCost: custo em créditos por geração
             Map<String, Map<String, Object>> PLANS = Map.of(
-                    "FREE", Map.of("generationsLimit", 0, "generationCost", 1),
+                    "FREE", Map.of("generationsLimit", -1, "generationCost", 5),
                     "STARTER", Map.of("generationsLimit", -1, "generationCost", 4),
                     "PRO", Map.of("generationsLimit", -1, "generationCost", 3),
                     "STUDIO", Map.of("generationsLimit", -1, "generationCost", 2));

@@ -76,17 +76,11 @@ public class TreinoController {
                     }
                 }
 
-                // FREE: bloqueado (apenas se não for privilegiado E não tiver créditos)
-                Integer userCredits = user.getCredits() != null ? user.getCredits() : 0;
-                if ("FREE".equalsIgnoreCase(planTypeToCheck) && !isPrivileged && userCredits <= 0) {
-                    return HttpResponse.status(HttpStatus.FORBIDDEN)
-                            .body(Map.of("message",
-                                    "Plano gratuito não permite geração de treinos sem créditos. Compre créditos ou faça upgrade!"));
-                }
-
-                // PRO e STUDIO: sem limite de gerações
-                // STARTER: limite de 10 (controlado pelo consume-credit)
-                // A verificação do limite agora é feita pelo consume-credit no frontend
+                // Planos: Verificação de créditos é feita pelo consume-credit no frontend
+                // FREE: 5 créditos por geração
+                // STARTER: 4 créditos por geração
+                // PRO: 3 créditos por geração
+                // STUDIO: 2 créditos por geração
             }
 
             Treino salvo = treinoRepository.save(treino);
