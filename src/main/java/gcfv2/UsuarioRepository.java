@@ -67,16 +67,16 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
     // Queries para créditos separados - Mantendo coluna 'credits' sempre
     // sincronizada (Soma)
 
-    @Query("UPDATE usuario SET subscription_credits = subscription_credits - 1, credits = credits - 1 WHERE id = :id AND subscription_credits > 0")
+    @Query("UPDATE usuario SET subscription_credits = COALESCE(subscription_credits, 0) - 1, credits = COALESCE(credits, 0) - 1 WHERE id = :id AND COALESCE(subscription_credits, 0) > 0")
     void consumeSubscriptionCredit(Long id);
 
-    @Query("UPDATE usuario SET purchased_credits = purchased_credits - 1, credits = credits - 1 WHERE id = :id AND purchased_credits > 0")
+    @Query("UPDATE usuario SET purchased_credits = COALESCE(purchased_credits, 0) - 1, credits = COALESCE(credits, 0) - 1 WHERE id = :id AND COALESCE(purchased_credits, 0) > 0")
     void consumePurchasedCredit(Long id);
 
-    @Query("UPDATE usuario SET purchased_credits = purchased_credits + :amount, credits = credits + :amount WHERE id = :id")
+    @Query("UPDATE usuario SET purchased_credits = COALESCE(purchased_credits, 0) + :amount, credits = COALESCE(credits, 0) + :amount WHERE id = :id")
     void addPurchasedCredits(Long id, Integer amount);
 
-    @Query("UPDATE usuario SET subscription_credits = :credits, credits = :credits + IFNULL(purchased_credits, 0) WHERE id = :id")
+    @Query("UPDATE usuario SET subscription_credits = :credits, credits = :credits + COALESCE(purchased_credits, 0) WHERE id = :id")
     void resetSubscriptionCredits(Long id, Integer credits);
 
     // Queries para Cron Job de Expiração

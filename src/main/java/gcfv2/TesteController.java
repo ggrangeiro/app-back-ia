@@ -639,6 +639,14 @@ public class TesteController {
 
             int subCredits = creditSource.getSubscriptionCredits() != null ? creditSource.getSubscriptionCredits() : 0;
             int purCredits = creditSource.getPurchasedCredits() != null ? creditSource.getPurchasedCredits() : 0;
+
+            // Legacy Fix: Se sub + pur != total, assumir que a diferença é crédito comprado
+            // (legado)
+            int totalCreditsColumn = creditSource.getCredits() != null ? creditSource.getCredits() : 0;
+            if (subCredits + purCredits != totalCreditsColumn) {
+                purCredits = Math.max(0, totalCreditsColumn - subCredits);
+            }
+
             int totalCredits = subCredits + purCredits;
 
             // 4. Montar Resposta
