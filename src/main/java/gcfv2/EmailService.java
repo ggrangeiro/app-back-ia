@@ -761,7 +761,7 @@ public class EmailService {
                 planName,
                 java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy").format(java.time.LocalDate.now()),
                 formattedAmount,
-                frontendUrl);
+                "https://fitanalizer.com.br/");
 
         String subject = "✅ Pagamento confirmado - FitAI";
 
