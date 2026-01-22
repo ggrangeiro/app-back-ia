@@ -93,24 +93,9 @@ public interface AtividadeProfessorRepository extends CrudRepository<AtividadePr
                         LocalDateTime startDate, LocalDateTime endDate);
 
         @io.micronaut.core.annotation.Introspected
-        public static class ActivityDailyCount {
-                private java.time.LocalDate date;
-                private Long count;
+        public interface ActivityDailyCount {
+                java.time.LocalDate getDate();
 
-                public java.time.LocalDate getDate() {
-                        return date;
-                }
-
-                public void setDate(java.time.LocalDate date) {
-                        this.date = date;
-                }
-
-                public Long getCount() {
-                        return count;
-                }
-
-                public void setCount(Long count) {
-                        this.count = count;
-                }
+                Long getCount();
         }
 }

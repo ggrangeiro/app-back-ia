@@ -182,4 +182,43 @@ public class StructuredTreinoController {
 
         }).orElse(HttpResponse.notFound(Map.of("message", "Treino estruturado não encontrado.")));
     }
+
+    /**
+     * UPDATE - Update an existing structured training
+     * Useful for saving progress, feedback, or load updates.
+     * 
+     * PUT /api/v2/treinos/{id}
+     */
+    @Put("/{id}")
+    @Transactional
+    public HttpResponse<?> atualizar(
+            @PathVariable Long id,
+            @Body StructuredTreino atualizacao,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+
+        return structuredTreinoRepository.findById(id).map(treino -> {
+            // Permission Check
+            boolean isOwner = treino.getUserId().equals(requesterId.toString());
+            boolean hasPermission = usuarioRepository.hasPermission(requesterId, requesterRole, treino.getUserId());
+
+            if (!isOwner && !hasPermission) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Acesso negado."));
+            }
+
+            // Update fields
+            if (atualizacao.getDaysData() != null) {
+                treino.setDaysData(atualizacao.getDaysData());
+            }
+            if (atualizacao.getObservations() != null) {
+                treino.setObservations(atualizacao.getObservations());
+            }
+            // Add other fields as necessary
+
+            structuredTreinoRepository.update(treino);
+            return HttpResponse.ok(treino);
+
+        }).orElse(HttpResponse.notFound(Map.of("message", "Treino não encontrado.")));
+    }
 }
