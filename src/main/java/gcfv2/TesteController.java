@@ -586,6 +586,10 @@ public class TesteController {
                     response.put("managerId", managerId);
                 }
 
+                if (usuario.getPersonalId() != null) {
+                    response.put("personalId", usuario.getPersonalId());
+                }
+
                 response.put("plan", Map.of(
                         "type", creditSource.getPlanType() != null ? creditSource.getPlanType() : "FREE",
                         "status",
@@ -662,6 +666,10 @@ public class TesteController {
             response.put("id", usuario.getId());
             response.put("role", usuario.getRole());
             response.put("accessLevel", usuario.getAccessLevel() != null ? usuario.getAccessLevel() : "FULL");
+
+            if (usuario.getPersonalId() != null) {
+                response.put("personalId", usuario.getPersonalId());
+            }
 
             response.put("plan", Map.of(
                     "type", currentPlan,
