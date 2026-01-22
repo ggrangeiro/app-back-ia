@@ -104,7 +104,14 @@ public class TesteController {
             // Professor criando aluno
             else if ("PROFESSOR".equalsIgnoreCase(requesterRole)) {
                 usuario.setRole("USER");
-                usuario.setPersonalId(requesterId); // Aluno vinculado ao professor
+
+                // Buscar o professor para obter o managerId (Personal)
+                Optional<Usuario> professorOpt = usuarioRepository.findById(requesterId);
+                if (professorOpt.isPresent() && professorOpt.get().getManagerId() != null) {
+                    usuario.setPersonalId(professorOpt.get().getManagerId());
+                } else {
+                    return HttpResponse.badRequest(Map.of("message", "Erro: Professor não possui Personal vinculado."));
+                }
             } else if ("ADMIN".equalsIgnoreCase(requesterRole)) {
                 if (usuario.getRole() == null)
                     usuario.setRole("USER");
