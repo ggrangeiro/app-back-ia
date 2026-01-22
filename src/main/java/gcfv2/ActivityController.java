@@ -38,6 +38,9 @@ public class ActivityController {
         @Inject
         private UsuarioRepository usuarioRepository;
 
+        @Inject
+        private ProfessorGoalRepository goalRepository;
+
         /**
          * Lista atividades dos professores com filtros e paginação.
          * 
@@ -242,6 +245,101 @@ public class ActivityController {
                 } catch (Exception e) {
                         return HttpResponse.serverError(Map.of(
                                         "message", "Erro ao gerar resumo de produtividade: " + e.getMessage()));
+                }
+        }
+
+        /**
+         * Resumo de Gamificação (Ranking, Metas, Gráficos)
+         * GET /api/activities/gamification
+         */
+        @Get("/gamification")
+        public HttpResponse<?> getGamificationSummary(
+                        @QueryValue Long managerId,
+                        @QueryValue Long requesterId,
+                        @QueryValue String requesterRole,
+                        @Nullable @QueryValue Integer month,
+                        @Nullable @QueryValue Integer year) {
+
+                if (!"ADMIN".equalsIgnoreCase(requesterRole)) {
+                        if (!"PERSONAL".equalsIgnoreCase(requesterRole) || !requesterId.equals(managerId)) {
+                                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                                                .body(Map.of("message", "Acesso negado."));
+                        }
+                }
+
+                int m = month != null ? month : LocalDate.now().getMonthValue();
+                int y = year != null ? year : LocalDate.now().getYear();
+                LocalDateTime start = LocalDate.of(y, m, 1).atStartOfDay();
+                LocalDateTime end = start.plusMonths(1).minusSeconds(1);
+
+                try {
+                        // 1. Ranking & Badges (Baseado na produtividade do mês)
+                        List<Usuario> professors = usuarioRepository.findProfessorsByManagerId(managerId);
+                        List<Map<String, Object>> ranking = new ArrayList<>();
+
+                        for (Usuario prof : professors) {
+                                int total = activityRepository.countTotalByProfessorIdAndPeriod(prof.getId(), start,
+                                                end);
+                                // Badges logic (Simplified)
+                                List<String> badges = new ArrayList<>();
+                                if (total > 50)
+                                        badges.add("HARD_WORKER");
+                                if (total > 100)
+                                        badges.add("LEGEND");
+
+                                Map<String, Object> profData = Map.of(
+                                                "id", prof.getId(),
+                                                "name", prof.getNome(),
+                                                "avatar", prof.getAvatar() != null ? prof.getAvatar() : "",
+                                                "score", total,
+                                                "badges", badges);
+                                ranking.add(profData);
+                        }
+                        ranking.sort((p1, p2) -> ((Integer) p2.get("score")).compareTo((Integer) p1.get("score")));
+
+                        // 2. Charts (Daily Activity)
+                        List<AtividadeProfessorRepository.ActivityDailyCount> dailyCounts = activityRepository
+                                        .countDailyActivities(managerId, null, start, end);
+
+                        // 3. Goals
+                        List<ProfessorGoal> goals = goalRepository.findByManagerIdAndMonthAndYear(managerId, m, y);
+
+                        return HttpResponse.ok(Map.of(
+                                        "ranking", ranking,
+                                        "charts", dailyCounts,
+                                        "goals", goals));
+
+                } catch (Exception e) {
+                        return HttpResponse.serverError(
+                                        Map.of("message", "Erro ao buscar gamification: " + e.getMessage()));
+                }
+        }
+
+        /**
+         * Criar ou Atualizar Meta
+         * POST /api/activities/goals
+         */
+        @Post("/goals")
+        public HttpResponse<?> setGoal(@Body ProfessorGoal goal) {
+                try {
+                        // Check existing
+                        var existing = goalRepository.findByProfessorIdAndTypeAndMonthAndYear(
+                                        goal.getProfessorId(), goal.getType(), goal.getMonth(), goal.getYear());
+
+                        if (existing.isPresent()) {
+                                ProfessorGoal g = existing.get();
+                                g.setTargetValue(goal.getTargetValue());
+                                g.setUpdatedAt(LocalDateTime.now());
+                                goalRepository.update(g);
+                                return HttpResponse.ok(g);
+                        } else {
+                                goal.setCreatedAt(LocalDateTime.now());
+                                goal.setUpdatedAt(LocalDateTime.now());
+                                goalRepository.save(goal);
+                                return HttpResponse.created(goal);
+                        }
+                } catch (Exception e) {
+                        return HttpResponse.serverError(Map.of("message", "Erro ao salvar meta: " + e.getMessage()));
                 }
         }
 }
