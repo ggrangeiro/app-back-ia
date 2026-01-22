@@ -146,4 +146,32 @@ public class TreinoController {
 
         }).orElse(HttpResponse.notFound(Map.of("message", "Treino não encontrado.")));
     }
+
+    @Put("/{id}")
+    @Transactional
+    public HttpResponse<?> atualizar(
+            @PathVariable Long id,
+            @Body Treino atualizacao,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+
+        return treinoRepository.findById(id).map(treino -> {
+            if (!usuarioRepository.hasPermission(requesterId, requesterRole, treino.getUserId())) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Acesso negado."));
+            }
+
+            if (atualizacao.getDaysData() != null) {
+                treino.setDaysData(atualizacao.getDaysData());
+            }
+            if (atualizacao.getContent() != null) {
+                treino.setContent(atualizacao.getContent());
+            }
+
+            treinoRepository.update(treino);
+            return HttpResponse.ok(treino);
+
+        }).orElse(HttpResponse.notFound(Map.of("message", "Treino não encontrado.")));
+    }
+
 }

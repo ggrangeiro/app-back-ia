@@ -8,7 +8,6 @@ import io.micronaut.data.annotation.DateCreated;
 import java.time.LocalDateTime;
 import io.micronaut.serde.annotation.Serdeable; // <--- ADICIONE ESTE IMPORT
 
-
 @Serdeable // <--- ADICIONE ESTA ANOTAÇÃO AQUI
 @MappedEntity("treinos")
 public class Treino {
@@ -23,14 +22,54 @@ public class Treino {
     @MappedProperty("created_at") // <--- MAPEIA PARA created_at DO BANCO
     private LocalDateTime createdAt;
 
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public String getUserId() { return userId; }
-    public void setUserId(String userId) { this.userId = userId; }
-    public String getContent() { return content; }
-    public void setContent(String content) { this.content = content; }
-    public String getGoal() { return goal; }
-    public void setGoal(String goal) { this.goal = goal; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    @MappedProperty("days_data")
+    private String daysData;
+
+    public String getDaysData() {
+        return daysData;
+    }
+
+    public void setDaysData(String daysData) {
+        this.daysData = daysData;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public String getContent() {
+        return content;
+    }
+
+    public void setContent(String content) {
+        this.content = content;
+    }
+
+    public String getGoal() {
+        return goal;
+    }
+
+    public void setGoal(String goal) {
+        this.goal = goal;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
 }
