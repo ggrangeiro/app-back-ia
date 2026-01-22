@@ -298,7 +298,7 @@ public class ActivityController {
                         ranking.sort((p1, p2) -> ((Integer) p2.get("score")).compareTo((Integer) p1.get("score")));
 
                         // 2. Charts (Daily Activity)
-                        List<AtividadeProfessorRepository.ActivityDailyCount> dailyCounts = activityRepository
+                        List<gcfv2.dto.DailyActivityDTO> dailyCounts = activityRepository
                                         .countDailyActivities(managerId, null, start, end);
 
                         // 3. Goals

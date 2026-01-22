@@ -88,14 +88,7 @@ public interface AtividadeProfessorRepository extends CrudRepository<AtividadePr
                         "AND (:professorId IS NULL OR professor_id = :professorId) " +
                         "AND created_at >= :startDate AND created_at <= :endDate " +
                         "GROUP BY DATE(created_at) ORDER BY DATE(created_at)")
-        List<ActivityDailyCount> countDailyActivities(
+        List<gcfv2.dto.DailyActivityDTO> countDailyActivities(
                         Long managerId, Long professorId,
                         LocalDateTime startDate, LocalDateTime endDate);
-
-        @io.micronaut.core.annotation.Introspected
-        public interface ActivityDailyCount {
-                java.time.LocalDate getDate();
-
-                Long getCount();
-        }
 }
