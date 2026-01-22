@@ -25,4 +25,6 @@ public interface PaymentTransactionRepository extends CrudRepository<PaymentTran
     void updatePaymentStatus(Long id, String status, String mpPaymentId, String paymentMethod);
 
     void deleteByUserId(Long userId);
+
+    List<PaymentTransaction> findAllOrderByCreatedAtDesc();
 }

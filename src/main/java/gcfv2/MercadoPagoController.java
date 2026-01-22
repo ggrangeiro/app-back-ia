@@ -438,6 +438,43 @@ public class MercadoPagoController {
     }
 
     /**
+     * Listar TODAS as transações (Apenas ADMIN)
+     */
+    @Get("/checkout/transactions/all")
+    public HttpResponse<?> listAllTransactions(
+            @QueryValue Long requesterId,
+            @QueryValue(defaultValue = "USER") String requesterRole) {
+
+        // 1. Verificar permissão de ADMIN
+        if (!"ADMIN".equalsIgnoreCase(requesterRole)) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Acesso negado. Apenas administradores."));
+        }
+
+        List<PaymentTransaction> transactions = paymentTransactionRepository.findAllOrderByCreatedAtDesc();
+
+        List<Map<String, Object>> transactionList = transactions.stream()
+                .map(t -> {
+                    Map<String, Object> map = new HashMap<>();
+                    map.put("id", t.getId());
+                    map.put("userId", t.getUserId());
+                    map.put("type", t.getPaymentType());
+                    map.put("planId", t.getPlanId());
+                    map.put("creditsAmount", t.getCreditsAmount());
+                    map.put("amount", t.getAmount());
+                    map.put("status", t.getStatus());
+                    map.put("paymentMethod", t.getPaymentMethod());
+                    map.put("createdAt", t.getCreatedAt() != null ? t.getCreatedAt().toString() : null);
+                    map.put("updatedAt", t.getUpdatedAt() != null ? t.getUpdatedAt().toString() : null);
+                    map.put("externalReference", t.getExternalReference());
+                    return map;
+                })
+                .collect(Collectors.toList());
+
+        return HttpResponse.ok(Map.of("transactions", transactionList));
+    }
+
+    /**
      * Listar transações do usuário
      */
     @Get("/checkout/transactions")
