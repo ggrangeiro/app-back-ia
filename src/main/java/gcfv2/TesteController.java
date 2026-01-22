@@ -1077,7 +1077,12 @@ public class TesteController {
         boolean isPersonalOfUser = targetUser.getPersonalId() != null
                 && targetUser.getPersonalId().equals(requesterId);
 
-        if (!isAdmin && !isOwner && !isPersonalOfUser) {
+        // Verifica se o requester é o Manager do Professor alvo
+        boolean isManagerOfProfessor = "PROFESSOR".equalsIgnoreCase(targetUser.getRole())
+                && targetUser.getManagerId() != null
+                && targetUser.getManagerId().equals(requesterId);
+
+        if (!isAdmin && !isOwner && !isPersonalOfUser && !isManagerOfProfessor) {
             return HttpResponse.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("message", "Você não tem permissão para excluir este usuário."));
         }
