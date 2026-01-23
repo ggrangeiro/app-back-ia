@@ -88,7 +88,7 @@ public class WorkoutExecutionController {
             WorkoutExecution execution = new WorkoutExecution();
             execution.setUserId(request.getUserId());
             execution.setWorkoutId(request.getWorkoutId());
-            execution.setDayOfWeek(request.getDayOfWeek().toLowerCase());
+            execution.setDayOfWeek(permissionService.normalizeDayOfWeek(request.getDayOfWeek()));
             execution.setExecutedAt(request.getExecutedAt());
             execution.setComment(request.getComment());
 

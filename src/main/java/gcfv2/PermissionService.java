@@ -56,7 +56,7 @@ public class PermissionService {
     }
 
     /**
-     * Valida se o dayOfWeek é válido
+     * Valida se o dayOfWeek é válido (aceita nome ou número 1-7)
      */
     public boolean isValidDayOfWeek(String dayOfWeek) {
         if (dayOfWeek == null)
@@ -67,6 +67,41 @@ public class PermissionService {
                 dayOfWeek.equalsIgnoreCase("thursday") ||
                 dayOfWeek.equalsIgnoreCase("friday") ||
                 dayOfWeek.equalsIgnoreCase("saturday") ||
-                dayOfWeek.equalsIgnoreCase("sunday");
+                dayOfWeek.equalsIgnoreCase("sunday") ||
+                dayOfWeek.equals("1") ||
+                dayOfWeek.equals("2") ||
+                dayOfWeek.equals("3") ||
+                dayOfWeek.equals("4") ||
+                dayOfWeek.equals("5") ||
+                dayOfWeek.equals("6") ||
+                dayOfWeek.equals("7");
+    }
+
+    /**
+     * Normaliza o dayOfWeek para o formato texto (monday, tuesday, etc.)
+     * Converte números 1-7 para os nomes correspondentes
+     * 1=monday, 2=tuesday, 3=wednesday, 4=thursday, 5=friday, 6=saturday, 7=sunday
+     */
+    public String normalizeDayOfWeek(String dayOfWeek) {
+        if (dayOfWeek == null)
+            return null;
+        switch (dayOfWeek) {
+            case "1":
+                return "monday";
+            case "2":
+                return "tuesday";
+            case "3":
+                return "wednesday";
+            case "4":
+                return "thursday";
+            case "5":
+                return "friday";
+            case "6":
+                return "saturday";
+            case "7":
+                return "sunday";
+            default:
+                return dayOfWeek.toLowerCase();
+        }
     }
 }
