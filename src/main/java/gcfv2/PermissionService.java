@@ -74,7 +74,14 @@ public class PermissionService {
                 dayOfWeek.equals("4") ||
                 dayOfWeek.equals("5") ||
                 dayOfWeek.equals("6") ||
-                dayOfWeek.equals("7");
+                dayOfWeek.equals("7") ||
+                dayOfWeek.equalsIgnoreCase("day 1") ||
+                dayOfWeek.equalsIgnoreCase("day 2") ||
+                dayOfWeek.equalsIgnoreCase("day 3") ||
+                dayOfWeek.equalsIgnoreCase("day 4") ||
+                dayOfWeek.equalsIgnoreCase("day 5") ||
+                dayOfWeek.equalsIgnoreCase("day 6") ||
+                dayOfWeek.equalsIgnoreCase("day 7");
     }
 
     /**
@@ -99,6 +106,20 @@ public class PermissionService {
             case "6":
                 return "saturday";
             case "7":
+                return "sunday";
+            case "day 1":
+                return "monday";
+            case "day 2":
+                return "tuesday";
+            case "day 3":
+                return "wednesday";
+            case "day 4":
+                return "thursday";
+            case "day 5":
+                return "friday";
+            case "day 6":
+                return "saturday";
+            case "day 7":
                 return "sunday";
             default:
                 return dayOfWeek.toLowerCase();
