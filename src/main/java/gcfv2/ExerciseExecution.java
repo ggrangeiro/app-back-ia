@@ -53,6 +53,7 @@ public class ExerciseExecution {
         this.id = id;
     }
 
+    @Transient
     public Long getWorkoutExecutionId() {
         return workoutExecution != null ? workoutExecution.getId() : null;
     }
