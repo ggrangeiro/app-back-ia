@@ -109,23 +109,33 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
      * - USER: apenas a si mesmo
      */
     default boolean hasPermission(Long requesterId, String requesterRole, String targetUserId) {
+        System.out.println(
+                "HasPermission CHECK: requester=" + requesterId + " (" + requesterRole + ") target=" + targetUserId);
+
         // ADMIN tem acesso total
-        if ("ADMIN".equalsIgnoreCase(requesterRole))
+        if ("ADMIN".equalsIgnoreCase(requesterRole)) {
+            System.out.println("  -> ACCESS GRANTED (ADMIN)");
             return true;
+        }
 
         // Acesso a si mesmo
-        if (requesterId.toString().equals(targetUserId))
+        if (requesterId.toString().equals(targetUserId)) {
+            System.out.println("  -> ACCESS GRANTED (SELF)");
             return true;
+        }
 
         try {
             Long targetId = Long.parseLong(targetUserId);
             Optional<Usuario> targetOpt = findById(targetId);
 
             if (targetOpt.isEmpty()) {
+                System.out.println("  -> ACCESS DENIED (Target user not found: " + targetId + ")");
                 return false;
             }
 
             Usuario target = targetOpt.get();
+            System.out.println("  -> Target User: id=" + target.getId() + " role=" + target.getRole() + " personalId="
+                    + target.getPersonalId() + " managerId=" + target.getManagerId());
 
             // PERSONAL pode acessar:
             // 1. Seus alunos diretos (target.personalId == requesterId)
@@ -135,11 +145,13 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
             if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
                 // Alunos diretos do personal
                 if (requesterId.equals(target.getPersonalId())) {
+                    System.out.println("  -> ACCESS GRANTED (Direct Student of Personal)");
                     return true;
                 }
 
                 // Professor é subordinado do personal
                 if ("PROFESSOR".equalsIgnoreCase(target.getRole()) && requesterId.equals(target.getManagerId())) {
+                    System.out.println("  -> ACCESS GRANTED (Professor subordinate to Personal)");
                     return true;
                 }
 
@@ -148,13 +160,19 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
                     Optional<Usuario> professorOpt = findById(target.getPersonalId());
                     if (professorOpt.isPresent()) {
                         Usuario professor = professorOpt.get();
+                        System.out.println("    -> Checking Professor Intermediary: id=" + professor.getId() + " role="
+                                + professor.getRole() + " managerId=" + professor.getManagerId());
                         if ("PROFESSOR".equalsIgnoreCase(professor.getRole()) &&
                                 requesterId.equals(professor.getManagerId())) {
+                            System.out.println("  -> ACCESS GRANTED (Student of subordinate Professor)");
                             return true;
                         }
+                    } else {
+                        System.out.println("    -> Professor linked not found ID=" + target.getPersonalId());
                     }
                 }
 
+                System.out.println("  -> ACCESS DENIED (PERSONAL logic exhausted)");
                 return false;
             }
 
@@ -166,23 +184,28 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
             if ("PROFESSOR".equalsIgnoreCase(requesterRole)) {
                 // Alunos próprios do professor
                 if (requesterId.equals(target.getPersonalId())) {
+                    System.out.println("  -> ACCESS GRANTED (Direct Student of Professor)");
                     return true;
                 }
 
                 // Buscar o managerId do professor requisitante
                 Optional<Usuario> requesterOpt = findById(requesterId);
                 if (requesterOpt.isEmpty()) {
+                    System.out.println("  -> ACCESS DENIED (Requester not found)");
                     return false;
                 }
                 Usuario requester = requesterOpt.get();
                 Long managerId = requester.getManagerId();
+                System.out.println("    -> Requester (Professor) managerId=" + managerId);
 
                 if (managerId == null) {
+                    System.out.println("  -> ACCESS DENIED (Professor has no managerId)");
                     return false;
                 }
 
                 // Aluno é direto do Personal (manager do professor)
                 if (managerId.equals(target.getPersonalId())) {
+                    System.out.println("  -> ACCESS GRANTED (Student of Manager/Personal)");
                     return true;
                 }
 
@@ -191,18 +214,24 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
                     Optional<Usuario> outroProfOpt = findById(target.getPersonalId());
                     if (outroProfOpt.isPresent()) {
                         Usuario outroProf = outroProfOpt.get();
+                        System.out.println("    -> Checking Other Professor: id=" + outroProf.getId() + " role="
+                                + outroProf.getRole() + " managerId=" + outroProf.getManagerId());
                         if ("PROFESSOR".equalsIgnoreCase(outroProf.getRole()) &&
                                 managerId.equals(outroProf.getManagerId())) {
+                            System.out.println("  -> ACCESS GRANTED (Student of Colleague Professor)");
                             return true;
                         }
                     }
                 }
 
+                System.out.println("  -> ACCESS DENIED (PROFESSOR logic exhausted)");
                 return false;
             }
 
+            System.out.println("  -> ACCESS DENIED (Role " + requesterRole + " not privileged)");
             return false;
         } catch (NumberFormatException e) {
+            System.out.println("  -> ACCESS DENIED (Invalid format)");
             return false;
         }
     }
