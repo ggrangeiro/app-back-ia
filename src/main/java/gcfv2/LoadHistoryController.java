@@ -3,6 +3,8 @@ package gcfv2;
 import gcfv2.dto.LoadHistoryResponse;
 import gcfv2.dto.LoadHistoryResponse.LoadHistoryEntry;
 import gcfv2.dto.LoadHistoryResponse.ProgressionSuggestion;
+import gcfv2.dto.LastUsedLoadsResponse;
+import gcfv2.dto.LastUsedLoadsResponse.LoadEntry;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
@@ -12,6 +14,7 @@ import jakarta.inject.Inject;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.HashMap;
 
 @Controller("/api/v2/exercises")
 @CrossOrigin("https://fitai-analyzer-732767853162.us-west1.run.app")
@@ -183,5 +186,47 @@ public class LoadHistoryController {
         }
 
         return "Aumente gradualmente a carga";
+    }
+
+    /**
+     * GET /api/v2/exercises/last-loads
+     * Obter as últimas cargas utilizadas em todos os exercícios de um usuário
+     * Útil para pré-popular os campos de carga ao iniciar um novo treino
+     */
+    @Get("/last-loads")
+    public HttpResponse<?> getLastUsedLoads(
+        @QueryValue Long userId,
+        @QueryValue Long requesterId,
+        @QueryValue String requesterRole
+    ) {
+        try {
+            // Validação de permissões
+            if (!permissionService.canAccessUserData(requesterId, requesterRole, userId)) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Você não tem permissão para acessar dados deste usuário"));
+            }
+
+            // Buscar últimas cargas utilizadas
+            List<Object[]> results = exerciseExecutionRepository.findLastUsedLoadsByUserId(userId);
+
+            // Converter para mapa exercício -> última carga
+            Map<String, LoadEntry> loads = new HashMap<>();
+            for (Object[] row : results) {
+                String exerciseName = (String) row[0];
+                String actualLoad = (String) row[1];
+                Long executedAt = row[2] != null ? ((Number) row[2]).longValue() : null;
+
+                loads.put(exerciseName, new LoadEntry(actualLoad, executedAt));
+            }
+
+            LastUsedLoadsResponse response = new LastUsedLoadsResponse(loads);
+            return HttpResponse.ok(response);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return HttpResponse.serverError(Map.of(
+                "error", "Erro ao buscar últimas cargas: " + e.getMessage()
+            ));
+        }
     }
 }

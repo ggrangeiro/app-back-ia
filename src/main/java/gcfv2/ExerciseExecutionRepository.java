@@ -38,4 +38,23 @@ public interface ExerciseExecutionRepository extends CrudRepository<ExerciseExec
         LIMIT :limit
     """)
     List<Object[]> findLoadHistoryByUserIdAndExerciseName(Long userId, String exerciseName, int limit);
+
+    /**
+     * Busca a última carga utilizada para cada exercício de um usuário
+     * Retorna apenas a execução mais recente de cada exercício
+     */
+    @Query("""
+        SELECT ee.exercise_name, ee.actual_load, we.executed_at
+        FROM exercise_executions ee
+        INNER JOIN workout_executions we ON ee.workout_execution_id = we.id
+        INNER JOIN (
+            SELECT ee2.exercise_name, MAX(we2.executed_at) as max_executed_at
+            FROM exercise_executions ee2
+            INNER JOIN workout_executions we2 ON ee2.workout_execution_id = we2.id
+            WHERE we2.user_id = :userId
+            GROUP BY ee2.exercise_name
+        ) latest ON ee.exercise_name = latest.exercise_name AND we.executed_at = latest.max_executed_at
+        WHERE we.user_id = :userId
+    """)
+    List<Object[]> findLastUsedLoadsByUserId(Long userId);
 }
