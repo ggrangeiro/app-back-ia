@@ -206,17 +206,29 @@ public class LoadHistoryController {
                     .body(Map.of("error", "Você não tem permissão para acessar dados deste usuário"));
             }
 
-            // Buscar últimas cargas utilizadas
-            List<Object[]> results = exerciseExecutionRepository.findLastUsedLoadsByUserId(userId);
+            // Buscar todas as execuções do usuário (já ordenadas por data DESC)
+            List<ExerciseExecution> allExecutions = exerciseExecutionRepository.findAllByUserId(userId);
 
-            // Converter para mapa exercício -> última carga
+            // Processar para pegar apenas a última carga de cada exercício
+            // Como já está ordenado por executedAt DESC, o primeiro de cada exercício é o mais recente
             Map<String, LoadEntry> loads = new HashMap<>();
-            for (Object[] row : results) {
-                String exerciseName = (String) row[0];
-                String actualLoad = (String) row[1];
-                Long executedAt = row[2] != null ? ((Number) row[2]).longValue() : null;
 
-                loads.put(exerciseName, new LoadEntry(actualLoad, executedAt));
+            for (ExerciseExecution exec : allExecutions) {
+                String exerciseName = exec.getExerciseName();
+
+                // Só adiciona se ainda não existe (primeiro encontrado = mais recente)
+                if (!loads.containsKey(exerciseName) && exec.getActualLoad() != null && !exec.getActualLoad().isEmpty()) {
+                    // Buscar a data de execução do treino
+                    Long executedAt = null;
+                    if (exec.getWorkoutExecutionId() != null) {
+                        var workoutExec = workoutExecutionRepository.findById(exec.getWorkoutExecutionId());
+                        if (workoutExec.isPresent()) {
+                            executedAt = workoutExec.get().getExecutedAt();
+                        }
+                    }
+
+                    loads.put(exerciseName, new LoadEntry(exec.getActualLoad(), executedAt));
+                }
             }
 
             LastUsedLoadsResponse response = new LastUsedLoadsResponse(loads);
