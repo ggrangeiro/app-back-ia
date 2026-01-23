@@ -1,0 +1,37 @@
+micronaut:
+  server:
+    cors:
+      enabled: true
+      configurations:
+        web:
+          allowed-origins:
+            - "https://fitai-analyzer-732767853162.us-west1.run.app"
+          allowed-methods:
+            - GET
+            - POST
+            - PUT
+            - DELETE
+            - OPTIONS
+          allowed-headers:
+            - Content-Type
+            - Authorization
+            - Accept
+          max-age: 3600
+
+datasources:
+  default:
+    url: "jdbc:mysql:///exercicio-fit?cloudSqlInstance=gen-lang-client-0004040174:southamerica-east1:exercicio-fit&socketFactory=com.google.cloud.sql.mysql.SocketFactory"
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: root
+    password: "124578Ka@"
+    dialect: MYSQL
+    db-configs:
+      max-lifetime: 1800000 # 30 min
+      idle-timeout: 600000  # 10 min
+      connection-timeout: 30000
+    # Se estiver usando Cloud SQL, garanta o socketFactory
+
+flyway:
+  datasources:
+    default:
+      enabled: false
