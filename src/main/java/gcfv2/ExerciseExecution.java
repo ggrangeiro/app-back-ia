@@ -15,8 +15,8 @@ public class ExerciseExecution {
     @GeneratedValue(GeneratedValue.Type.AUTO)
     private Long id;
 
-    @MappedProperty("workout_execution_id")
-    private Long workoutExecutionId;
+    // @MappedProperty("workout_execution_id")
+    // private Long workoutExecutionId;
 
     @MappedProperty("exercise_name")
     private String exerciseName;
@@ -36,11 +36,10 @@ public class ExerciseExecution {
     @MappedProperty("created_at")
     private Instant createdAt;
 
-    // Relacionamento removido para evitar duplicidade de coluna com
-    // workoutExecutionId
-    // @Relation(Relation.Kind.MANY_TO_ONE)
-    // @JsonIgnore
-    // private WorkoutExecution workoutExecution;
+    // Relacionamento MANY_TO_ONE com WorkoutExecution
+    @Relation(Relation.Kind.MANY_TO_ONE)
+    @JsonIgnore
+    private WorkoutExecution workoutExecution;
 
     public ExerciseExecution() {
     }
@@ -55,12 +54,10 @@ public class ExerciseExecution {
     }
 
     public Long getWorkoutExecutionId() {
-        return workoutExecutionId;
+        return workoutExecution != null ? workoutExecution.getId() : null;
     }
 
-    public void setWorkoutExecutionId(Long workoutExecutionId) {
-        this.workoutExecutionId = workoutExecutionId;
-    }
+    // public void setWorkoutExecutionId(Long workoutExecutionId) { ... }
 
     public String getExerciseName() {
         return exerciseName;
@@ -110,13 +107,11 @@ public class ExerciseExecution {
         this.createdAt = createdAt;
     }
 
-    /*
-     * public WorkoutExecution getWorkoutExecution() {
-     * return workoutExecution;
-     * }
-     * 
-     * public void setWorkoutExecution(WorkoutExecution workoutExecution) {
-     * this.workoutExecution = workoutExecution;
-     * }
-     */
+    public WorkoutExecution getWorkoutExecution() {
+        return workoutExecution;
+    }
+
+    public void setWorkoutExecution(WorkoutExecution workoutExecution) {
+        this.workoutExecution = workoutExecution;
+    }
 }

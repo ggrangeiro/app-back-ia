@@ -42,7 +42,8 @@ public class WorkoutExecution {
     @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "workoutExecution")
     private List<ExerciseExecution> exercises = new ArrayList<>();
 
-    public WorkoutExecution() {}
+    public WorkoutExecution() {
+    }
 
     // Getters e Setters
     public Long getId() {

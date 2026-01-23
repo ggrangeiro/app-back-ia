@@ -25,12 +25,11 @@ public class WorkoutExecutionController {
 
     @Inject
     public WorkoutExecutionController(
-        WorkoutExecutionRepository workoutExecutionRepository,
-        ExerciseExecutionRepository exerciseExecutionRepository,
-        StructuredWorkoutPlanRepository workoutPlanRepository,
-        UsuarioRepository usuarioRepository,
-        PermissionService permissionService
-    ) {
+            WorkoutExecutionRepository workoutExecutionRepository,
+            ExerciseExecutionRepository exerciseExecutionRepository,
+            StructuredWorkoutPlanRepository workoutPlanRepository,
+            UsuarioRepository usuarioRepository,
+            PermissionService permissionService) {
         this.workoutExecutionRepository = workoutExecutionRepository;
         this.exerciseExecutionRepository = exerciseExecutionRepository;
         this.workoutPlanRepository = workoutPlanRepository;
@@ -45,23 +44,21 @@ public class WorkoutExecutionController {
     @Post
     @Transactional
     public HttpResponse<?> saveWorkoutExecution(
-        @Body WorkoutExecutionRequest request,
-        @QueryValue Long requesterId,
-        @QueryValue String requesterRole
-    ) {
+            @Body WorkoutExecutionRequest request,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
         try {
             // Validações básicas
             if (request.getUserId() == null || request.getWorkoutId() == null ||
-                request.getDayOfWeek() == null || request.getExecutedAt() == null) {
+                    request.getDayOfWeek() == null || request.getExecutedAt() == null) {
                 return HttpResponse.badRequest(Map.of(
-                    "error", "Campos obrigatórios faltando: userId, workoutId, dayOfWeek, executedAt"
-                ));
+                        "error", "Campos obrigatórios faltando: userId, workoutId, dayOfWeek, executedAt"));
             }
 
             // Validação de permissões
             if (!permissionService.canSaveWorkoutExecution(requesterId, requesterRole, request.getUserId())) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Você não tem permissão para salvar execuções para este usuário"));
+                        .body(Map.of("error", "Você não tem permissão para salvar execuções para este usuário"));
             }
 
             // Validação do usuário
@@ -78,8 +75,8 @@ public class WorkoutExecutionController {
             // Validação do dayOfWeek
             if (!permissionService.isValidDayOfWeek(request.getDayOfWeek())) {
                 return HttpResponse.badRequest(Map.of(
-                    "error", "dayOfWeek inválido. Use: monday, tuesday, wednesday, thursday, friday, saturday, sunday"
-                ));
+                        "error",
+                        "dayOfWeek inválido. Use: monday, tuesday, wednesday, thursday, friday, saturday, sunday"));
             }
 
             // Validação dos exercícios
@@ -103,14 +100,13 @@ public class WorkoutExecutionController {
             for (ExerciseExecutionRequest exerciseReq : request.getExercises()) {
                 // Validações do exercício
                 if (exerciseReq.getExerciseName() == null || exerciseReq.getOrder() == null ||
-                    exerciseReq.getSetsCompleted() == null) {
+                        exerciseReq.getSetsCompleted() == null) {
                     return HttpResponse.badRequest(Map.of(
-                        "error", "Cada exercício deve ter: exerciseName, order, setsCompleted"
-                    ));
+                            "error", "Cada exercício deve ter: exerciseName, order, setsCompleted"));
                 }
 
                 ExerciseExecution exerciseExec = new ExerciseExecution();
-                exerciseExec.setWorkoutExecutionId(savedExecution.getId());
+                exerciseExec.setWorkoutExecution(savedExecution);
                 exerciseExec.setExerciseName(exerciseReq.getExerciseName());
                 exerciseExec.setExerciseOrder(exerciseReq.getOrder());
                 exerciseExec.setSetsCompleted(exerciseReq.getSetsCompleted());
@@ -129,8 +125,7 @@ public class WorkoutExecutionController {
         } catch (Exception e) {
             e.printStackTrace();
             return HttpResponse.serverError(Map.of(
-                "error", "Erro ao salvar execução de treino: " + e.getMessage()
-            ));
+                    "error", "Erro ao salvar execução de treino: " + e.getMessage()));
         }
     }
 
@@ -140,20 +135,19 @@ public class WorkoutExecutionController {
      */
     @Get("/{userId}")
     public HttpResponse<?> listWorkoutExecutions(
-        @PathVariable Long userId,
-        @QueryValue Long requesterId,
-        @QueryValue String requesterRole,
-        @Nullable @QueryValue Long workoutId,
-        @Nullable @QueryValue Long startDate,
-        @Nullable @QueryValue Long endDate,
-        @Nullable @QueryValue Integer limit,
-        @Nullable @QueryValue Integer offset
-    ) {
+            @PathVariable Long userId,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole,
+            @Nullable @QueryValue Long workoutId,
+            @Nullable @QueryValue Long startDate,
+            @Nullable @QueryValue Long endDate,
+            @Nullable @QueryValue Integer limit,
+            @Nullable @QueryValue Integer offset) {
         try {
             // Validação de permissões
             if (!permissionService.canAccessUserData(requesterId, requesterRole, userId)) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Você não tem permissão para acessar dados deste usuário"));
+                        .body(Map.of("error", "Você não tem permissão para acessar dados deste usuário"));
             }
 
             // Buscar execuções
@@ -161,12 +155,12 @@ public class WorkoutExecutionController {
 
             if (workoutId != null) {
                 // Filtrar por workoutId
-                executions = workoutExecutionRepository.findByUserIdAndWorkoutIdOrderByExecutedAtDesc(userId, workoutId);
+                executions = workoutExecutionRepository.findByUserIdAndWorkoutIdOrderByExecutedAtDesc(userId,
+                        workoutId);
             } else if (startDate != null && endDate != null) {
                 // Filtrar por período
                 executions = workoutExecutionRepository.findByUserIdAndExecutedAtBetweenOrderByExecutedAtDesc(
-                    userId, startDate, endDate
-                );
+                        userId, startDate, endDate);
             } else {
                 // Todas as execuções
                 executions = workoutExecutionRepository.findByUserIdOrderByExecutedAtDesc(userId);
@@ -178,26 +172,24 @@ public class WorkoutExecutionController {
             int offsetValue = (offset != null && offset >= 0) ? offset : 0;
 
             List<WorkoutExecution> paginatedExecutions = executions.stream()
-                .skip(offsetValue)
-                .limit(limitValue)
-                .toList();
+                    .skip(offsetValue)
+                    .limit(limitValue)
+                    .toList();
 
             // Montar resposta com paginação
             Map<String, Object> response = new HashMap<>();
             response.put("executions", paginatedExecutions);
             response.put("pagination", Map.of(
-                "total", totalRecords,
-                "limit", limitValue,
-                "offset", offsetValue
-            ));
+                    "total", totalRecords,
+                    "limit", limitValue,
+                    "offset", offsetValue));
 
             return HttpResponse.ok(response);
 
         } catch (Exception e) {
             e.printStackTrace();
             return HttpResponse.serverError(Map.of(
-                "error", "Erro ao listar execuções: " + e.getMessage()
-            ));
+                    "error", "Erro ao listar execuções: " + e.getMessage()));
         }
     }
 
@@ -207,10 +199,9 @@ public class WorkoutExecutionController {
      */
     @Get("/detail/{executionId}")
     public HttpResponse<?> getWorkoutExecutionDetails(
-        @PathVariable Long executionId,
-        @QueryValue Long requesterId,
-        @QueryValue String requesterRole
-    ) {
+            @PathVariable Long executionId,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
         try {
             var executionOpt = workoutExecutionRepository.findById(executionId);
 
@@ -223,7 +214,7 @@ public class WorkoutExecutionController {
             // Validação de permissões
             if (!permissionService.canAccessUserData(requesterId, requesterRole, execution.getUserId())) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Você não tem permissão para acessar esta execução"));
+                        .body(Map.of("error", "Você não tem permissão para acessar esta execução"));
             }
 
             return HttpResponse.ok(execution);
@@ -231,8 +222,7 @@ public class WorkoutExecutionController {
         } catch (Exception e) {
             e.printStackTrace();
             return HttpResponse.serverError(Map.of(
-                "error", "Erro ao buscar execução: " + e.getMessage()
-            ));
+                    "error", "Erro ao buscar execução: " + e.getMessage()));
         }
     }
 }
