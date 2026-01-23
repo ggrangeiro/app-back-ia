@@ -51,25 +51,30 @@ public class CheckinController {
                 return HttpResponse.badRequest(Map.of("message", "O trainingId é obrigatório."));
             }
 
-            // Tenta encontrar em Treino V1
-            var treinoV1 = treinoRepository.findById(checkin.getTrainingId());
-            if (treinoV1.isPresent()) {
-                if (!treinoV1.get().getUserId().equals(checkin.getUserId())) {
-                    return HttpResponse.badRequest(Map.of("message", "O treino (V1) informado não pertence ao aluno."));
-                }
-                return saveCheckinInternal(checkin);
-            }
-
-            // Tenta encontrar em Treino V2 (Structured)
+            // Tenta encontrar em Treino V2 (Structured) primeiro - formato mais recente
             var treinoV2 = structuredWorkoutPlanRepository.findById(checkin.getTrainingId());
             if (treinoV2.isPresent()) {
                 Long ownerId = treinoV2.get().getUserId();
                 Long checkinUserId = Long.parseLong(checkin.getUserId());
 
-                if (!ownerId.equals(checkinUserId)) {
-                    return HttpResponse.badRequest(Map.of("message", "O treino (V2) informado não pertence ao aluno."));
+                if (ownerId.equals(checkinUserId)) {
+                    return saveCheckinInternal(checkin);
                 }
-                return saveCheckinInternal(checkin);
+                // Se não pertence ao usuário em V2, continua verificando V1
+            }
+
+            // Tenta encontrar em Treino V1
+            var treinoV1 = treinoRepository.findById(checkin.getTrainingId());
+            if (treinoV1.isPresent()) {
+                if (treinoV1.get().getUserId().equals(checkin.getUserId())) {
+                    return saveCheckinInternal(checkin);
+                }
+                // Se não pertence ao usuário em V1, continua para verificar se foi encontrado em algum lugar
+            }
+
+            // Se encontrou em alguma tabela mas não pertence ao usuário
+            if (treinoV2.isPresent() || treinoV1.isPresent()) {
+                return HttpResponse.badRequest(Map.of("message", "O treino informado não pertence ao aluno."));
             }
 
             return HttpResponse.badRequest(Map.of("message", "Treino (trainingId) não encontrado em base V1 nem V2."));
