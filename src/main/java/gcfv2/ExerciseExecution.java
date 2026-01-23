@@ -36,12 +36,14 @@ public class ExerciseExecution {
     @MappedProperty("created_at")
     private Instant createdAt;
 
-    // Relacionamento MANY_TO_ONE com WorkoutExecution
-    @Relation(Relation.Kind.MANY_TO_ONE)
-    @JsonIgnore
-    private WorkoutExecution workoutExecution;
+    // Relacionamento removido para evitar duplicidade de coluna com
+    // workoutExecutionId
+    // @Relation(Relation.Kind.MANY_TO_ONE)
+    // @JsonIgnore
+    // private WorkoutExecution workoutExecution;
 
-    public ExerciseExecution() {}
+    public ExerciseExecution() {
+    }
 
     // Getters e Setters
     public Long getId() {
@@ -108,11 +110,13 @@ public class ExerciseExecution {
         this.createdAt = createdAt;
     }
 
-    public WorkoutExecution getWorkoutExecution() {
-        return workoutExecution;
-    }
-
-    public void setWorkoutExecution(WorkoutExecution workoutExecution) {
-        this.workoutExecution = workoutExecution;
-    }
+    /*
+     * public WorkoutExecution getWorkoutExecution() {
+     * return workoutExecution;
+     * }
+     * 
+     * public void setWorkoutExecution(WorkoutExecution workoutExecution) {
+     * this.workoutExecution = workoutExecution;
+     * }
+     */
 }
