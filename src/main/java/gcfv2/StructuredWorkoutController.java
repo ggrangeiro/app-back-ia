@@ -1,5 +1,6 @@
 package gcfv2;
 
+import gcfv2.dto.CreateWorkoutRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
@@ -40,29 +41,43 @@ public class StructuredWorkoutController {
     @Post
     @Transactional
     public HttpResponse<?> createWorkout(
-        @Body StructuredWorkoutPlan workout,
+        @Body CreateWorkoutRequest request,
         @QueryValue Long requesterId,
         @QueryValue String requesterRole
     ) {
         try {
             // Validações básicas
-            if (workout.getUserId() == null || workout.getTitle() == null ||
-                workout.getDaysData() == null || workout.getDaysData().isEmpty()) {
+            if (request.getUserId() == null || request.getDaysData() == null ||
+                request.getDaysData().isEmpty()) {
                 return HttpResponse.badRequest(Map.of(
-                    "error", "Campos obrigatórios faltando: userId, title, daysData"
+                    "error", "Campos obrigatórios faltando: userId, daysData"
                 ));
             }
 
             // Validação de permissões
-            if (!permissionService.canAccessUserData(requesterId, requesterRole, workout.getUserId())) {
+            if (!permissionService.canAccessUserData(requesterId, requesterRole, request.getUserId())) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", "Você não tem permissão para criar treino para este usuário"));
             }
 
             // Validação do usuário
-            if (!usuarioRepository.existsById(workout.getUserId())) {
+            if (!usuarioRepository.existsById(request.getUserId())) {
                 return HttpResponse.notFound(Map.of("error", "Usuário não encontrado"));
             }
+
+            // Gerar título automaticamente baseado nos dados
+            String title = generateWorkoutTitle(
+                request.getGoal(),
+                request.getTrainingStyle(),
+                request.getLevel()
+            );
+
+            // Criar entidade StructuredWorkoutPlan
+            StructuredWorkoutPlan workout = new StructuredWorkoutPlan();
+            workout.setUserId(request.getUserId());
+            workout.setTitle(title);
+            workout.setDaysData(request.getDaysData());
+            workout.setLegacyHtml(request.getLegacyHtml());
 
             // Salvar treino
             StructuredWorkoutPlan savedWorkout = workoutPlanRepository.save(workout);
@@ -75,6 +90,35 @@ public class StructuredWorkoutController {
                 "error", "Erro ao criar treino: " + e.getMessage()
             ));
         }
+    }
+
+    /**
+     * Gera título do treino automaticamente
+     */
+    private String generateWorkoutTitle(String goal, String trainingStyle, String level) {
+        StringBuilder title = new StringBuilder("Treino ");
+
+        if (trainingStyle != null && !trainingStyle.isEmpty()) {
+            title.append(trainingStyle);
+        }
+
+        if (goal != null && !goal.isEmpty()) {
+            title.append(" - ").append(capitalize(goal));
+        }
+
+        if (level != null && !level.isEmpty()) {
+            title.append(" (").append(capitalize(level)).append(")");
+        }
+
+        return title.toString();
+    }
+
+    /**
+     * Capitaliza primeira letra
+     */
+    private String capitalize(String text) {
+        if (text == null || text.isEmpty()) return text;
+        return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
     }
 
     /**
