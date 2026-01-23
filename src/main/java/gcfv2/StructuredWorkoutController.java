@@ -41,43 +41,54 @@ public class StructuredWorkoutController {
     @Post
     @Transactional
     public HttpResponse<?> createWorkout(
-        @Body CreateWorkoutRequest request,
+        @Body Map<String, Object> requestBody,
         @QueryValue Long requesterId,
         @QueryValue String requesterRole
     ) {
         try {
+            // Extrair dados do Map
+            Object userIdObj = requestBody.get("userId");
+            String daysData = (String) requestBody.get("daysData");
+            String goal = (String) requestBody.get("goal");
+            String trainingStyle = (String) requestBody.get("trainingStyle");
+            String level = (String) requestBody.get("level");
+            String legacyHtml = (String) requestBody.get("legacyHtml");
+
+            // Converter userId para Long
+            Long userId = null;
+            if (userIdObj instanceof Number) {
+                userId = ((Number) userIdObj).longValue();
+            } else if (userIdObj instanceof String) {
+                userId = Long.parseLong((String) userIdObj);
+            }
+
             // Validações básicas
-            if (request.getUserId() == null || request.getDaysData() == null ||
-                request.getDaysData().isEmpty()) {
+            if (userId == null || daysData == null || daysData.isEmpty()) {
                 return HttpResponse.badRequest(Map.of(
                     "error", "Campos obrigatórios faltando: userId, daysData"
                 ));
             }
 
             // Validação de permissões
-            if (!permissionService.canAccessUserData(requesterId, requesterRole, request.getUserId())) {
+            if (!permissionService.canAccessUserData(requesterId, requesterRole, userId)) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", "Você não tem permissão para criar treino para este usuário"));
             }
 
             // Validação do usuário
-            if (!usuarioRepository.existsById(request.getUserId())) {
+            if (!usuarioRepository.existsById(userId)) {
                 return HttpResponse.notFound(Map.of("error", "Usuário não encontrado"));
             }
 
             // Gerar título automaticamente baseado nos dados
-            String title = generateWorkoutTitle(
-                request.getGoal(),
-                request.getTrainingStyle(),
-                request.getLevel()
-            );
+            String title = generateWorkoutTitle(goal, trainingStyle, level);
 
             // Criar entidade StructuredWorkoutPlan
             StructuredWorkoutPlan workout = new StructuredWorkoutPlan();
-            workout.setUserId(request.getUserId());
+            workout.setUserId(userId);
             workout.setTitle(title);
-            workout.setDaysData(request.getDaysData());
-            workout.setLegacyHtml(request.getLegacyHtml());
+            workout.setDaysData(daysData);
+            workout.setLegacyHtml(legacyHtml);
 
             // Salvar treino
             StructuredWorkoutPlan savedWorkout = workoutPlanRepository.save(workout);
