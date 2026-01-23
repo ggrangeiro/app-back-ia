@@ -1,0 +1,1 @@
+ALTER TABLE treinos ADD COLUMN days_data LONGTEXT;

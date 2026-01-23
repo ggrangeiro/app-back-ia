@@ -1,0 +1,1 @@
+ALTER TABLE usuario ADD COLUMN anamnesis JSON NULL;

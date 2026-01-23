@@ -1,0 +1,1 @@
+ALTER TABLE usuario ADD COLUMN access_level VARCHAR(20) DEFAULT 'FULL';

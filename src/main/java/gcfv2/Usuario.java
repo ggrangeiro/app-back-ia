@@ -1,63 +1,293 @@
 package gcfv2;
 
-import io.micronaut.core.annotation.Introspected;
-import io.micronaut.data.annotation.*;
-import io.micronaut.serde.annotation.Serdeable;
-import java.util.List;
-import java.util.ArrayList;
-import java.util.stream.Collectors;
+import io.micronaut.data.annotation.Id;
+import io.micronaut.data.annotation.GeneratedValue;
+import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
+import io.micronaut.data.annotation.Transient;
+import io.micronaut.serde.annotation.Serdeable; // IMPORTANTE: Adicione este import
 
 @Serdeable
-@Introspected
 @MappedEntity("usuario")
 public class Usuario {
 
     @Id
     @GeneratedValue(GeneratedValue.Type.AUTO)
     private Long id;
-    
-    @MappedProperty("nome") 
-    private String name;
-    
+
+    private String nome;
     private String email;
     private String senha;
-    private String role;
     private String avatar;
+    private String role;
+    private String telefone;
 
-    // IMPORTANTE: O nome desta variável deve bater com o @Join no Repository
-    @Relation(value = Relation.Kind.ONE_TO_MANY, mappedBy = "usuario")
-    private List<UsuarioExercicio> assignedExercisesList = new ArrayList<>();
+    @MappedProperty("personal_id")
+    private Long personalId;
 
-    public Usuario() {}
+    @MappedProperty("brand_logo")
+    private String brandLogo;
+
+    @MappedProperty("access_level")
+    private String accessLevel;
+
+    private Integer credits;
+
+    @MappedProperty("plan_type")
+    private String planType;
+
+    @MappedProperty("subscription_status")
+    private String subscriptionStatus;
+
+    @MappedProperty("subscription_end_date")
+    private java.time.LocalDateTime subscriptionEndDate;
+
+    @MappedProperty("credits_reset_date")
+    private java.time.LocalDateTime creditsResetDate;
+
+    @MappedProperty("generations_used_cycle")
+    private Integer generationsUsedCycle;
+
+    @MappedProperty("subscription_credits")
+    private Integer subscriptionCredits;
+
+    @MappedProperty("purchased_credits")
+    private Integer purchasedCredits;
+
+    @Transient
+    private Object latestWorkout;
+
+    @MappedProperty(converter = gcfv2.converter.AnamnesisConverter.class)
+    private gcfv2.dto.anamnese.AnamnesisDTO anamnesis;
+
+    @Transient
+    private java.util.List<String> assignedExercises;
+
+    // Getter/Setter for assignedExercises
+    public java.util.List<String> getAssignedExercises() {
+        return assignedExercises;
+    }
+
+    public void setAssignedExercises(java.util.List<String> assignedExercises) {
+        this.assignedExercises = assignedExercises;
+    }
+
+    // Construtor padrão vazio é obrigatório para o Micronaut
+    public Usuario() {
+    }
 
     // Getters e Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public String getNome() {
+        return nome;
+    }
 
-    public String getSenha() { return senha; }
-    public void setSenha(String senha) { this.senha = senha; }
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
 
-    public String getRole() { return role; }
-    public void setRole(String role) { this.role = role; }
+    public String getEmail() {
+        return email;
+    }
 
-    public String getAvatar() { return avatar; }
-    public void setAvatar(String avatar) { this.avatar = avatar; }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public List<UsuarioExercicio> getAssignedExercisesList() { return assignedExercisesList; }
-    public void setAssignedExercisesList(List<UsuarioExercicio> assignedExercisesList) { this.assignedExercisesList = assignedExercisesList; }
+    public String getSenha() {
+        return senha;
+    }
 
-    // Este método gera o campo "assignedExercises" no JSON para o React
+    public void setSenha(String senha) {
+        this.senha = senha;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getTelefone() {
+        return telefone;
+    }
+
+    public void setTelefone(String telefone) {
+        this.telefone = telefone;
+    }
+
+    public Long getPersonalId() {
+        return personalId;
+    }
+
+    public void setPersonalId(Long personalId) {
+        this.personalId = personalId;
+    }
+
+    public String getBrandLogo() {
+        return brandLogo;
+    }
+
+    public void setBrandLogo(String brandLogo) {
+        this.brandLogo = brandLogo;
+    }
+
+    public String getAccessLevel() {
+        return accessLevel;
+    }
+
+    public void setAccessLevel(String accessLevel) {
+        this.accessLevel = accessLevel;
+    }
+
+    public Integer getCredits() {
+        return credits;
+    }
+
+    public void setCredits(Integer credits) {
+        this.credits = credits;
+    }
+
+    public Object getLatestWorkout() {
+        return latestWorkout;
+    }
+
+    public void setLatestWorkout(Object latestWorkout) {
+        this.latestWorkout = latestWorkout;
+    }
+
+    public String getPlanType() {
+        return planType;
+    }
+
+    public void setPlanType(String planType) {
+        this.planType = planType;
+    }
+
+    public String getSubscriptionStatus() {
+        return subscriptionStatus;
+    }
+
+    public void setSubscriptionStatus(String subscriptionStatus) {
+        this.subscriptionStatus = subscriptionStatus;
+    }
+
+    public java.time.LocalDateTime getSubscriptionEndDate() {
+        return subscriptionEndDate;
+    }
+
+    public void setSubscriptionEndDate(java.time.LocalDateTime subscriptionEndDate) {
+        this.subscriptionEndDate = subscriptionEndDate;
+    }
+
+    public java.time.LocalDateTime getCreditsResetDate() {
+        return creditsResetDate;
+    }
+
+    public void setCreditsResetDate(java.time.LocalDateTime creditsResetDate) {
+        this.creditsResetDate = creditsResetDate;
+    }
+
+    public Integer getGenerationsUsedCycle() {
+        return generationsUsedCycle;
+    }
+
+    public void setGenerationsUsedCycle(Integer generationsUsedCycle) {
+        this.generationsUsedCycle = generationsUsedCycle;
+    }
+
+    public Integer getSubscriptionCredits() {
+        return subscriptionCredits;
+    }
+
+    public void setSubscriptionCredits(Integer subscriptionCredits) {
+        this.subscriptionCredits = subscriptionCredits;
+    }
+
+    public Integer getPurchasedCredits() {
+        return purchasedCredits;
+    }
+
+    public void setPurchasedCredits(Integer purchasedCredits) {
+        this.purchasedCredits = purchasedCredits;
+    }
+
+    /**
+     * Calcula o total de créditos (retrocompatibilidade)
+     */
     @Transient
-    public List<String> getAssignedExercises() {
-        if (assignedExercisesList == null) return new ArrayList<>();
-        return assignedExercisesList.stream()
-                                    .map(UsuarioExercicio::getExercicio)
-                                    .collect(Collectors.toList());
+    public Integer getTotalCredits() {
+        int sub = subscriptionCredits != null ? subscriptionCredits : 0;
+        int pur = purchasedCredits != null ? purchasedCredits : 0;
+        return sub + pur;
+    }
+
+    public gcfv2.dto.anamnese.AnamnesisDTO getAnamnesis() {
+        return anamnesis;
+    }
+
+    public void setAnamnesis(gcfv2.dto.anamnese.AnamnesisDTO anamnesis) {
+        this.anamnesis = anamnesis;
+    }
+
+    @MappedProperty("methodology")
+    private String methodology;
+
+    @MappedProperty("communication_style")
+    private String communicationStyle;
+
+    public String getMethodology() {
+        return methodology;
+    }
+
+    public void setMethodology(String methodology) {
+        this.methodology = methodology;
+    }
+
+    public String getCommunicationStyle() {
+        return communicationStyle;
+    }
+
+    public void setCommunicationStyle(String communicationStyle) {
+        this.communicationStyle = communicationStyle;
+    }
+
+    @MappedProperty("manager_id")
+    private Long managerId;
+
+    public Long getManagerId() {
+        return managerId;
+    }
+
+    public void setManagerId(Long managerId) {
+        this.managerId = managerId;
+    }
+
+    @MappedProperty("weekly_goal")
+    private Integer weeklyGoal = 5;
+
+    public Integer getWeeklyGoal() {
+        return weeklyGoal != null ? weeklyGoal : 5;
+    }
+
+    public void setWeeklyGoal(Integer weeklyGoal) {
+        this.weeklyGoal = weeklyGoal;
     }
 }

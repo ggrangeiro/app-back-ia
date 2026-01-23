@@ -1,0 +1,224 @@
+package gcfv2;
+
+import io.micronaut.http.HttpResponse;
+import io.micronaut.http.HttpStatus;
+import io.micronaut.http.annotation.*;
+import io.micronaut.http.server.cors.CrossOrigin;
+import io.micronaut.http.HttpMethod;
+import io.micronaut.transaction.annotation.Transactional;
+import jakarta.inject.Inject;
+import java.util.Map;
+import java.util.List;
+
+/**
+ * Controller for Structured Training Plans (V2 API)
+ * 
+ * NEW endpoints at /api/v2/treinos/ - does NOT affect existing /api/treinos/
+ * routes.
+ * 
+ * This controller handles JSON-structured training data instead of HTML
+ * content.
+ */
+@Controller("/api/v2/treinos")
+@CrossOrigin(allowedOrigins = {
+        "https://fitai-analyzer-732767853162.us-west1.run.app",
+        "https://analisa-exercicio-732767853162.southamerica-east1.run.app",
+        "https://fitanalizer.com.br",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://app-back-ia-732767853162.southamerica-east1.run.app"
+}, allowedMethods = {
+        HttpMethod.GET,
+        HttpMethod.POST,
+        HttpMethod.DELETE,
+        HttpMethod.OPTIONS
+})
+public class StructuredTreinoController {
+
+    @Inject
+    private StructuredTreinoRepository structuredTreinoRepository;
+
+    @Inject
+    private UsuarioRepository usuarioRepository;
+
+    @Inject
+    private EmailService emailService;
+
+    @Inject
+    private ActivityLogService activityLogService;
+
+    /**
+     * CREATE - Save a new structured training plan
+     * 
+     * POST /api/v2/treinos/
+     * 
+     * Request Body: StructuredTreino JSON
+     * Query Params: requesterId, requesterRole
+     */
+    @Post("/")
+    @Transactional
+    public HttpResponse<?> salvar(@Body StructuredTreino treino,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+        try {
+            // Permission check
+            if (!usuarioRepository.hasPermission(requesterId, requesterRole, treino.getUserId())) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Acesso negado. Você não tem vínculo com este aluno."));
+            }
+
+            // Plan type check (same logic as V1)
+            Long targetUserId = Long.parseLong(treino.getUserId());
+            var userOpt = usuarioRepository.findById(targetUserId);
+            String targetUserName = null;
+            if (userOpt.isPresent()) {
+                var user = userOpt.get();
+                targetUserName = user.getNome();
+
+                // Check Access Level (Leitura vs Escrita)
+                if ("USER".equalsIgnoreCase(requesterRole) && "READONLY".equalsIgnoreCase(user.getAccessLevel())) {
+                    return HttpResponse.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message",
+                                    "Seu plano atual não permite gerar treinos. Solicite ao seu Personal."));
+                }
+
+                String planTypeToCheck = user.getPlanType() != null ? user.getPlanType() : "FREE";
+                boolean isPrivileged = "PERSONAL".equalsIgnoreCase(requesterRole)
+                        || "ADMIN".equalsIgnoreCase(requesterRole)
+                        || "PROFESSOR".equalsIgnoreCase(requesterRole);
+
+                if (isPrivileged && !requesterId.equals(targetUserId)) {
+                    var requesterOpt = usuarioRepository.findById(requesterId);
+                    if (requesterOpt.isPresent()) {
+                        planTypeToCheck = requesterOpt.get().getPlanType() != null
+                                ? requesterOpt.get().getPlanType()
+                                : "FREE";
+                    }
+                }
+
+                // Planos: Verificação de créditos é feita pelo consume-credit no frontend
+                // FREE: 5 créditos por geração
+                // STARTER: 4 créditos por geração
+                // PRO: 3 créditos por geração
+                // STUDIO: 2 créditos por geração
+            }
+
+            // Save structured training
+            StructuredTreino salvo = structuredTreinoRepository.save(treino);
+
+            // Increment generation counter
+            usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(treino.getUserId()));
+
+            // Log de atividade para professor
+            activityLogService.logActivity(
+                    requesterId,
+                    requesterRole,
+                    "WORKOUT_GENERATED",
+                    targetUserId,
+                    targetUserName,
+                    "TRAINING",
+                    salvo.getId());
+
+            // Enviar e-mail de notificação
+            try {
+                var userOptEmail = usuarioRepository.findById(Long.parseLong(treino.getUserId()));
+                if (userOptEmail.isPresent()) {
+                    var user = userOptEmail.get();
+                    String subject = (treino.getGoal() != null && !treino.getGoal().isEmpty()) ? treino.getGoal()
+                            : "Treino Estruturado";
+                    emailService.sendWorkoutGeneratedEmail(user.getEmail(), user.getNome(), subject);
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao enviar email de treino estruturado: " + e.getMessage());
+            }
+
+            return HttpResponse.created(salvo);
+        } catch (Exception e) {
+            return HttpResponse.serverError(Map.of("message", "Erro ao salvar treino estruturado: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * READ - List all structured trainings for a user
+     * 
+     * GET /api/v2/treinos/{userId}
+     * 
+     * Query Params: requesterId, requesterRole
+     */
+    @Get("/{userId}")
+    public HttpResponse<?> listar(@PathVariable String userId,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+        if (!usuarioRepository.hasPermission(requesterId, requesterRole, userId)) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Acesso negado."));
+        }
+
+        List<StructuredTreino> treinos = structuredTreinoRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        return HttpResponse.ok(treinos);
+    }
+
+    /**
+     * DELETE - Remove a structured training
+     * 
+     * DELETE /api/v2/treinos/{id}
+     * 
+     * Query Params: requesterId, requesterRole
+     */
+    @Delete("/{id}")
+    @Transactional
+    public HttpResponse<?> excluir(
+            @PathVariable Long id,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+
+        return structuredTreinoRepository.findById(id).map(treino -> {
+            if (!usuarioRepository.hasPermission(requesterId, requesterRole, treino.getUserId())) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Acesso negado. Você não pode excluir este treino."));
+            }
+
+            structuredTreinoRepository.delete(treino);
+            return HttpResponse.ok(Map.of("message", "Treino estruturado excluído com sucesso."));
+
+        }).orElse(HttpResponse.notFound(Map.of("message", "Treino estruturado não encontrado.")));
+    }
+
+    /**
+     * UPDATE - Update an existing structured training
+     * Useful for saving progress, feedback, or load updates.
+     * 
+     * PUT /api/v2/treinos/{id}
+     */
+    @Put("/{id}")
+    @Transactional
+    public HttpResponse<?> atualizar(
+            @PathVariable Long id,
+            @Body StructuredTreino atualizacao,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+
+        return structuredTreinoRepository.findById(id).map(treino -> {
+            // Permission Check
+            boolean isOwner = treino.getUserId().equals(requesterId.toString());
+            boolean hasPermission = usuarioRepository.hasPermission(requesterId, requesterRole, treino.getUserId());
+
+            if (!isOwner && !hasPermission) {
+                return HttpResponse.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "Acesso negado."));
+            }
+
+            // Update fields
+            if (atualizacao.getDaysData() != null) {
+                treino.setDaysData(atualizacao.getDaysData());
+            }
+            if (atualizacao.getObservations() != null) {
+                treino.setObservations(atualizacao.getObservations());
+            }
+            // Add other fields as necessary
+
+            structuredTreinoRepository.update(treino);
+            return HttpResponse.ok(treino);
+
+        }).orElse(HttpResponse.notFound(Map.of("message", "Treino não encontrado.")));
+    }
+}
