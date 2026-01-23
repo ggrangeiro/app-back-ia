@@ -16,7 +16,7 @@ import java.util.Map;
  * Permite criar, listar, buscar e deletar treinos com estrutura JSON
  */
 @Controller("/api/v2/treinos")
-@CrossOrigin("https://fitai-analyzer-732767853162.us-west1.run.app")
+@CrossOrigin
 public class StructuredWorkoutController {
 
     private final StructuredWorkoutPlanRepository workoutPlanRepository;

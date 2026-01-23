@@ -16,6 +16,8 @@ micronaut:
             - "https://fitai-analyzer-732767853162.us-west1.run.app"
             - "https://analisa-exercicio-732767853162.southamerica-east1.run.app"
             - "https://app-back-ia-732767853162.southamerica-east1.run.app"
+            - "https://fitanalizer.com.br"
+            - "https://www.fitanalizer.com.br"
           allowed-methods:
             - GET
             - POST

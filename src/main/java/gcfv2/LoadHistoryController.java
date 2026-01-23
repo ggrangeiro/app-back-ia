@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 @Controller("/api/v2/exercises")
-@CrossOrigin("https://fitai-analyzer-732767853162.us-west1.run.app")
+@CrossOrigin
 public class LoadHistoryController {
 
     private final ExerciseExecutionRepository exerciseExecutionRepository;
