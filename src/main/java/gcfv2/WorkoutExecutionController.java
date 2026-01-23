@@ -20,6 +20,7 @@ public class WorkoutExecutionController {
     private final WorkoutExecutionRepository workoutExecutionRepository;
     private final ExerciseExecutionRepository exerciseExecutionRepository;
     private final StructuredWorkoutPlanRepository workoutPlanRepository;
+    private final TreinoRepository treinoRepository; // CORRECTED: Use TreinoRepository
     private final UsuarioRepository usuarioRepository;
     private final PermissionService permissionService;
 
@@ -28,11 +29,13 @@ public class WorkoutExecutionController {
             WorkoutExecutionRepository workoutExecutionRepository,
             ExerciseExecutionRepository exerciseExecutionRepository,
             StructuredWorkoutPlanRepository workoutPlanRepository,
+            TreinoRepository treinoRepository, // CORRECTED
             UsuarioRepository usuarioRepository,
             PermissionService permissionService) {
         this.workoutExecutionRepository = workoutExecutionRepository;
         this.exerciseExecutionRepository = exerciseExecutionRepository;
         this.workoutPlanRepository = workoutPlanRepository;
+        this.treinoRepository = treinoRepository;
         this.usuarioRepository = usuarioRepository;
         this.permissionService = permissionService;
     }
@@ -66,10 +69,16 @@ public class WorkoutExecutionController {
                 return HttpResponse.notFound(Map.of("error", "Usuário não encontrado"));
             }
 
-            // Validação do treino
-            var workoutOpt = workoutPlanRepository.findByIdAndDeletedAtIsNull(request.getWorkoutId());
-            if (workoutOpt.isEmpty()) {
-                return HttpResponse.notFound(Map.of("error", "Treino não encontrado"));
+            // Validação do treino (Dual-Check: V2 Plans OR Legacy Treinos)
+            boolean existsV2 = workoutPlanRepository.existsById(request.getWorkoutId());
+            boolean existsLegacy = false;
+
+            if (!existsV2) {
+                existsLegacy = treinoRepository.existsById(request.getWorkoutId());
+            }
+
+            if (!existsV2 && !existsLegacy) {
+                return HttpResponse.notFound(Map.of("error", "Treino não encontrado (nem V2 nem Legado)"));
             }
 
             // Validação do dayOfWeek
