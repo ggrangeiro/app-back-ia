@@ -31,6 +31,9 @@ public class CheckinController {
     @Inject
     private TreinoRepository treinoRepository;
 
+    @Inject
+    private StructuredWorkoutPlanRepository structuredWorkoutPlanRepository;
+
     @Post("/")
     public HttpResponse<?> salvar(@Body Checkin checkin,
             @QueryValue Long requesterId,
@@ -48,30 +51,48 @@ public class CheckinController {
                 return HttpResponse.badRequest(Map.of("message", "O trainingId é obrigatório."));
             }
 
-            return treinoRepository.findById(checkin.getTrainingId()).map(treino -> {
-                // Valida se o treino pertence ao usuário
-                if (!treino.getUserId().equals(checkin.getUserId())) {
-                    return HttpResponse.badRequest(Map.of("message", "O treino informado não pertence ao aluno."));
+            // Tenta encontrar em Treino V1
+            var treinoV1 = treinoRepository.findById(checkin.getTrainingId());
+            if (treinoV1.isPresent()) {
+                if (!treinoV1.get().getUserId().equals(checkin.getUserId())) {
+                    return HttpResponse.badRequest(Map.of("message", "O treino (V1) informado não pertence ao aluno."));
                 }
+                return saveCheckinInternal(checkin);
+            }
 
-                // Garante status completed se não enviado
-                if (checkin.getStatus() == null || checkin.getStatus().isEmpty()) {
-                    checkin.setStatus("completed");
+            // Tenta encontrar em Treino V2 (Structured)
+            var treinoV2 = structuredWorkoutPlanRepository.findById(checkin.getTrainingId());
+            if (treinoV2.isPresent()) {
+                Long ownerId = treinoV2.get().getUserId();
+                Long checkinUserId = Long.parseLong(checkin.getUserId());
+
+                if (!ownerId.equals(checkinUserId)) {
+                    return HttpResponse.badRequest(Map.of("message", "O treino (V2) informado não pertence ao aluno."));
                 }
+                return saveCheckinInternal(checkin);
+            }
 
-                // Garante timestamp se não enviado
-                if (checkin.getTimestamp() == null || checkin.getTimestamp() == 0) {
-                    checkin.setTimestamp(System.currentTimeMillis());
-                }
-
-                Checkin salvo = checkinRepository.save(checkin);
-                return HttpResponse.created(salvo);
-
-            }).orElse(HttpResponse.badRequest(Map.of("message", "Treino (trainingId) não encontrado.")));
+            return HttpResponse.badRequest(Map.of("message", "Treino (trainingId) não encontrado em base V1 nem V2."));
 
         } catch (Exception e) {
             return HttpResponse.serverError(Map.of("message", "Erro ao salvar check-in: " + e.getMessage()));
         }
+    }
+
+    private HttpResponse<?> saveCheckinInternal(Checkin checkin) {
+        // Garante status completed se não enviado
+        if (checkin.getStatus() == null || checkin.getStatus().isEmpty()) {
+            checkin.getStatus();
+            checkin.setStatus("completed");
+        }
+
+        // Garante timestamp se não enviado
+        if (checkin.getTimestamp() == null || checkin.getTimestamp() == 0) {
+            checkin.setTimestamp(System.currentTimeMillis());
+        }
+
+        Checkin salvo = checkinRepository.save(checkin);
+        return HttpResponse.created(salvo);
     }
 
     @Get("/{userId}")
