@@ -69,7 +69,8 @@ public class CheckinController {
                 if (treinoV1.get().getUserId().equals(checkin.getUserId())) {
                     return saveCheckinInternal(checkin);
                 }
-                // Se não pertence ao usuário em V1, continua para verificar se foi encontrado em algum lugar
+                // Se não pertence ao usuário em V1, continua para verificar se foi encontrado
+                // em algum lugar
             }
 
             // Se encontrou em alguma tabela mas não pertence ao usuário
@@ -110,7 +111,40 @@ public class CheckinController {
             }
 
             List<Checkin> checkins = checkinRepository.findByUserId(userId);
-            return HttpResponse.ok(checkins);
+
+            // Mapear para DTO com nome do treino
+            List<gcfv2.dto.checkin.CheckinResponse> responseList = new java.util.ArrayList<>();
+
+            for (Checkin c : checkins) {
+                gcfv2.dto.checkin.CheckinResponse resp = new gcfv2.dto.checkin.CheckinResponse();
+                // Copiar propriedades
+                resp.setId(c.getId());
+                resp.setUserId(c.getUserId());
+                resp.setTrainingId(c.getTrainingId());
+                resp.setData(c.getData());
+                resp.setStatus(c.getStatus());
+                resp.setComment(c.getComment());
+                resp.setFeedback(c.getFeedback());
+                resp.setTimestamp(c.getTimestamp());
+
+                // Resolver nome do treino
+                String workoutName = "Treino Removido ou Não Encontrado";
+                if (c.getTrainingId() != null) {
+                    var v2 = structuredWorkoutPlanRepository.findById(c.getTrainingId());
+                    if (v2.isPresent()) {
+                        workoutName = v2.get().getTitle();
+                    } else {
+                        var v1 = treinoRepository.findById(c.getTrainingId());
+                        if (v1.isPresent()) {
+                            workoutName = v1.get().getGoal(); // V1 usa goal como 'nome' muitas vezes ou type
+                        }
+                    }
+                }
+                resp.setWorkoutName(workoutName);
+                responseList.add(resp);
+            }
+
+            return HttpResponse.ok(responseList);
 
         } catch (Exception e) {
             return HttpResponse.serverError(Map.of("message", "Erro ao listar check-ins: " + e.getMessage()));
@@ -209,6 +243,23 @@ public class CheckinController {
                     detail.setId(checkin.getId() != null ? checkin.getId().toString() : null);
                     detail.setTimestamp(checkin.getTimestamp());
                     detail.setComment(checkin.getComment());
+                    detail.setFeedback(checkin.getFeedback()); // Set Feedback
+
+                    // Resolver Workout Name para Week View
+                    String workoutName = "Treino";
+                    if (checkin.getTrainingId() != null) {
+                        var v2 = structuredWorkoutPlanRepository.findById(checkin.getTrainingId());
+                        if (v2.isPresent()) {
+                            workoutName = v2.get().getTitle();
+                        } else {
+                            var v1 = treinoRepository.findById(checkin.getTrainingId());
+                            if (v1.isPresent()) {
+                                workoutName = v1.get().getGoal();
+                            }
+                        }
+                    }
+                    detail.setWorkoutName(workoutName);
+
                     dayCheckIn.setCheckIn(detail);
                 } else {
                     dayCheckIn.setCheckIn(null);
