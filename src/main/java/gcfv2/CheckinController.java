@@ -110,7 +110,7 @@ public class CheckinController {
                 return HttpResponse.status(HttpStatus.FORBIDDEN).body(Map.of("message", "Acesso negado."));
             }
 
-            List<Checkin> checkins = checkinRepository.findByUserId(userId);
+            List<Checkin> checkins = checkinRepository.findByUserIdOrderByTimestampDesc(userId);
 
             // Mapear para DTO com nome do treino
             List<gcfv2.dto.checkin.CheckinResponse> responseList = new java.util.ArrayList<>();

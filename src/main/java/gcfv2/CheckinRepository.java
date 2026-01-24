@@ -9,6 +9,8 @@ import java.util.List;
 public interface CheckinRepository extends CrudRepository<Checkin, Long> {
     List<Checkin> findByUserId(String userId);
 
+    List<Checkin> findByUserIdOrderByTimestampDesc(String userId);
+
     List<Checkin> findByUserIdAndTimestampBetween(String userId, Long start, Long end);
 
     void deleteByUserId(String userId);
