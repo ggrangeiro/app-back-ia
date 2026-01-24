@@ -23,6 +23,7 @@ public class Checkin {
     private String data;
     private String status;
     private String comment;
+    private String feedback;
     private Long timestamp;
 
     public Checkin() {
@@ -74,6 +75,14 @@ public class Checkin {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public String getFeedback() {
+        return feedback;
+    }
+
+    public void setFeedback(String feedback) {
+        this.feedback = feedback;
     }
 
     public Long getTimestamp() {

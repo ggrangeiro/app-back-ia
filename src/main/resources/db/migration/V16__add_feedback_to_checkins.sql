@@ -1,0 +1,1 @@
+ALTER TABLE checkins ADD COLUMN feedback VARCHAR(255);
