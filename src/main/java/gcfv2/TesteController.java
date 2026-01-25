@@ -708,8 +708,14 @@ public class TesteController {
         if ("ADMIN".equalsIgnoreCase(requesterRole))
             return HttpResponse.ok(usuarioRepository.findAll());
 
-        if ("PERSONAL".equalsIgnoreCase(requesterRole))
-            return HttpResponse.ok(usuarioRepository.findByPersonalId(requesterId));
+        if ("PERSONAL".equalsIgnoreCase(requesterRole)) {
+            List<Usuario> usuarios = new ArrayList<>();
+            // 1. Buscar alunos diretos
+            usuarios.addAll(usuarioRepository.findByPersonalId(requesterId));
+            // 2. Buscar professores da equipe (que têm manager_id = requesterId)
+            usuarios.addAll(usuarioRepository.findProfessorsByManagerId(requesterId));
+            return HttpResponse.ok(usuarios);
+        }
 
         if ("PROFESSOR".equalsIgnoreCase(requesterRole)) {
             // Professor vê todos os alunos do ecossistema do seu Personal
