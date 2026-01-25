@@ -13,5 +13,10 @@ public interface CheckinRepository extends CrudRepository<Checkin, Long> {
 
     List<Checkin> findByUserIdAndTimestampBetween(String userId, Long start, Long end);
 
+    // [NEW] Methods for Insights
+    List<Checkin> findByUserIdIn(List<String> userIds);
+
+    List<Checkin> findByUserIdInAndTimestampBetween(List<String> userIds, Long start, Long end);
+
     void deleteByUserId(String userId);
 }
