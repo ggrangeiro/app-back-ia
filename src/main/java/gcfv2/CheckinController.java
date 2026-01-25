@@ -85,6 +85,9 @@ public class CheckinController {
         }
     }
 
+    @Inject
+    private NotificationService notificationService;
+
     private HttpResponse<?> saveCheckinInternal(Checkin checkin) {
         // Garante status completed se não enviado
         if (checkin.getStatus() == null || checkin.getStatus().isEmpty()) {
@@ -98,6 +101,16 @@ public class CheckinController {
         }
 
         Checkin salvo = checkinRepository.save(checkin);
+
+        // --- NOTIFICAÇÃO ---
+        try {
+            Long studentId = Long.parseLong(checkin.getUserId());
+            notificationService.createNotification(studentId, "CHECKIN", "Novo check-in realizado.");
+        } catch (Exception e) {
+            // Log erro mas não falha o request
+            System.out.println("Erro ao criar notificação de checkin: " + e.getMessage());
+        }
+
         return HttpResponse.created(salvo);
     }
 

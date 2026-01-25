@@ -45,6 +45,9 @@ public class FotoEvolucaoController {
     @Inject
     private UploadService uploadService;
 
+    @Inject
+    private NotificationService notificationService;
+
     /**
      * Upload de foto de evolução
      * 
@@ -108,6 +111,14 @@ public class FotoEvolucaoController {
             FotoEvolucao saved = fotoEvolucaoRepository.save(foto);
 
             LOG.info("Foto de evolução salva: userId={}, category={}, photoDate={}", id, normalizedCategory, photoDate);
+
+            // --- NOTIFICAÇÃO ---
+            try {
+                // Notificar o personal do aluno (id = aluno)
+                notificationService.createNotification(id, "PHOTO", "Nova foto de evolução enviada.");
+            } catch (Exception e) {
+                LOG.error("Erro ao criar notificação de foto: {}", e.getMessage());
+            }
 
             return HttpResponse.created(Map.of(
                     "success", true,
