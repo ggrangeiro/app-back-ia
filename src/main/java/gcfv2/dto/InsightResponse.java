@@ -10,13 +10,24 @@ public class InsightResponse {
     private Map<Integer, Long> hourDistribution;
     private List<TopWorkoutDTO> topWorkouts;
     private List<TopStudentDTO> topStudents;
+    private FeedbackSummary feedbackSummary;
+    private List<FeedbackDetailDTO> feedbackDetails;
 
     public InsightResponse(Map<String, Long> dayDistribution, Map<Integer, Long> hourDistribution,
-            List<TopWorkoutDTO> topWorkouts, List<TopStudentDTO> topStudents) {
+            List<TopWorkoutDTO> topWorkouts, List<TopStudentDTO> topStudents,
+            FeedbackSummary feedbackSummary, List<FeedbackDetailDTO> feedbackDetails) {
         this.dayDistribution = dayDistribution;
         this.hourDistribution = hourDistribution;
         this.topWorkouts = topWorkouts;
         this.topStudents = topStudents;
+        this.feedbackSummary = feedbackSummary;
+        this.feedbackDetails = feedbackDetails;
+    }
+
+    // Existing constructor for compatibility
+    public InsightResponse(Map<String, Long> dayDistribution, Map<Integer, Long> hourDistribution,
+            List<TopWorkoutDTO> topWorkouts, List<TopStudentDTO> topStudents) {
+        this(dayDistribution, hourDistribution, topWorkouts, topStudents, null, null);
     }
 
     public Map<String, Long> getDayDistribution() {
@@ -49,6 +60,22 @@ public class InsightResponse {
 
     public void setTopStudents(List<TopStudentDTO> topStudents) {
         this.topStudents = topStudents;
+    }
+
+    public FeedbackSummary getFeedbackSummary() {
+        return feedbackSummary;
+    }
+
+    public void setFeedbackSummary(FeedbackSummary feedbackSummary) {
+        this.feedbackSummary = feedbackSummary;
+    }
+
+    public List<FeedbackDetailDTO> getFeedbackDetails() {
+        return feedbackDetails;
+    }
+
+    public void setFeedbackDetails(List<FeedbackDetailDTO> feedbackDetails) {
+        this.feedbackDetails = feedbackDetails;
     }
 
     @Serdeable
@@ -122,6 +149,88 @@ public class InsightResponse {
 
         public void setCheckinCount(Long checkinCount) {
             this.checkinCount = checkinCount;
+        }
+    }
+
+    @Serdeable
+    public static class FeedbackSummary {
+        private PeriodStats week;
+        private PeriodStats month;
+        private PeriodStats year;
+
+        public FeedbackSummary(PeriodStats week, PeriodStats month, PeriodStats year) {
+            this.week = week;
+            this.month = month;
+            this.year = year;
+        }
+
+        public PeriodStats getWeek() {
+            return week;
+        }
+
+        public PeriodStats getMonth() {
+            return month;
+        }
+
+        public PeriodStats getYear() {
+            return year;
+        }
+    }
+
+    @Serdeable
+    public static class PeriodStats {
+        private long likes;
+        private long dislikes;
+
+        public PeriodStats(long likes, long dislikes) {
+            this.likes = likes;
+            this.dislikes = dislikes;
+        }
+
+        public long getLikes() {
+            return likes;
+        }
+
+        public long getDislikes() {
+            return dislikes;
+        }
+    }
+
+    @Serdeable
+    public static class FeedbackDetailDTO {
+        private String studentName;
+        private String workoutName;
+        private String professorName;
+        private String feedbackType;
+        private Long timestamp;
+
+        public FeedbackDetailDTO(String studentName, String workoutName, String professorName, String feedbackType,
+                Long timestamp) {
+            this.studentName = studentName;
+            this.workoutName = workoutName;
+            this.professorName = professorName;
+            this.feedbackType = feedbackType;
+            this.timestamp = timestamp;
+        }
+
+        public String getStudentName() {
+            return studentName;
+        }
+
+        public String getWorkoutName() {
+            return workoutName;
+        }
+
+        public String getProfessorName() {
+            return professorName;
+        }
+
+        public String getFeedbackType() {
+            return feedbackType;
+        }
+
+        public Long getTimestamp() {
+            return timestamp;
         }
     }
 }
