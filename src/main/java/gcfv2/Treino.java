@@ -25,12 +25,24 @@ public class Treino {
     @MappedProperty("days_data")
     private String daysData;
 
+    // Dados do formulário para refazer treino (JSON string)
+    @MappedProperty("form_data")
+    private String formData;
+
     public String getDaysData() {
         return daysData;
     }
 
     public void setDaysData(String daysData) {
         this.daysData = daysData;
+    }
+
+    public String getFormData() {
+        return formData;
+    }
+
+    public void setFormData(String formData) {
+        this.formData = formData;
     }
 
     public Long getId() {

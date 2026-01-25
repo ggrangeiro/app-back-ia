@@ -158,6 +158,9 @@ public class TreinoController {
             if (atualizacao.getContent() != null) {
                 treino.setContent(atualizacao.getContent());
             }
+            if (atualizacao.getFormData() != null) {
+                treino.setFormData(atualizacao.getFormData());
+            }
 
             treinoRepository.update(treino);
             return HttpResponse.ok(treino);

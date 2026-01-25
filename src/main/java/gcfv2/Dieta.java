@@ -3,6 +3,7 @@ package gcfv2;
 import io.micronaut.data.annotation.GeneratedValue;
 import io.micronaut.data.annotation.Id;
 import io.micronaut.data.annotation.MappedEntity;
+import io.micronaut.data.annotation.MappedProperty;
 import io.micronaut.data.annotation.DateCreated;
 import io.micronaut.serde.annotation.Serdeable;
 import java.time.LocalDateTime;
@@ -22,6 +23,10 @@ public class Dieta {
     @DateCreated
     private LocalDateTime createdAt;
 
+    // Dados do formulário para refazer dieta (JSON string)
+    @MappedProperty("form_data")
+    private String formData;
+
     // Getters e Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -33,4 +38,6 @@ public class Dieta {
     public void setGoal(String goal) { this.goal = goal; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public String getFormData() { return formData; }
+    public void setFormData(String formData) { this.formData = formData; }
 }
