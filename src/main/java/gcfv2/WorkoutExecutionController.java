@@ -23,6 +23,7 @@ public class WorkoutExecutionController {
     private final TreinoRepository treinoRepository; // CORRECTED: Use TreinoRepository
     private final UsuarioRepository usuarioRepository;
     private final PermissionService permissionService;
+    private final NotificationService notificationService;
 
     @Inject
     public WorkoutExecutionController(
@@ -31,13 +32,15 @@ public class WorkoutExecutionController {
             StructuredWorkoutPlanRepository workoutPlanRepository,
             TreinoRepository treinoRepository, // CORRECTED
             UsuarioRepository usuarioRepository,
-            PermissionService permissionService) {
+            PermissionService permissionService,
+            NotificationService notificationService) {
         this.workoutExecutionRepository = workoutExecutionRepository;
         this.exerciseExecutionRepository = exerciseExecutionRepository;
         this.workoutPlanRepository = workoutPlanRepository;
         this.treinoRepository = treinoRepository;
         this.usuarioRepository = usuarioRepository;
         this.permissionService = permissionService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -128,6 +131,16 @@ public class WorkoutExecutionController {
 
             // Montar resposta
             savedExecution.setExercises(exerciseExecutions);
+
+            // --- NOTIFICAÇÃO ---
+            try {
+                notificationService.createNotification(
+                        request.getUserId(),
+                        "WORKOUT_FINISHED",
+                        "Treino finalizado com sucesso!");
+            } catch (Exception e) {
+                System.out.println("Erro ao criar notificação de treino finalizado: " + e.getMessage());
+            }
 
             return HttpResponse.status(HttpStatus.CREATED).body(savedExecution);
 
