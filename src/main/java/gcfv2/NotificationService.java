@@ -20,19 +20,36 @@ public class NotificationService {
             return;
 
         var student = studentOpt.get();
-        if (student.getPersonalId() == null)
+        Long personalId = student.getPersonalId();
+
+        if (personalId == null)
             return; // Se não tem personal, ninguém recebe
 
-        // 2. Criar notificação para o Personal
-        Notification note = new Notification(
-                student.getPersonalId(),
+        String studentName = student.getNome() != null ? student.getNome() : "Aluno";
+        long timestamp = System.currentTimeMillis();
+
+        // 2. Criar notificação para o Personal (Manager)
+        Notification notePersonal = new Notification(
+                personalId,
                 studentId,
-                student.getNome() != null ? student.getNome() : "Aluno",
+                studentName,
                 type,
                 message,
-                System.currentTimeMillis());
+                timestamp);
+        notificationRepository.save(notePersonal);
 
-        notificationRepository.save(note);
+        // 3. Criar notificação para TODOS os professores da equipe deste Personal
+        List<Usuario> professors = usuarioRepository.findProfessorsByManagerId(personalId);
+        for (Usuario prof : professors) {
+            Notification noteProf = new Notification(
+                    prof.getId(),
+                    studentId,
+                    studentName,
+                    type,
+                    message,
+                    timestamp);
+            notificationRepository.save(noteProf);
+        }
     }
 
     public List<Notification> listForRecipient(Long recipientId) {
