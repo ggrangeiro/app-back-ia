@@ -88,10 +88,12 @@ public class CheckinController {
     @Inject
     private NotificationService notificationService;
 
+    @Inject
+    private gcfv2.gamification.GamificationService gamificationService;
+
     private HttpResponse<?> saveCheckinInternal(Checkin checkin) {
         // Garante status completed se não enviado
         if (checkin.getStatus() == null || checkin.getStatus().isEmpty()) {
-            checkin.getStatus();
             checkin.setStatus("completed");
         }
 
@@ -101,14 +103,24 @@ public class CheckinController {
         }
 
         Checkin salvo = checkinRepository.save(checkin);
+        List<gcfv2.gamification.Achievement> newBadges = java.util.Collections.emptyList();
 
-        // --- NOTIFICAÇÃO ---
+        // --- NOTIFICAÇÃO & GAMIFICATION ---
         try {
             Long studentId = Long.parseLong(checkin.getUserId());
             notificationService.createNotification(studentId, "CHECKIN", "Novo check-in realizado.");
+
+            // Check for new achievements
+            newBadges = gamificationService.checkAndUnlockAchievements(checkin.getUserId());
+
         } catch (Exception e) {
             // Log erro mas não falha o request
-            System.out.println("Erro ao criar notificação de checkin: " + e.getMessage());
+            System.out.println("Erro ao processar pós-checkin (Notificação/Gamificação): " + e.getMessage());
+        }
+
+        // Return Map with checkin and badges if any
+        if (!newBadges.isEmpty()) {
+            return HttpResponse.created(Map.of("checkin", salvo, "newBadges", newBadges));
         }
 
         return HttpResponse.created(salvo);
