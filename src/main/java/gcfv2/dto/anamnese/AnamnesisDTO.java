@@ -8,6 +8,10 @@ import java.util.List;
 public class AnamnesisDTO {
 
     private String updatedAt;
+
+    // Texto bruto extraído de documento via IA (opcional)
+    private String extractedDocumentText;
+
     private PersonalInfo personal;
     private MarketingInfo marketing;
     private PhysicalInfo physical;
@@ -25,6 +29,14 @@ public class AnamnesisDTO {
 
     public void setUpdatedAt(String updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getExtractedDocumentText() {
+        return extractedDocumentText;
+    }
+
+    public void setExtractedDocumentText(String extractedDocumentText) {
+        this.extractedDocumentText = extractedDocumentText;
     }
 
     public PersonalInfo getPersonal() {
@@ -108,6 +120,7 @@ public class AnamnesisDTO {
         private LocationInfo location;
         private String maritalStatus;
         private String profession;
+        private String gender; // Masculino ou Feminino
 
         // Getters/Setters
         public String getFullName() {
@@ -164,6 +177,14 @@ public class AnamnesisDTO {
 
         public void setProfession(String profession) {
             this.profession = profession;
+        }
+
+        public String getGender() {
+            return gender;
+        }
+
+        public void setGender(String gender) {
+            this.gender = gender;
         }
     }
 
