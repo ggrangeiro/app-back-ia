@@ -66,4 +66,32 @@ public class NotificationService {
     public void deleteAllForRecipient(Long recipientId) {
         notificationRepository.deleteByRecipientId(recipientId);
     }
+
+    /**
+     * Criar notificação para um ALUNO quando um Personal/Professor fizer algo para
+     * ele.
+     * Usado para: geração de dieta, treino, análise corporal, etc.
+     *
+     * @param studentId  - ID do aluno que vai receber a notificação
+     * @param senderId   - ID do personal/professor que fez a ação
+     * @param senderName - Nome do personal/professor
+     * @param type       - Tipo: DIET_GENERATED, WORKOUT_GENERATED, BODY_ANALYSIS
+     * @param message    - Mensagem da notificação
+     */
+    public void createNotificationForStudent(Long studentId, Long senderId, String senderName, String type,
+            String message) {
+        long timestamp = System.currentTimeMillis();
+
+        // Criar notificação onde recipientId = aluno
+        // studentId e studentName serão usados para guardar info do sender (quem
+        // criou)
+        Notification notification = new Notification(
+                studentId, // recipientId = aluno recebe
+                senderId, // studentId usado como senderId (quem fez a ação)
+                senderName, // studentName usado como senderName
+                type,
+                message,
+                timestamp);
+        notificationRepository.save(notification);
+    }
 }

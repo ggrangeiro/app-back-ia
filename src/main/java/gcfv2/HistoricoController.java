@@ -28,6 +28,9 @@ public class HistoricoController {
     private ActivityLogService activityLogService;
 
     @Inject
+    private NotificationService notificationService;
+
+    @Inject
     public HistoricoController(HistoricoRepository historicoRepository, UsuarioRepository usuarioRepository,
             EmailService emailService) {
         this.historicoRepository = historicoRepository;
@@ -91,17 +94,49 @@ public class HistoricoController {
                     "ANALYSIS",
                     salvo.getId());
 
-            // Enviar e-mail de notificação de análise
-            try {
-                var userOptEmail = usuarioRepository.findById(Long.parseLong(historico.getUserId()));
-                if (userOptEmail.isPresent()) {
-                    var user = userOptEmail.get();
-                    String exerciseName = historico.getExercise();
-                    int score = historico.getScore() != null ? historico.getScore() : 0;
-                    emailService.sendAnalysisGeneratedEmail(user.getEmail(), user.getNome(), exerciseName, score);
+            // Enviar e-mail e notificação in-app APENAS se não foi o próprio aluno que criou
+            if (!requesterId.equals(targetUserId)) {
+                // Enviar e-mail de notificação de análise
+                try {
+                    var userOptEmail = usuarioRepository.findById(Long.parseLong(historico.getUserId()));
+                    if (userOptEmail.isPresent()) {
+                        var user = userOptEmail.get();
+                        String exerciseName = historico.getExercise();
+                        int score = historico.getScore() != null ? historico.getScore() : 0;
+                        emailService.sendAnalysisGeneratedEmail(user.getEmail(), user.getNome(), exerciseName, score);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erro ao enviar email de análise: " + e.getMessage());
                 }
-            } catch (Exception e) {
-                System.err.println("Erro ao enviar email de análise: " + e.getMessage());
+
+                // Notificação in-app para o aluno
+                try {
+                    var requesterOpt = usuarioRepository.findById(requesterId);
+                    String senderName = requesterOpt.map(u -> u.getNome()).orElse("Seu Personal");
+                    String exerciseName = historico.getExercise();
+
+                    // Determinar tipo de notificação baseado no exercício
+                    String notificationType = "ANALYSIS_PERFORMED";
+                    String message = senderName + " fez uma análise para você!";
+
+                    if (exerciseName != null) {
+                        String lowerExercise = exerciseName.toLowerCase();
+                        if (lowerExercise.contains("composição") || lowerExercise.contains("corporal")
+                            || lowerExercise.contains("biotipo") || lowerExercise.contains("gordura")) {
+                            notificationType = "BODY_ANALYSIS";
+                            message = senderName + " fez uma análise corporal para você!";
+                        }
+                    }
+
+                    notificationService.createNotificationForStudent(
+                            targetUserId,
+                            requesterId,
+                            senderName,
+                            notificationType,
+                            message);
+                } catch (Exception e) {
+                    System.err.println("Erro ao criar notificação de análise: " + e.getMessage());
+                }
             }
 
             return HttpResponse.created(salvo);

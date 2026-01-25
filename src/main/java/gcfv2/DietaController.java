@@ -36,6 +36,9 @@ public class DietaController {
     @Inject
     private ActivityLogService activityLogService;
 
+    @Inject
+    private NotificationService notificationService;
+
     @Post("/")
     @Transactional
     public HttpResponse<?> salvar(@Body Dieta dieta,
@@ -99,7 +102,7 @@ public class DietaController {
                     "DIET",
                     salva.getId());
 
-            // Enviar e-mail de notificação APENAS se não foi o próprio aluno que criou
+            // Enviar e-mail e notificação in-app APENAS se não foi o próprio aluno que criou
             if (!requesterId.equals(Long.parseLong(dieta.getUserId()))) {
                 try {
                     var userOptEmail = usuarioRepository.findById(Long.parseLong(dieta.getUserId()));
@@ -111,6 +114,20 @@ public class DietaController {
                     }
                 } catch (Exception e) {
                     System.err.println("Erro ao enviar email de dieta: " + e.getMessage());
+                }
+
+                // Notificação in-app para o aluno
+                try {
+                    var requesterOpt = usuarioRepository.findById(requesterId);
+                    String senderName = requesterOpt.map(u -> u.getNome()).orElse("Seu Personal");
+                    notificationService.createNotificationForStudent(
+                            targetUserId,
+                            requesterId,
+                            senderName,
+                            "DIET_GENERATED",
+                            senderName + " criou uma nova dieta para você!");
+                } catch (Exception e) {
+                    System.err.println("Erro ao criar notificação de dieta: " + e.getMessage());
                 }
             }
 

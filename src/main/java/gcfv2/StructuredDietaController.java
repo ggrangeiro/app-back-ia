@@ -43,6 +43,9 @@ public class StructuredDietaController {
     @Inject
     private EmailService emailService;
 
+    @Inject
+    private NotificationService notificationService;
+
     /**
      * CREATE - Save a new structured diet plan
      * 
@@ -102,7 +105,7 @@ public class StructuredDietaController {
             // Increment generation counter
             usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(dieta.getUserId()));
 
-            // Enviar e-mail de notificação APENAS se não foi o próprio aluno que criou
+            // Enviar e-mail e notificação in-app APENAS se não foi o próprio aluno que criou
             if (!requesterId.equals(Long.parseLong(dieta.getUserId()))) {
                 try {
                     var userOptEmail = usuarioRepository.findById(Long.parseLong(dieta.getUserId()));
@@ -114,6 +117,20 @@ public class StructuredDietaController {
                     }
                 } catch (Exception e) {
                     System.err.println("Erro ao enviar email de dieta estruturada: " + e.getMessage());
+                }
+
+                // Notificação in-app para o aluno
+                try {
+                    var requesterOpt = usuarioRepository.findById(requesterId);
+                    String senderName = requesterOpt.map(u -> u.getNome()).orElse("Seu Personal");
+                    notificationService.createNotificationForStudent(
+                            targetUserId,
+                            requesterId,
+                            senderName,
+                            "DIET_GENERATED",
+                            senderName + " criou uma nova dieta para você!");
+                } catch (Exception e) {
+                    System.err.println("Erro ao criar notificação de dieta estruturada: " + e.getMessage());
                 }
             }
 

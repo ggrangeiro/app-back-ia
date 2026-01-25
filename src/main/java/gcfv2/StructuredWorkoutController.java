@@ -22,16 +22,19 @@ public class StructuredWorkoutController {
     private final StructuredWorkoutPlanRepository workoutPlanRepository;
     private final UsuarioRepository usuarioRepository;
     private final PermissionService permissionService;
+    private final NotificationService notificationService;
 
     @Inject
     public StructuredWorkoutController(
         StructuredWorkoutPlanRepository workoutPlanRepository,
         UsuarioRepository usuarioRepository,
-        PermissionService permissionService
+        PermissionService permissionService,
+        NotificationService notificationService
     ) {
         this.workoutPlanRepository = workoutPlanRepository;
         this.usuarioRepository = usuarioRepository;
         this.permissionService = permissionService;
+        this.notificationService = notificationService;
     }
 
     /**
@@ -92,6 +95,22 @@ public class StructuredWorkoutController {
 
             // Salvar treino
             StructuredWorkoutPlan savedWorkout = workoutPlanRepository.save(workout);
+
+            // Notificação in-app para o aluno (se não foi criado pelo próprio aluno)
+            if (!requesterId.equals(userId)) {
+                try {
+                    var requesterOpt = usuarioRepository.findById(requesterId);
+                    String senderName = requesterOpt.map(u -> u.getNome()).orElse("Seu Personal");
+                    notificationService.createNotificationForStudent(
+                            userId,
+                            requesterId,
+                            senderName,
+                            "WORKOUT_GENERATED",
+                            senderName + " criou um novo treino para você!");
+                } catch (Exception e) {
+                    System.err.println("Erro ao criar notificação de treino V2: " + e.getMessage());
+                }
+            }
 
             return HttpResponse.status(HttpStatus.CREATED).body(savedWorkout);
 

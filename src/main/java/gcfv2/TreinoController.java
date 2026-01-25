@@ -24,6 +24,9 @@ public class TreinoController {
     @Inject
     private ActivityLogService activityLogService;
 
+    @Inject
+    private NotificationService notificationService;
+
     @Post("/")
     @Transactional
     public HttpResponse<?> salvar(@Body Treino treino,
@@ -87,7 +90,7 @@ public class TreinoController {
                     "TRAINING",
                     salvo.getId());
 
-            // Enviar e-mail de notificação APENAS se não foi o próprio aluno que criou
+            // Enviar e-mail e notificação in-app APENAS se não foi o próprio aluno que criou
             if (!requesterId.equals(Long.parseLong(treino.getUserId()))) {
                 try {
                     var userOptEmail = usuarioRepository.findById(Long.parseLong(treino.getUserId()));
@@ -100,6 +103,20 @@ public class TreinoController {
                 } catch (Exception e) {
                     // Log and continue, don't fail the request because email failed
                     System.err.println("Erro ao enviar email de treino: " + e.getMessage());
+                }
+
+                // Notificação in-app para o aluno
+                try {
+                    var requesterOpt = usuarioRepository.findById(requesterId);
+                    String senderName = requesterOpt.map(u -> u.getNome()).orElse("Seu Personal");
+                    notificationService.createNotificationForStudent(
+                            targetUserId,
+                            requesterId,
+                            senderName,
+                            "WORKOUT_GENERATED",
+                            senderName + " criou um novo treino para você!");
+                } catch (Exception e) {
+                    System.err.println("Erro ao criar notificação de treino: " + e.getMessage());
                 }
             }
 
