@@ -102,17 +102,19 @@ public class StructuredDietaController {
             // Increment generation counter
             usuarioRepository.incrementGenerationsUsedCycle(Long.parseLong(dieta.getUserId()));
 
-            // Enviar e-mail de notificação
-            try {
-                var userOptEmail = usuarioRepository.findById(Long.parseLong(dieta.getUserId()));
-                if (userOptEmail.isPresent()) {
-                    var user = userOptEmail.get();
-                    String goal = (dieta.getGoal() != null && !dieta.getGoal().isEmpty()) ? dieta.getGoal()
-                            : "Dieta Estruturada";
-                    emailService.sendDietGeneratedEmail(user.getEmail(), user.getNome(), goal);
+            // Enviar e-mail de notificação APENAS se não foi o próprio aluno que criou
+            if (!requesterId.equals(Long.parseLong(dieta.getUserId()))) {
+                try {
+                    var userOptEmail = usuarioRepository.findById(Long.parseLong(dieta.getUserId()));
+                    if (userOptEmail.isPresent()) {
+                        var user = userOptEmail.get();
+                        String goal = (dieta.getGoal() != null && !dieta.getGoal().isEmpty()) ? dieta.getGoal()
+                                : "Dieta Estruturada";
+                        emailService.sendDietGeneratedEmail(user.getEmail(), user.getNome(), goal);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Erro ao enviar email de dieta estruturada: " + e.getMessage());
                 }
-            } catch (Exception e) {
-                System.err.println("Erro ao enviar email de dieta estruturada: " + e.getMessage());
             }
 
             return HttpResponse.created(salva);

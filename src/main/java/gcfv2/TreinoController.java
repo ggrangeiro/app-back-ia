@@ -87,18 +87,20 @@ public class TreinoController {
                     "TRAINING",
                     salvo.getId());
 
-            // Enviar e-mail de notificação (assíncrono/fire-and-forget logicamente)
-            try {
-                var userOptEmail = usuarioRepository.findById(Long.parseLong(treino.getUserId()));
-                if (userOptEmail.isPresent()) {
-                    var user = userOptEmail.get();
-                    String subject = (treino.getGoal() != null && !treino.getGoal().isEmpty()) ? treino.getGoal()
-                            : "Treino Personalizado";
-                    emailService.sendWorkoutGeneratedEmail(user.getEmail(), user.getNome(), subject);
+            // Enviar e-mail de notificação APENAS se não foi o próprio aluno que criou
+            if (!requesterId.equals(Long.parseLong(treino.getUserId()))) {
+                try {
+                    var userOptEmail = usuarioRepository.findById(Long.parseLong(treino.getUserId()));
+                    if (userOptEmail.isPresent()) {
+                        var user = userOptEmail.get();
+                        String subject = (treino.getGoal() != null && !treino.getGoal().isEmpty()) ? treino.getGoal()
+                                : "Treino Personalizado";
+                        emailService.sendWorkoutGeneratedEmail(user.getEmail(), user.getNome(), subject);
+                    }
+                } catch (Exception e) {
+                    // Log and continue, don't fail the request because email failed
+                    System.err.println("Erro ao enviar email de treino: " + e.getMessage());
                 }
-            } catch (Exception e) {
-                // Log and continue, don't fail the request because email failed
-                System.err.println("Erro ao enviar email de treino: " + e.getMessage());
             }
 
             return HttpResponse.created(salvo);
