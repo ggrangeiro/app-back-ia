@@ -29,7 +29,8 @@ micronaut:
 
 datasources:
   default:
-    url: "jdbc:mysql:///exercicio-fit?cloudSqlInstance=gen-lang-client-0004040174:us-west1:banco-fit&socketFactory=com.google.cloud.sql.mysql.SocketFactory"    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: "jdbc:mysql:///exercicio-fit?cloudSqlInstance=gen-lang-client-0004040174:us-west1:banco-fit&socketFactory=com.google.cloud.sql.mysql.SocketFactory"
+    driver-class-name: com.mysql.cj.jdbc.Driver
     username: root
     password: "124578Ka@"
     dialect: MYSQL
