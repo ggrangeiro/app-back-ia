@@ -35,8 +35,14 @@ public interface WorkoutExecutionRepository extends CrudRepository<WorkoutExecut
 
     /**
      * Conta quantas execuções um usuário tem e que foram marcadas como "liked".
+     * NOTA: Para contagem de dias únicos, use findByUserIdAndLikedTrue e filtre no código.
      */
     long countByUserIdAndLikedTrue(Long userId);
+
+    /**
+     * Busca todas as execuções com like de um usuário (para cálculo de dias únicos)
+     */
+    List<WorkoutExecution> findByUserIdAndLikedTrue(Long userId);
 
     /**
      * Busca uma execução específica com seus exercícios

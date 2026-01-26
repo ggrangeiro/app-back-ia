@@ -180,10 +180,25 @@ public class GamificationService {
     private boolean checkWorkoutLikeCount(String userId, int threshold) {
         try {
             Long uid = Long.parseLong(userId);
-            long count = workoutExecutionRepository.countByUserIdAndLikedTrue(uid);
-            System.out.println("[GAMIFICATION] Checking likes for user " + userId + ". Count: " + count
-                    + ", Threshold: " + threshold);
-            return count >= threshold;
+
+            // Buscar todas as execuções com like
+            List<gcfv2.WorkoutExecution> likedExecutions = workoutExecutionRepository.findByUserIdAndLikedTrue(uid);
+
+            // Contar apenas DIAS ÚNICOS com like (máximo 1 like por dia)
+            long uniqueDaysWithLike = likedExecutions.stream()
+                    .filter(e -> e.getExecutedAt() != null)
+                    .map(e -> Instant.ofEpochMilli(e.getExecutedAt())
+                            .atZone(ZoneId.of("America/Sao_Paulo"))
+                            .toLocalDate())
+                    .distinct()
+                    .count();
+
+            System.out.println("[GAMIFICATION] Checking likes for user " + userId +
+                    ". Total likes: " + likedExecutions.size() +
+                    ", Unique days with like: " + uniqueDaysWithLike +
+                    ", Threshold: " + threshold);
+
+            return uniqueDaysWithLike >= threshold;
         } catch (NumberFormatException e) {
             e.printStackTrace();
             return false;
