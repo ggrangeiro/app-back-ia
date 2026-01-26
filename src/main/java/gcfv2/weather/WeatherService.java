@@ -51,10 +51,18 @@ public class WeatherService {
         // Try to get key from DB first
         String apiKey = envApiKey;
         try {
-            java.util.Optional<gcfv2.AppConfig> configOpt = appConfigRepository.findByConfigKey("GEMINI_API_KEY");
+            // First try specific WEATHER_API_KEY
+            java.util.Optional<gcfv2.AppConfig> configOpt = appConfigRepository.findByConfigKey("WEATHER_API_KEY");
             if (configOpt.isPresent()) {
                 apiKey = configOpt.get().getConfigValue();
-                System.out.println("[WeatherService] Loaded API Key from DB.");
+                System.out.println("[WeatherService] Loaded WEATHER_API_KEY from DB.");
+            } else {
+                // Fallback to Gemini key if Weather key not found
+                configOpt = appConfigRepository.findByConfigKey("GEMINI_API_KEY");
+                if (configOpt.isPresent()) {
+                    apiKey = configOpt.get().getConfigValue();
+                    System.out.println("[WeatherService] Loaded GEMINI_API_KEY from DB (Fallback).");
+                }
             }
         } catch (Exception e) {
             System.out.println("[WeatherService] Failed to load key from DB: " + e.getMessage());
