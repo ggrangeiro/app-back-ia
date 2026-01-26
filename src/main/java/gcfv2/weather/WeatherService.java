@@ -20,9 +20,12 @@ public class WeatherService {
     @Inject
     private ObjectMapper objectMapper;
 
+    @Inject
+    private gcfv2.AppConfigRepository appConfigRepository;
+
     // Uses the same API key as Gemini (Google Cloud API key)
     @Value("${gemini.api-key:}")
-    private String apiKey;
+    private String envApiKey;
 
     /**
      * Weather condition types that indicate rain.
@@ -45,8 +48,20 @@ public class WeatherService {
             return null;
         }
 
+        // Try to get key from DB first
+        String apiKey = envApiKey;
+        try {
+            java.util.Optional<gcfv2.AppConfig> configOpt = appConfigRepository.findByConfigKey("GEMINI_API_KEY");
+            if (configOpt.isPresent()) {
+                apiKey = configOpt.get().getConfigValue();
+                System.out.println("[WeatherService] Loaded API Key from DB.");
+            }
+        } catch (Exception e) {
+            System.out.println("[WeatherService] Failed to load key from DB: " + e.getMessage());
+        }
+
         if (apiKey == null || apiKey.isEmpty()) {
-            System.out.println("[WeatherService] API key not configured. Skipping weather check.");
+            System.out.println("[WeatherService] API key not configured (DB or Env). Skipping weather check.");
             return null;
         }
 
