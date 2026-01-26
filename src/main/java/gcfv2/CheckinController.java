@@ -234,8 +234,9 @@ public class CheckinController {
             java.time.LocalDate endDate = startDate.plusDays(6); // Domingo
 
             // Converter para timestamps (início do dia e fim do dia)
-            long startTimestamp = startDate.atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli();
-            long endTimestamp = endDate.atTime(23, 59, 59).atZone(java.time.ZoneId.systemDefault()).toInstant()
+            long startTimestamp = startDate.atStartOfDay(java.time.ZoneId.of("America/Sao_Paulo")).toInstant()
+                    .toEpochMilli();
+            long endTimestamp = endDate.atTime(23, 59, 59).atZone(java.time.ZoneId.of("America/Sao_Paulo")).toInstant()
                     .toEpochMilli();
 
             // Buscar check-ins da semana
@@ -247,7 +248,7 @@ public class CheckinController {
             for (Checkin c : weekCheckins) {
                 if (c.getTimestamp() != null) {
                     java.time.LocalDate date = java.time.Instant.ofEpochMilli(c.getTimestamp())
-                            .atZone(java.time.ZoneId.systemDefault())
+                            .atZone(java.time.ZoneId.of("America/Sao_Paulo"))
                             .toLocalDate();
                     String dateStr = date.toString();
                     // Guardar apenas o primeiro check-in do dia
@@ -376,7 +377,7 @@ public class CheckinController {
             for (Checkin c : allCheckins) {
                 if (c.getTimestamp() != null) {
                     java.time.LocalDate date = java.time.Instant.ofEpochMilli(c.getTimestamp())
-                            .atZone(java.time.ZoneId.systemDefault())
+                            .atZone(java.time.ZoneId.of("America/Sao_Paulo"))
                             .toLocalDate();
                     checkInDates.add(date);
                 }
