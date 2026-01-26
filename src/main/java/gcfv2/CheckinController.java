@@ -106,7 +106,8 @@ public class CheckinController {
         }
 
         // --- WEATHER CHECK ---
-        // If location is provided, check weather conditions for weather-based achievements
+        // If location is provided, check weather conditions for weather-based
+        // achievements
         boolean isRaining = false;
         if (checkin.getLatitude() != null && checkin.getLongitude() != null) {
             try {
@@ -223,7 +224,7 @@ public class CheckinController {
                 java.time.LocalDate today = java.time.LocalDate.now();
                 startDate = today.with(java.time.DayOfWeek.MONDAY);
             } else {
-                startDate = java.time.LocalDate.parse(weekStart);
+                startDate = java.time.LocalDate.parse(weekStart).with(java.time.DayOfWeek.MONDAY);
             }
             java.time.LocalDate endDate = startDate.plusDays(6); // Domingo
 
