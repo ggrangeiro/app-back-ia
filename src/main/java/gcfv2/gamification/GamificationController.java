@@ -6,6 +6,8 @@ import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Get;
 import io.micronaut.http.annotation.PathVariable;
 import io.micronaut.http.annotation.Post;
+import io.micronaut.http.server.cors.CrossOrigin;
+import io.micronaut.http.HttpMethod;
 import jakarta.inject.Inject;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,6 +16,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Controller("/api/gamification")
+@CrossOrigin(allowedOrigins = { "https://fitai-analyzer-732767853162.us-west1.run.app",
+        "https://analisa-exercicio-732767853162.southamerica-east1.run.app",
+        "https://fitanalizer.com.br",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://app-back-ia-732767853162.southamerica-east1.run.app" }, allowedMethods = {
+                HttpMethod.GET,
+                HttpMethod.POST,
+                HttpMethod.OPTIONS
+        })
 public class GamificationController {
 
     @Inject
@@ -55,8 +67,10 @@ public class GamificationController {
     }
 
     /**
-     * Backfill: Verifica e desbloqueia achievements para TODOS os usuários existentes.
-     * Útil para rodar uma vez após criar novos achievements ou para usuários antigos.
+     * Backfill: Verifica e desbloqueia achievements para TODOS os usuários
+     * existentes.
+     * Útil para rodar uma vez após criar novos achievements ou para usuários
+     * antigos.
      * Apenas ADMIN pode executar.
      */
     @Post("/backfill")
@@ -75,7 +89,8 @@ public class GamificationController {
                 userResult.put("userId", user.getId());
                 userResult.put("userName", user.getNome());
                 userResult.put("unlockedCount", unlocked.size());
-                userResult.put("achievements", unlocked.stream().map(Achievement::getName).collect(Collectors.toList()));
+                userResult.put("achievements",
+                        unlocked.stream().map(Achievement::getName).collect(Collectors.toList()));
                 userResults.add(userResult);
                 totalUnlocked += unlocked.size();
             }
