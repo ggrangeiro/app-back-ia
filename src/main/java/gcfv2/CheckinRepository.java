@@ -19,4 +19,7 @@ public interface CheckinRepository extends CrudRepository<Checkin, Long> {
     List<Checkin> findByUserIdInAndTimestampBetween(List<String> userIds, Long start, Long end);
 
     void deleteByUserId(String userId);
+
+    // [NEW] Find checkins with valid location
+    List<Checkin> findByUserIdAndLatitudeIsNotNullAndLongitudeIsNotNull(String userId);
 }

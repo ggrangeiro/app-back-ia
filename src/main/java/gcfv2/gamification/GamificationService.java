@@ -73,6 +73,14 @@ public class GamificationService {
                 case "WORKOUT_LIKE_COUNT":
                     unlocked = checkWorkoutLikeCount(userId, achievement.getCriteriaThreshold());
                     break;
+                case "UNIQUE_LOCATIONS":
+                    // Gym Nomad: check unique locations
+                    unlocked = checkUniqueLocations(userId, achievement.getCriteriaThreshold());
+                    break;
+                case "DISTANCE_TRAVELLED":
+                    // Traveler: check distance from previous check-in with location
+                    unlocked = checkDistanceTravelled(userId, achievement.getCriteriaThreshold());
+                    break;
             }
 
             if (unlocked) {
@@ -203,5 +211,66 @@ public class GamificationService {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * Checks if the user has visited enough unique locations.
+     * Uses LocationUtils to group nearby coordinates.
+     */
+    private boolean checkUniqueLocations(String userId, int threshold) {
+        List<Checkin> checkins = checkinRepository.findByUserIdAndLatitudeIsNotNullAndLongitudeIsNotNull(userId);
+        if (checkins.isEmpty()) {
+            return false;
+        }
+
+        List<gcfv2.utils.LocationUtils.Coordinate> uniqueLocs = new ArrayList<>();
+
+        for (Checkin c : checkins) {
+            boolean isNew = true;
+            for (gcfv2.utils.LocationUtils.Coordinate known : uniqueLocs) {
+                // Threshold 0.1km = 100 meters
+                if (gcfv2.utils.LocationUtils.isSameLocation(c.getLatitude(), c.getLongitude(), known.lat, known.lon,
+                        0.1)) {
+                    isNew = false;
+                    break;
+                }
+            }
+            if (isNew) {
+                uniqueLocs.add(new gcfv2.utils.LocationUtils.Coordinate(c.getLatitude(), c.getLongitude()));
+            }
+        }
+
+        return uniqueLocs.size() >= threshold;
+    }
+
+    /**
+     * Checks if the *latest* check-in is far enough from the *previous* valid
+     * check-in.
+     */
+    private boolean checkDistanceTravelled(String userId, int thresholdKm) {
+        // We need the latest check-in to compare against history
+        List<Checkin> checkins = checkinRepository.findByUserIdAndLatitudeIsNotNullAndLongitudeIsNotNull(userId);
+
+        // Sort by timestamp descending (just to be safe, though repository method name
+        // suggests ordering might be needed if not implicit)
+        // Ideally, we should add OrderByTimestampDesc to the repository method name or
+        // sort here.
+        // Let's sort here to be robust.
+        checkins.sort((c1, c2) -> Long.compare(c2.getTimestamp(), c1.getTimestamp()));
+
+        if (checkins.size() < 2) {
+            return false;
+        }
+
+        Checkin latest = checkins.get(0);
+        Checkin previous = checkins.get(1); // The one before the latest
+
+        double dist = gcfv2.utils.LocationUtils.calculateDistanceKm(
+                latest.getLatitude(), latest.getLongitude(),
+                previous.getLatitude(), previous.getLongitude());
+
+        System.out
+                .println("[GAMIFICATION] Distance from last check-in: " + dist + "km (Threshold: " + thresholdKm + ")");
+        return dist >= thresholdKm;
     }
 }
