@@ -81,7 +81,18 @@ public class PermissionService {
                 dayOfWeek.equalsIgnoreCase("day 4") ||
                 dayOfWeek.equalsIgnoreCase("day 5") ||
                 dayOfWeek.equalsIgnoreCase("day 6") ||
-                dayOfWeek.equalsIgnoreCase("day 7");
+                dayOfWeek.equalsIgnoreCase("day 6") ||
+                dayOfWeek.equalsIgnoreCase("day 7") ||
+                // Portuguese variations
+                dayOfWeek.toLowerCase().startsWith("segunda") ||
+                dayOfWeek.toLowerCase().startsWith("terça") ||
+                dayOfWeek.toLowerCase().startsWith("terca") ||
+                dayOfWeek.toLowerCase().startsWith("quarta") ||
+                dayOfWeek.toLowerCase().startsWith("quinta") ||
+                dayOfWeek.toLowerCase().startsWith("sexta") ||
+                dayOfWeek.toLowerCase().startsWith("sábado") ||
+                dayOfWeek.toLowerCase().startsWith("sabado") ||
+                dayOfWeek.toLowerCase().startsWith("domingo");
     }
 
     /**
@@ -122,7 +133,33 @@ public class PermissionService {
             case "day 7":
                 return "sunday";
             default:
-                return dayOfWeek.toLowerCase();
+                String lowered = dayOfWeek.toLowerCase();
+                // Try Portuguese normalization
+                String normalized = normalizePortugueseDay(lowered);
+                // If it returns the same thing and it's not a standard day, return lowered
+                // (fallback)
+                // However, based on the logic, normalizePortugueseDay returns English day if it
+                // matches Portuguese.
+                return normalized;
         }
+    }
+
+    private String normalizePortugueseDay(String day) {
+        day = day.toLowerCase().trim();
+        if (day.startsWith("segunda"))
+            return "monday";
+        if (day.startsWith("terça") || day.startsWith("terca"))
+            return "tuesday";
+        if (day.startsWith("quarta"))
+            return "wednesday";
+        if (day.startsWith("quinta"))
+            return "thursday";
+        if (day.startsWith("sexta"))
+            return "friday";
+        if (day.startsWith("sábado") || day.startsWith("sabado"))
+            return "saturday";
+        if (day.startsWith("domingo"))
+            return "sunday";
+        return day;
     }
 }
