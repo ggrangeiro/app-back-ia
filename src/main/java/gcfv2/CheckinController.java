@@ -100,10 +100,15 @@ public class CheckinController {
             checkin.setStatus("completed");
         }
 
-        // Garante timestamp se não enviado
-        if (checkin.getTimestamp() == null || checkin.getTimestamp() == 0) {
-            checkin.setTimestamp(System.currentTimeMillis());
-        }
+        // --- TIMEZONE NORMALIZATION (BRAZIL) ---
+        // Force server time relative to Sao Paulo, ignoring client timestamp
+        java.time.ZonedDateTime nowBrazil = java.time.ZonedDateTime.now(java.time.ZoneId.of("America/Sao_Paulo"));
+
+        // Overwrite timestamp
+        checkin.setTimestamp(nowBrazil.toInstant().toEpochMilli());
+
+        // Overwrite date string (YYYY-MM-DD) to ensure consistency with timestamp
+        checkin.setData(nowBrazil.toLocalDate().toString());
 
         // --- WEATHER CHECK ---
         // If location is provided, check weather conditions for weather-based
