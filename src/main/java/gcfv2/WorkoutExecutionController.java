@@ -107,6 +107,8 @@ public class WorkoutExecutionController {
             execution.setExecutedAt(request.getExecutedAt());
             execution.setComment(request.getComment());
             execution.setLiked(request.getLiked());
+            System.out.println("[WORKOUT_EXECUTION] Saving execution. UserId: " + request.getUserId() + ", Liked: "
+                    + request.getLiked());
 
             // Salvar execução
             WorkoutExecution savedExecution = workoutExecutionRepository.save(execution);

@@ -181,8 +181,11 @@ public class GamificationService {
         try {
             Long uid = Long.parseLong(userId);
             long count = workoutExecutionRepository.countByUserIdAndLikedTrue(uid);
+            System.out.println("[GAMIFICATION] Checking likes for user " + userId + ". Count: " + count
+                    + ", Threshold: " + threshold);
             return count >= threshold;
         } catch (NumberFormatException e) {
+            e.printStackTrace();
             return false;
         }
     }
