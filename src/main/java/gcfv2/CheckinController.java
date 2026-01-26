@@ -409,43 +409,70 @@ public class CheckinController {
             sortedDates.sort(java.util.Comparator.reverseOrder());
 
             java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo"));
+            java.time.LocalDate yesterday = today.minusDays(1);
+
             java.time.LocalDate lastCheckInDate = sortedDates.get(0);
             boolean isActiveToday = lastCheckInDate.equals(today);
 
-            // Calcular currentStreak baseado na SEMANA ATUAL (começando no domingo)
-            // Encontrar o início da semana atual (domingo)
-            java.time.LocalDate weekStart = today.with(java.time.DayOfWeek.SUNDAY);
-            // Se hoje não é domingo, voltar para o domingo anterior
-            if (today.getDayOfWeek() != java.time.DayOfWeek.SUNDAY) {
-                weekStart = today.minusDays(today.getDayOfWeek().getValue());
-            }
+            // --- CÁLCULO DE STREAK (SEMANAL - SEGUNDA A DOMINGO) ---
 
-            // Contar dias únicos de check-in dentro da semana atual
+            // O Java Time pads DayOfWeek ISO-8601 (Monday=1, Sunday=7).
+            // 'with(DayOfWeek.MONDAY)' retorna a segunda-feira da semana atual.
+            java.time.LocalDate weekStart = today.with(java.time.DayOfWeek.MONDAY);
+
             int currentStreak = 0;
-            for (java.time.LocalDate date : checkInDates) {
-                if (!date.isBefore(weekStart) && !date.isAfter(today)) {
-                    currentStreak++;
+
+            // Se o user não treinou nem hoje nem ontem, streak já era
+            if (isActiveToday || lastCheckInDate.equals(yesterday)) {
+
+                // Ponto de partida
+                java.time.LocalDate expectedDate = isActiveToday ? today : yesterday;
+
+                // Se o ponto de partida for antes do início da semana, o streak é 0 para essa
+                // semana
+                // (Ex: hoje é segunda, treinou domingo. weekStart=Segunda. yesterday=Domingo <
+                // weekStart. Streak=0)
+                if (!expectedDate.isBefore(weekStart)) {
+                    for (java.time.LocalDate date : sortedDates) {
+                        // Se sairmos da semana atual, para
+                        if (date.isBefore(weekStart)) {
+                            break;
+                        }
+
+                        if (date.equals(expectedDate)) {
+                            currentStreak++;
+                            expectedDate = expectedDate.minusDays(1);
+                        } else if (date.isAfter(expectedDate)) {
+                            continue;
+                        } else {
+                            // Buraco
+                            break;
+                        }
+                    }
                 }
             }
 
-            // Calcular longestStreak
+            // Calcular longestStreak (mantido lógica original global)
             int longestStreak = 0;
             int tempStreak = 1;
             java.util.List<java.time.LocalDate> ascendingDates = new java.util.ArrayList<>(checkInDates);
             java.util.Collections.sort(ascendingDates);
 
-            for (int i = 1; i < ascendingDates.size(); i++) {
-                java.time.LocalDate prev = ascendingDates.get(i - 1);
-                java.time.LocalDate curr = ascendingDates.get(i);
+            if (ascendingDates.size() > 0) {
+                longestStreak = 1;
+                for (int i = 1; i < ascendingDates.size(); i++) {
+                    java.time.LocalDate prev = ascendingDates.get(i - 1);
+                    java.time.LocalDate curr = ascendingDates.get(i);
 
-                if (prev.plusDays(1).equals(curr)) {
-                    tempStreak++;
-                } else {
-                    longestStreak = Math.max(longestStreak, tempStreak);
-                    tempStreak = 1;
+                    if (prev.plusDays(1).equals(curr)) {
+                        tempStreak++;
+                    } else {
+                        longestStreak = Math.max(longestStreak, tempStreak);
+                        tempStreak = 1;
+                    }
                 }
+                longestStreak = Math.max(longestStreak, tempStreak);
             }
-            longestStreak = Math.max(longestStreak, tempStreak);
 
             gcfv2.dto.checkin.UserStreakResponse response = new gcfv2.dto.checkin.UserStreakResponse(
                     currentStreak,
