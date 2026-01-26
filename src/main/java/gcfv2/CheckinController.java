@@ -91,6 +91,9 @@ public class CheckinController {
     @Inject
     private gcfv2.gamification.GamificationService gamificationService;
 
+    @Inject
+    private gcfv2.weather.WeatherService weatherService;
+
     private HttpResponse<?> saveCheckinInternal(Checkin checkin) {
         // Garante status completed se não enviado
         if (checkin.getStatus() == null || checkin.getStatus().isEmpty()) {
@@ -102,6 +105,21 @@ public class CheckinController {
             checkin.setTimestamp(System.currentTimeMillis());
         }
 
+        // --- WEATHER CHECK ---
+        // If location is provided, check weather conditions for weather-based achievements
+        boolean isRaining = false;
+        if (checkin.getLatitude() != null && checkin.getLongitude() != null) {
+            try {
+                isRaining = weatherService.isRaining(checkin.getLatitude(), checkin.getLongitude());
+                if (isRaining) {
+                    checkin.setWeatherCondition("RAIN");
+                    System.out.println("[CheckinController] Rain detected at check-in location!");
+                }
+            } catch (Exception e) {
+                System.out.println("[CheckinController] Weather check failed: " + e.getMessage());
+            }
+        }
+
         Checkin salvo = checkinRepository.save(checkin);
         List<gcfv2.gamification.Achievement> newBadges = java.util.Collections.emptyList();
 
@@ -110,12 +128,19 @@ public class CheckinController {
             Long studentId = Long.parseLong(checkin.getUserId());
             notificationService.createNotification(studentId, "CHECKIN", "Novo check-in realizado.");
 
-            // Check for new achievements
+            // Set weather context for gamification service
+            gamificationService.setWeatherContext(isRaining);
+
+            // Check for new achievements (including weather-based)
             newBadges = gamificationService.checkAndUnlockAchievements(checkin.getUserId());
+
+            // Clear weather context
+            gamificationService.clearWeatherContext();
 
         } catch (Exception e) {
             // Log erro mas não falha o request
             System.out.println("Erro ao processar pós-checkin (Notificação/Gamificação): " + e.getMessage());
+            gamificationService.clearWeatherContext(); // Ensure cleanup on error
         }
 
         // Return Map with checkin and badges if any

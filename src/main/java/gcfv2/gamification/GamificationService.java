@@ -25,6 +25,24 @@ public class GamificationService {
     @Inject
     private CheckinRepository checkinRepository;
 
+    // Thread-local to pass weather context to achievement check
+    private static final ThreadLocal<Boolean> isRainingContext = new ThreadLocal<>();
+
+    /**
+     * Sets the weather context for the current check-in.
+     * Call this before checkAndUnlockAchievements to enable weather-based achievements.
+     */
+    public void setWeatherContext(boolean isRaining) {
+        isRainingContext.set(isRaining);
+    }
+
+    /**
+     * Clears the weather context after processing.
+     */
+    public void clearWeatherContext() {
+        isRainingContext.remove();
+    }
+
     public List<Achievement> checkAndUnlockAchievements(String userId) {
         List<Achievement> newUnlocks = new ArrayList<>();
         List<Achievement> activeAchievements = achievementRepository.findByActive(true);
@@ -47,7 +65,10 @@ public class GamificationService {
                     // Example: Early Bird or Night Owl checked here based on last checkin
                     unlocked = checkTimeWindow(userCheckins, achievement.getCriteriaThreshold());
                     break;
-                // Add more cases as needed (RAIN, etc)
+                case "WEATHER":
+                    // Weather-based achievements (e.g., Rainy Day)
+                    unlocked = checkWeatherCondition(achievement.getCriteriaThreshold());
+                    break;
             }
 
             if (unlocked) {
@@ -123,6 +144,29 @@ public class GamificationService {
         } else if (thresholdOrType == 2) { // Night Owl
             return hour >= 21;
         }
+        return false;
+    }
+
+    /**
+     * Checks weather-based conditions.
+     * Uses the thread-local context set by setWeatherContext().
+     *
+     * @param thresholdOrType 1 = Rainy Day (check if it's raining)
+     * @return true if weather condition matches
+     */
+    private boolean checkWeatherCondition(int thresholdOrType) {
+        Boolean isRaining = isRainingContext.get();
+
+        if (isRaining == null) {
+            // No weather context available (location not provided)
+            return false;
+        }
+
+        // thresholdOrType: 1 = Rainy Day badge
+        if (thresholdOrType == 1) {
+            return isRaining;
+        }
+
         return false;
     }
 }

@@ -26,6 +26,14 @@ public class Checkin {
     private String feedback;
     private Long timestamp;
 
+    // Geolocation for weather-based achievements
+    private Double latitude;
+    private Double longitude;
+
+    // Weather condition at check-in time (filled by backend)
+    @MappedProperty("weather_condition")
+    private String weatherCondition;
+
     public Checkin() {
     }
 
@@ -91,5 +99,29 @@ public class Checkin {
 
     public void setTimestamp(Long timestamp) {
         this.timestamp = timestamp;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
+    public String getWeatherCondition() {
+        return weatherCondition;
+    }
+
+    public void setWeatherCondition(String weatherCondition) {
+        this.weatherCondition = weatherCondition;
     }
 }

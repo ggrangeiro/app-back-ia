@@ -24,7 +24,10 @@ public class GamificationInitializer implements ApplicationEventListener<Startup
                     "TIME_WINDOW", 1));
             achievementRepository.save(
                     new Achievement("Coruja", "Treinou depois das 21 da noite", "BADGE_NIGHT_OWL", "TIME_WINDOW", 2));
-            // Add more as defined in the plan
+
+            // Weather-based achievement - requires location permission from user
+            achievementRepository.save(
+                    new Achievement("Dia Chuvoso", "Treinou mesmo com chuva! Determinação é tudo!", "BADGE_RAINY_DAY", "WEATHER", 1));
         }
     }
 }
