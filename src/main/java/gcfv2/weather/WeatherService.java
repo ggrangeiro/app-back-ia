@@ -28,8 +28,8 @@ public class WeatherService {
      * Weather condition types that indicate rain.
      */
     private static final String[] RAIN_CONDITIONS = {
-        "RAIN", "LIGHT_RAIN", "HEAVY_RAIN", "RAIN_SHOWERS",
-        "THUNDERSTORM", "DRIZZLE", "FREEZING_RAIN"
+            "RAIN", "LIGHT_RAIN", "HEAVY_RAIN", "RAIN_SHOWERS",
+            "THUNDERSTORM", "DRIZZLE", "FREEZING_RAIN"
     };
 
     /**
@@ -53,9 +53,12 @@ public class WeatherService {
         HttpURLConnection connection = null;
         try {
             String urlString = String.format(
-                "https://weather.googleapis.com/v1/currentConditions:lookup?key=%s&location.latitude=%f&location.longitude=%f",
-                apiKey, latitude, longitude
-            );
+                    "https://weather.googleapis.com/v1/currentConditions:lookup?key=%s&location.latitude=%f&location.longitude=%f",
+                    apiKey, latitude, longitude);
+
+            // Log masked URL
+            String maskedUrl = urlString.replace(apiKey, "HIDDEN_API_KEY");
+            System.out.println("[WeatherService] Calling API: " + maskedUrl);
 
             URI uri = URI.create(urlString);
             connection = (HttpURLConnection) uri.toURL().openConnection();
@@ -64,8 +67,21 @@ public class WeatherService {
             connection.setReadTimeout(5000);
 
             int responseCode = connection.getResponseCode();
+            System.out.println("[WeatherService] API Response Code: " + responseCode);
+
             if (responseCode != 200) {
                 System.out.println("[WeatherService] API returned status: " + responseCode);
+                // Read error stream if available
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(connection.getErrorStream()))) {
+                    StringBuilder errorResponse = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        errorResponse.append(line);
+                    }
+                    System.out.println("[WeatherService] Error Body: " + errorResponse.toString());
+                } catch (Exception ex) {
+                }
+
                 return null;
             }
 
@@ -78,8 +94,11 @@ public class WeatherService {
                 }
             }
 
+            String jsonStr = response.toString();
+            System.out.println("[WeatherService] Raw API Response: " + jsonStr);
+
             // Parse JSON response
-            Map<String, Object> jsonResponse = objectMapper.readValue(response.toString(), Map.class);
+            Map<String, Object> jsonResponse = objectMapper.readValue(jsonStr, Map.class);
 
             // Extract weather condition
             String conditionType = "UNKNOWN";
@@ -116,7 +135,8 @@ public class WeatherService {
                 }
             }
 
-            System.out.println("[WeatherService] Weather at (" + latitude + ", " + longitude + "): " + conditionType + " - " + description);
+            System.out.println("[WeatherService] Weather at (" + latitude + ", " + longitude + "): " + conditionType
+                    + " - " + description);
             return new WeatherResult(conditionType, description, precipitationProbability);
 
         } catch (Exception e) {
@@ -154,7 +174,8 @@ public class WeatherService {
 
         // Also consider high precipitation probability as "raining"
         if (result.getPrecipitationProbability() >= 70) {
-            System.out.println("[WeatherService] High precipitation probability: " + result.getPrecipitationProbability() + "%");
+            System.out.println(
+                    "[WeatherService] High precipitation probability: " + result.getPrecipitationProbability() + "%");
             return true;
         }
 
@@ -190,7 +211,7 @@ public class WeatherService {
         @Override
         public String toString() {
             return String.format("WeatherResult{type='%s', desc='%s', precip=%d%%}",
-                conditionType, description, precipitationProbability);
+                    conditionType, description, precipitationProbability);
         }
     }
 }

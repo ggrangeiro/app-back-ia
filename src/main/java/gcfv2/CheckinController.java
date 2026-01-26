@@ -115,15 +115,23 @@ public class CheckinController {
         // achievements
         boolean isRaining = false;
         if (checkin.getLatitude() != null && checkin.getLongitude() != null) {
+            System.out.println("[CheckinController] Checking weather for lat=" + checkin.getLatitude() + " long="
+                    + checkin.getLongitude());
             try {
                 isRaining = weatherService.isRaining(checkin.getLatitude(), checkin.getLongitude());
+                System.out.println("[CheckinController] Weather check result: isRaining=" + isRaining);
                 if (isRaining) {
                     checkin.setWeatherCondition("RAIN");
-                    System.out.println("[CheckinController] Rain detected at check-in location!");
+                    System.out.println("[CheckinController] Rain detected! Setting weatherCondition=RAIN");
+                } else {
+                    System.out.println("[CheckinController] No rain detected.");
                 }
             } catch (Exception e) {
                 System.out.println("[CheckinController] Weather check failed: " + e.getMessage());
+                e.printStackTrace();
             }
+        } else {
+            System.out.println("[CheckinController] No coordinates provided. Skipping weather check.");
         }
 
         Checkin salvo = checkinRepository.save(checkin);
