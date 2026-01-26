@@ -43,6 +43,15 @@ public class GamificationInitializer implements ApplicationEventListener<Startup
                         achievementRepository.save(
                                         new Achievement("Super Curtidor", "Curtiu 10 treinos! Você adora treinar!",
                                                         "BADGE_LIKE_10", "WORKOUT_LIKE_COUNT", 10));
+                        achievementRepository.save(
+                                        new Achievement("Amante de Treinos", "Curtiu 30 treinos! Você realmente ama treinar!",
+                                                        "BADGE_LIKE_30", "WORKOUT_LIKE_COUNT", 30));
+                        achievementRepository.save(
+                                        new Achievement("Fã Incondicional", "Curtiu 50 treinos! Dedicação admirável!",
+                                                        "BADGE_LIKE_50", "WORKOUT_LIKE_COUNT", 50));
+                        achievementRepository.save(
+                                        new Achievement("Lenda dos Treinos", "Curtiu 60 treinos! Você é uma inspiração!",
+                                                        "BADGE_LIKE_60", "WORKOUT_LIKE_COUNT", 60));
                 }
         }
 }
