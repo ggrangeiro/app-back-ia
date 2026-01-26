@@ -3,6 +3,7 @@ package gcfv2;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.data.annotation.*;
 import io.micronaut.serde.annotation.Serdeable;
+import io.micronaut.core.annotation.Nullable;
 import java.time.Instant;
 import java.util.List;
 import java.util.ArrayList;
@@ -29,6 +30,9 @@ public class WorkoutExecution {
     private Long executedAt; // Unix timestamp em milissegundos
 
     private String comment;
+
+    @Nullable
+    private Boolean liked; // true if the user liked the workout
 
     @DateCreated
     @MappedProperty("created_at")
@@ -92,6 +96,14 @@ public class WorkoutExecution {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public Boolean getLiked() {
+        return liked;
+    }
+
+    public void setLiked(Boolean liked) {
+        this.liked = liked;
     }
 
     public Instant getCreatedAt() {

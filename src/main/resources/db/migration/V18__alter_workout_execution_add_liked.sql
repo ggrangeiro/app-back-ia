@@ -1,0 +1,1 @@
+ALTER TABLE workout_executions ADD COLUMN liked BOOLEAN DEFAULT FALSE;

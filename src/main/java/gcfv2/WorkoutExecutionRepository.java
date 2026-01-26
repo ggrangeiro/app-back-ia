@@ -11,7 +11,8 @@ import java.util.Optional;
 public interface WorkoutExecutionRepository extends CrudRepository<WorkoutExecution, Long> {
 
     /**
-     * Lista todas as execuções de um usuário ordenadas por data de execução (mais recente primeiro)
+     * Lista todas as execuções de um usuário ordenadas por data de execução (mais
+     * recente primeiro)
      * Inclui os exercícios relacionados
      */
     @Join(value = "exercises", type = Join.Type.LEFT_FETCH)
@@ -28,10 +29,14 @@ public interface WorkoutExecutionRepository extends CrudRepository<WorkoutExecut
      */
     @Join(value = "exercises", type = Join.Type.LEFT_FETCH)
     List<WorkoutExecution> findByUserIdAndExecutedAtBetweenOrderByExecutedAtDesc(
-        Long userId,
-        Long startDate,
-        Long endDate
-    );
+            Long userId,
+            Long startDate,
+            Long endDate);
+
+    /**
+     * Conta quantas execuções um usuário tem e que foram marcadas como "liked".
+     */
+    long countByUserIdAndLikedTrue(Long userId);
 
     /**
      * Busca uma execução específica com seus exercícios

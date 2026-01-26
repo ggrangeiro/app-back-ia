@@ -13,9 +13,11 @@ public class WorkoutExecutionRequest {
     private String dayOfWeek;
     private Long executedAt;
     private String comment;
+    private Boolean liked;
     private List<ExerciseExecutionRequest> exercises;
 
-    public WorkoutExecutionRequest() {}
+    public WorkoutExecutionRequest() {
+    }
 
     // Getters e Setters
     public Long getUserId() {
@@ -56,6 +58,14 @@ public class WorkoutExecutionRequest {
 
     public void setComment(String comment) {
         this.comment = comment;
+    }
+
+    public Boolean getLiked() {
+        return liked;
+    }
+
+    public void setLiked(Boolean liked) {
+        this.liked = liked;
     }
 
     public List<ExerciseExecutionRequest> getExercises() {

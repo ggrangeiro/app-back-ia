@@ -24,6 +24,7 @@ public class WorkoutExecutionController {
     private final UsuarioRepository usuarioRepository;
     private final PermissionService permissionService;
     private final NotificationService notificationService;
+    private final gcfv2.gamification.GamificationService gamificationService;
 
     @Inject
     public WorkoutExecutionController(
@@ -33,7 +34,8 @@ public class WorkoutExecutionController {
             TreinoRepository treinoRepository, // CORRECTED
             UsuarioRepository usuarioRepository,
             PermissionService permissionService,
-            NotificationService notificationService) {
+            NotificationService notificationService,
+            gcfv2.gamification.GamificationService gamificationService) {
         this.workoutExecutionRepository = workoutExecutionRepository;
         this.exerciseExecutionRepository = exerciseExecutionRepository;
         this.workoutPlanRepository = workoutPlanRepository;
@@ -41,6 +43,7 @@ public class WorkoutExecutionController {
         this.usuarioRepository = usuarioRepository;
         this.permissionService = permissionService;
         this.notificationService = notificationService;
+        this.gamificationService = gamificationService;
     }
 
     /**
@@ -103,6 +106,7 @@ public class WorkoutExecutionController {
             execution.setDayOfWeek(permissionService.normalizeDayOfWeek(request.getDayOfWeek()));
             execution.setExecutedAt(request.getExecutedAt());
             execution.setComment(request.getComment());
+            execution.setLiked(request.getLiked());
 
             // Salvar execução
             WorkoutExecution savedExecution = workoutExecutionRepository.save(execution);
@@ -140,6 +144,13 @@ public class WorkoutExecutionController {
                         "Treino finalizado com sucesso!");
             } catch (Exception e) {
                 System.out.println("Erro ao criar notificação de treino finalizado: " + e.getMessage());
+            }
+
+            // --- GAMIFICATION ---
+            try {
+                gamificationService.checkAndUnlockAchievements(String.valueOf(request.getUserId()));
+            } catch (Exception e) {
+                System.out.println("Erro ao processar gamificação: " + e.getMessage());
             }
 
             return HttpResponse.status(HttpStatus.CREATED).body(savedExecution);

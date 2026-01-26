@@ -30,7 +30,8 @@ public class GamificationService {
 
     /**
      * Sets the weather context for the current check-in.
-     * Call this before checkAndUnlockAchievements to enable weather-based achievements.
+     * Call this before checkAndUnlockAchievements to enable weather-based
+     * achievements.
      */
     public void setWeatherContext(boolean isRaining) {
         isRainingContext.set(isRaining);
@@ -68,6 +69,9 @@ public class GamificationService {
                 case "WEATHER":
                     // Weather-based achievements (e.g., Rainy Day)
                     unlocked = checkWeatherCondition(achievement.getCriteriaThreshold());
+                    break;
+                case "WORKOUT_LIKE_COUNT":
+                    unlocked = checkWorkoutLikeCount(userId, achievement.getCriteriaThreshold());
                     break;
             }
 
@@ -168,5 +172,18 @@ public class GamificationService {
         }
 
         return false;
+    }
+
+    @Inject
+    private gcfv2.WorkoutExecutionRepository workoutExecutionRepository;
+
+    private boolean checkWorkoutLikeCount(String userId, int threshold) {
+        try {
+            Long uid = Long.parseLong(userId);
+            long count = workoutExecutionRepository.countByUserIdAndLikedTrue(uid);
+            return count >= threshold;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 }
