@@ -40,6 +40,17 @@ public class GamificationController {
     @Inject
     private UsuarioRepository usuarioRepository;
 
+    // === PROFESSOR ACHIEVEMENTS ===
+
+    @Inject
+    private ProfessorAchievementRepository professorAchievementRepository;
+
+    @Inject
+    private ProfessorUserAchievementRepository professorUserAchievementRepository;
+
+    @Inject
+    private ProfessorGamificationService professorGamificationService;
+
     @Get("/achievements")
     public List<Achievement> listAchievements() {
         return (List<Achievement>) achievementRepository.findAll();
@@ -125,5 +136,68 @@ public class GamificationController {
         public java.time.LocalDateTime getUnlockedAt() {
             return unlockedAt;
         }
+    }
+
+    // ==========================================================================
+    // PROFESSOR ACHIEVEMENTS ENDPOINTS
+    // ==========================================================================
+
+    /**
+     * Lista todas as conquistas disponíveis para professores.
+     */
+    @Get("/professor/achievements")
+    public List<ProfessorAchievement> listProfessorAchievements() {
+        return (List<ProfessorAchievement>) professorAchievementRepository.findAll();
+    }
+
+    /**
+     * Lista conquistas desbloqueadas de um professor.
+     */
+    @Get("/professor/{professorId}/achievements")
+    public List<ProfessorUserAchievement> getProfessorAchievements(@PathVariable Long professorId) {
+        return professorUserAchievementRepository.findByProfessorId(professorId);
+    }
+
+    /**
+     * Retorna o progresso completo de conquistas de um professor.
+     * Inclui conquistas bloqueadas e desbloqueadas com progresso atual.
+     */
+    @Get("/professor/{professorId}/progress")
+    public List<ProfessorGamificationService.ProfessorAchievementProgressDTO> getProfessorProgress(
+            @PathVariable Long professorId) {
+        return professorGamificationService.getProfessorProgress(professorId);
+    }
+
+    /**
+     * Retorna estatísticas do professor (contagem de treinos, dietas, alunos, etc.)
+     */
+    @Get("/professor/{professorId}/stats")
+    public ProfessorGamificationService.ProfessorStats getProfessorStats(@PathVariable Long professorId) {
+        return professorGamificationService.getProfessorStats(professorId);
+    }
+
+    /**
+     * Verifica e desbloqueia conquistas para um professor específico.
+     * Retorna as conquistas recém-desbloqueadas.
+     */
+    @Post("/professor/{professorId}/check")
+    public Map<String, Object> checkProfessorAchievements(@PathVariable Long professorId) {
+        List<ProfessorAchievement> newBadges = professorGamificationService.checkAndUnlockAchievements(professorId);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("professorId", professorId);
+        result.put("newBadges", newBadges);
+        result.put("newBadgesCount", newBadges.size());
+
+        return result;
+    }
+
+    /**
+     * Backfill: Verifica e desbloqueia conquistas para TODOS os professores.
+     * Útil para rodar após criar novas conquistas.
+     */
+    @Post("/professor/backfill")
+    public Map<String, Object> backfillProfessorAchievements() {
+        return professorGamificationService.backfillAllProfessors();
     }
 }
