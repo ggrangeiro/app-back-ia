@@ -118,13 +118,20 @@ public class CheckinController {
             System.out.println("[CheckinController] Checking weather for lat=" + checkin.getLatitude() + " long="
                     + checkin.getLongitude());
             try {
-                isRaining = weatherService.isRaining(checkin.getLatitude(), checkin.getLongitude());
-                System.out.println("[CheckinController] Weather check result: isRaining=" + isRaining);
-                if (isRaining) {
-                    checkin.setWeatherCondition("RAIN");
-                    System.out.println("[CheckinController] Rain detected! Setting weatherCondition=RAIN");
+                // Fetch actual conditions
+                gcfv2.weather.WeatherService.WeatherResult result = weatherService
+                        .getCurrentConditions(checkin.getLatitude(), checkin.getLongitude());
+
+                if (result != null) {
+                    // ALWAYS save the condition type (e.g., "CLOUDY", "CLEAR", "RAIN")
+                    checkin.setWeatherCondition(result.getConditionType());
+                    System.out.println("[CheckinController] Weather saved: " + result.getConditionType());
+
+                    // Check logic for achievements
+                    isRaining = weatherService.isRainy(result);
+                    System.out.println("[CheckinController] Is raining? " + isRaining);
                 } else {
-                    System.out.println("[CheckinController] No rain detected.");
+                    System.out.println("[CheckinController] Weather service returned null.");
                 }
             } catch (Exception e) {
                 System.out.println("[CheckinController] Weather check failed: " + e.getMessage());

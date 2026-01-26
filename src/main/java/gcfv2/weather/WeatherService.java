@@ -181,7 +181,13 @@ public class WeatherService {
      */
     public boolean isRaining(Double latitude, Double longitude) {
         WeatherResult result = getCurrentConditions(latitude, longitude);
+        return isRainy(result);
+    }
 
+    /**
+     * Checks if a weather result constitutes "rain" for achievement purposes.
+     */
+    public boolean isRainy(WeatherResult result) {
         if (result == null) {
             return false;
         }
@@ -190,7 +196,7 @@ public class WeatherService {
         String upperType = result.getConditionType().toUpperCase();
         for (String rainCondition : RAIN_CONDITIONS) {
             if (upperType.contains(rainCondition)) {
-                System.out.println("[WeatherService] Rain detected: " + result.getConditionType());
+                System.out.println("[WeatherService] Rain detected from type: " + result.getConditionType());
                 return true;
             }
         }
