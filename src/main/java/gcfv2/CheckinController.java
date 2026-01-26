@@ -408,26 +408,23 @@ public class CheckinController {
             java.util.List<java.time.LocalDate> sortedDates = new java.util.ArrayList<>(checkInDates);
             sortedDates.sort(java.util.Comparator.reverseOrder());
 
-            java.time.LocalDate today = java.time.LocalDate.now();
-            java.time.LocalDate yesterday = today.minusDays(1);
+            java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneId.of("America/Sao_Paulo"));
             java.time.LocalDate lastCheckInDate = sortedDates.get(0);
             boolean isActiveToday = lastCheckInDate.equals(today);
 
-            // Calcular currentStreak
-            int currentStreak = 0;
-            java.time.LocalDate expectedDate = isActiveToday ? today : yesterday;
+            // Calcular currentStreak baseado na SEMANA ATUAL (começando no domingo)
+            // Encontrar o início da semana atual (domingo)
+            java.time.LocalDate weekStart = today.with(java.time.DayOfWeek.SUNDAY);
+            // Se hoje não é domingo, voltar para o domingo anterior
+            if (today.getDayOfWeek() != java.time.DayOfWeek.SUNDAY) {
+                weekStart = today.minusDays(today.getDayOfWeek().getValue());
+            }
 
-            // Se o último check-in não é de hoje nem de ontem, currentStreak = 0
-            if (!lastCheckInDate.equals(today) && !lastCheckInDate.equals(yesterday)) {
-                currentStreak = 0;
-            } else {
-                for (java.time.LocalDate date : sortedDates) {
-                    if (date.equals(expectedDate)) {
-                        currentStreak++;
-                        expectedDate = expectedDate.minusDays(1);
-                    } else if (date.isBefore(expectedDate)) {
-                        break;
-                    }
+            // Contar dias únicos de check-in dentro da semana atual
+            int currentStreak = 0;
+            for (java.time.LocalDate date : checkInDates) {
+                if (!date.isBefore(weekStart) && !date.isAfter(today)) {
+                    currentStreak++;
                 }
             }
 
