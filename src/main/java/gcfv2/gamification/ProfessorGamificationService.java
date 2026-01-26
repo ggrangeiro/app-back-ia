@@ -139,8 +139,17 @@ public class ProfessorGamificationService {
 
     /**
      * Retorna o progresso de todas as conquistas para um professor.
+     * IMPORTANTE: Também verifica e desbloqueia conquistas pendentes automaticamente.
      */
     public List<ProfessorAchievementProgressDTO> getProfessorProgress(Long professorId) {
+        // Primeiro, verificar e desbloquear conquistas pendentes
+        List<ProfessorAchievement> newlyUnlocked = checkAndUnlockAchievements(professorId);
+        if (!newlyUnlocked.isEmpty()) {
+            System.out.println("[PROFESSOR_GAMIFICATION] Auto-unlocked " + newlyUnlocked.size() +
+                " achievements for professor " + professorId + " on progress check");
+        }
+
+        // Agora buscar o estado atualizado
         List<ProfessorAchievement> all = (List<ProfessorAchievement>) achievementRepository.findAll();
         List<ProfessorUserAchievement> unlocked = userAchievementRepository.findByProfessorId(professorId);
         ProfessorStats stats = getProfessorStats(professorId);
