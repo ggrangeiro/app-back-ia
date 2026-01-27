@@ -146,12 +146,6 @@ public class ExerciseController {
     @Inject
     private ProfessorVideoService professorVideoService;
 
-    @Inject
-    private UsuarioRepository usuarioRepository;
-
-    @Inject
-    private UsuarioExercicioRepository usuarioExercicioRepository;
-
     @Post("/create")
     @Transactional
     public HttpResponse<?> createExercise(@Body Map<String, Object> body,
