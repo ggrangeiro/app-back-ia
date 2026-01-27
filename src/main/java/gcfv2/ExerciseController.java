@@ -146,6 +146,12 @@ public class ExerciseController {
     @Inject
     private ProfessorVideoService professorVideoService;
 
+    @Inject
+    private UsuarioRepository usuarioRepository;
+
+    @Inject
+    private UsuarioExercicioRepository usuarioExercicioRepository;
+
     @Post("/create")
     @Transactional
     public HttpResponse<?> createExercise(@Body Map<String, Object> body,
@@ -200,6 +206,23 @@ public class ExerciseController {
             } catch (Exception e) {
                 LOG.error("Erro ao salvar vídeo para o novo exercício: ", e);
                 // Não falha o request todo, apenas loga
+            }
+        }
+
+        // [FIX] Vincular o exercício ao usuário criador (Personal ou Professor)
+        // para que apareça na lista dele (UsuarioExercicio)
+        Optional<Usuario> userOpt = usuarioRepository.findById(requesterId);
+        if (userOpt.isPresent()) {
+            // Verificar se já não existe o vinculo (embora seja novo, vai que...)
+            boolean jaVinculado = usuarioExercicioRepository.findByUsuario(userOpt.get())
+                    .stream()
+                    .anyMatch(ue -> ue.getExercicio().equalsIgnoreCase(exerciseId));
+
+            if (!jaVinculado) {
+                UsuarioExercicio ue = new UsuarioExercicio();
+                ue.setExercicio(exerciseId); // USAR O ID (NORMALIZED) "SUPINO"
+                ue.setUsuario(userOpt.get());
+                usuarioExercicioRepository.save(ue);
             }
         }
 
