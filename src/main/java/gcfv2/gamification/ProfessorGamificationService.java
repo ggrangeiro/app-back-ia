@@ -80,7 +80,7 @@ public class ProfessorGamificationService {
                 userAchievementRepository.save(ua);
                 newUnlocks.add(achievement);
                 System.out.println("[PROFESSOR_GAMIFICATION] Professor " + professorId +
-                    " unlocked: " + achievement.getName());
+                        " unlocked: " + achievement.getName());
             }
         }
 
@@ -95,13 +95,28 @@ public class ProfessorGamificationService {
         ProfessorStats stats = new ProfessorStats();
 
         try {
-            // Buscar todas as atividades do professor uma única vez
-            List<AtividadeProfessor> activities = atividadeRepository.findByProfessorIdOrderByCreatedAtDesc(professorId);
+            // Buscar todas as atividades do professor (ou Personal + Subordinados) uma
+            // única vez
+            List<AtividadeProfessor> activities;
+
+            // Verificar Role do usuário para decidir estratégia
+            java.util.Optional<gcfv2.Usuario> userOpt = usuarioRepository.findById(professorId);
+            if (userOpt.isPresent() &&
+                    (userOpt.get().getRole().equalsIgnoreCase("PERSONAL"))) {
+
+                // É PERSONAL: Buscar atividades próprias + subordinados
+                activities = atividadeRepository.getStatsForPersonal(professorId);
+                System.out.println("[PROFESSOR_GAMIFICATION] Using PERSONAL aggregation for id=" + professorId);
+            } else {
+                // É PROFESSOR (ou outro): Apenas atividades próprias
+                activities = atividadeRepository.findByProfessorIdOrderByCreatedAtDesc(professorId);
+            }
 
             // Contar por tipo de ação
             for (AtividadeProfessor activity : activities) {
                 String actionType = activity.getActionType();
-                if (actionType == null) continue;
+                if (actionType == null)
+                    continue;
 
                 switch (actionType) {
                     case "WORKOUT_GENERATED":
@@ -123,14 +138,15 @@ public class ProfessorGamificationService {
             }
 
             System.out.println("[PROFESSOR_GAMIFICATION] Stats for professor " + professorId + ": " +
-                "workouts=" + stats.workoutsCreated +
-                ", diets=" + stats.dietsCreated +
-                ", students=" + stats.studentsRegistered +
-                ", analyses=" + stats.analysesPerformed +
-                ", assessments=" + stats.assessmentsCreated);
+                    "workouts=" + stats.workoutsCreated +
+                    ", diets=" + stats.dietsCreated +
+                    ", students=" + stats.studentsRegistered +
+                    ", analyses=" + stats.analysesPerformed +
+                    ", assessments=" + stats.assessmentsCreated);
 
         } catch (Exception e) {
-            System.err.println("[PROFESSOR_GAMIFICATION] Error getting stats for professor " + professorId + ": " + e.getMessage());
+            System.err.println("[PROFESSOR_GAMIFICATION] Error getting stats for professor " + professorId + ": "
+                    + e.getMessage());
             e.printStackTrace();
         }
 
@@ -139,14 +155,15 @@ public class ProfessorGamificationService {
 
     /**
      * Retorna o progresso de todas as conquistas para um professor.
-     * IMPORTANTE: Também verifica e desbloqueia conquistas pendentes automaticamente.
+     * IMPORTANTE: Também verifica e desbloqueia conquistas pendentes
+     * automaticamente.
      */
     public List<ProfessorAchievementProgressDTO> getProfessorProgress(Long professorId) {
         // Primeiro, verificar e desbloquear conquistas pendentes
         List<ProfessorAchievement> newlyUnlocked = checkAndUnlockAchievements(professorId);
         if (!newlyUnlocked.isEmpty()) {
             System.out.println("[PROFESSOR_GAMIFICATION] Auto-unlocked " + newlyUnlocked.size() +
-                " achievements for professor " + professorId + " on progress check");
+                    " achievements for professor " + professorId + " on progress check");
         }
 
         // Agora buscar o estado atualizado
@@ -158,26 +175,25 @@ public class ProfessorGamificationService {
 
         for (ProfessorAchievement a : all) {
             boolean isUnlocked = unlocked.stream()
-                .anyMatch(ua -> ua.getAchievementId().equals(a.getId()));
+                    .anyMatch(ua -> ua.getAchievementId().equals(a.getId()));
 
             java.time.LocalDateTime unlockedAt = null;
             if (isUnlocked) {
                 unlockedAt = unlocked.stream()
-                    .filter(ua -> ua.getAchievementId().equals(a.getId()))
-                    .findFirst()
-                    .map(ProfessorUserAchievement::getUnlockedAt)
-                    .orElse(null);
+                        .filter(ua -> ua.getAchievementId().equals(a.getId()))
+                        .findFirst()
+                        .map(ProfessorUserAchievement::getUnlockedAt)
+                        .orElse(null);
             }
 
             // Calcular progresso atual
             int currentProgress = getCurrentProgress(stats, a.getCriteriaType());
 
             result.add(new ProfessorAchievementProgressDTO(
-                a,
-                isUnlocked,
-                unlockedAt,
-                currentProgress
-            ));
+                    a,
+                    isUnlocked,
+                    unlockedAt,
+                    currentProgress));
         }
 
         return result;
@@ -228,8 +244,8 @@ public class ProfessorGamificationService {
                 profResult.put("professorName", professor.getNome());
                 profResult.put("unlockedCount", unlocked.size());
                 profResult.put("achievements", unlocked.stream()
-                    .map(ProfessorAchievement::getName)
-                    .collect(java.util.stream.Collectors.toList()));
+                        .map(ProfessorAchievement::getName)
+                        .collect(java.util.stream.Collectors.toList()));
                 professorResults.add(profResult);
                 totalUnlocked += unlocked.size();
             }

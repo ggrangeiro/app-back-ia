@@ -200,4 +200,42 @@ public class GamificationController {
     public Map<String, Object> backfillProfessorAchievements() {
         return professorGamificationService.backfillAllProfessors();
     }
+
+    // ==========================================================================
+    // PERSONAL ACHIEVEMENTS ENDPOINTS (Delegates to Professor Logic with
+    // Aggregation)
+    // ==========================================================================
+
+    /**
+     * Retorna o progresso de conquistas de um Personal.
+     * A lógica interna detecta que é Personal e agrega atividades dos subordinados.
+     */
+    @Get("/personal/{personalId}/progress")
+    public List<ProfessorGamificationService.ProfessorAchievementProgressDTO> getPersonalProgress(
+            @PathVariable Long personalId) {
+        return professorGamificationService.getProfessorProgress(personalId);
+    }
+
+    /**
+     * Retorna estatísticas de um Personal.
+     */
+    @Get("/personal/{personalId}/stats")
+    public ProfessorGamificationService.ProfessorStats getPersonalStats(@PathVariable Long personalId) {
+        return professorGamificationService.getProfessorStats(personalId);
+    }
+
+    /**
+     * Verifica e desbloqueia conquistas para um Personal.
+     */
+    @Post("/personal/{personalId}/check")
+    public Map<String, Object> checkPersonalAchievements(@PathVariable Long personalId) {
+        List<ProfessorAchievement> newBadges = professorGamificationService.checkAndUnlockAchievements(personalId);
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("personalId", personalId);
+        result.put("newBadges", newBadges);
+        result.put("newBadgesCount", newBadges.size());
+
+        return result;
+    }
 }

@@ -77,7 +77,18 @@ public interface AtividadeProfessorRepository extends CrudRepository<AtividadePr
         /**
          * Deletar atividades por manager
          */
+        /**
+         * Deletar atividades por manager
+         */
         void deleteByManagerId(Long managerId);
+
+        /**
+         * Buscar TODAS as atividades para um Personal:
+         * Inclui atividades do próprio Personal (professor_id = personalId)
+         * E atividades dos seus subordinados (manager_id = personalId)
+         */
+        @Query("SELECT * FROM atividades_professor WHERE professor_id = :personalId OR manager_id = :personalId")
+        List<AtividadeProfessor> getStatsForPersonal(Long personalId);
 
         /**
          * Agregação para Gráfico de Linha: Contar atividades por dia
