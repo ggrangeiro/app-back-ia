@@ -7,7 +7,7 @@ import io.micronaut.data.repository.CrudRepository;
 import java.util.List;
 import java.util.Optional;
 
-@JdbcRepository(dialect = Dialect.POSTGRES)
+@JdbcRepository(dialect = Dialect.MYSQL)
 public interface ProfessorExerciseVideoRepository extends CrudRepository<ProfessorExerciseVideo, Long> {
 
     Optional<ProfessorExerciseVideo> findByProfessorIdAndExerciseId(Long professorId, String exerciseId);
