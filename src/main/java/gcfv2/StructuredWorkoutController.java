@@ -1,18 +1,20 @@
 package gcfv2;
 
-import gcfv2.dto.CreateWorkoutRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.server.cors.CrossOrigin;
+import io.micronaut.json.JsonMapper;
 import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Inject;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.HashMap;
 
 /**
- * Controller para gerenciar treinos estruturados (V2)
+ * Controller para gerenciar treinos estruturados (V2) asdasd
  * Permite criar, listar, buscar e deletar treinos com estrutura JSON
  */
 @Controller("/api/v2/treinos")
@@ -23,18 +25,23 @@ public class StructuredWorkoutController {
     private final UsuarioRepository usuarioRepository;
     private final PermissionService permissionService;
     private final NotificationService notificationService;
+    private final ProfessorVideoService professorVideoService;
+    private final JsonMapper jsonMapper;
 
     @Inject
     public StructuredWorkoutController(
-        StructuredWorkoutPlanRepository workoutPlanRepository,
-        UsuarioRepository usuarioRepository,
-        PermissionService permissionService,
-        NotificationService notificationService
-    ) {
+            StructuredWorkoutPlanRepository workoutPlanRepository,
+            UsuarioRepository usuarioRepository,
+            PermissionService permissionService,
+            NotificationService notificationService,
+            ProfessorVideoService professorVideoService,
+            JsonMapper jsonMapper) {
         this.workoutPlanRepository = workoutPlanRepository;
         this.usuarioRepository = usuarioRepository;
         this.permissionService = permissionService;
         this.notificationService = notificationService;
+        this.professorVideoService = professorVideoService;
+        this.jsonMapper = jsonMapper;
     }
 
     /**
@@ -44,10 +51,9 @@ public class StructuredWorkoutController {
     @Post
     @Transactional
     public HttpResponse<?> createWorkout(
-        @Body Map<String, Object> requestBody,
-        @QueryValue Long requesterId,
-        @QueryValue String requesterRole
-    ) {
+            @Body Map<String, Object> requestBody,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
         try {
             // Extrair dados do Map
             Object userIdObj = requestBody.get("userId");
@@ -68,14 +74,13 @@ public class StructuredWorkoutController {
             // Validações básicas
             if (userId == null || daysData == null || daysData.isEmpty()) {
                 return HttpResponse.badRequest(Map.of(
-                    "error", "Campos obrigatórios faltando: userId, daysData"
-                ));
+                        "error", "Campos obrigatórios faltando: userId, daysData"));
             }
 
             // Validação de permissões
             if (!permissionService.canAccessUserData(requesterId, requesterRole, userId)) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Você não tem permissão para criar treino para este usuário"));
+                        .body(Map.of("error", "Você não tem permissão para criar treino para este usuário"));
             }
 
             // Validação do usuário
@@ -117,8 +122,7 @@ public class StructuredWorkoutController {
         } catch (Exception e) {
             e.printStackTrace();
             return HttpResponse.serverError(Map.of(
-                "error", "Erro ao criar treino: " + e.getMessage()
-            ));
+                    "error", "Erro ao criar treino: " + e.getMessage()));
         }
     }
 
@@ -147,7 +151,8 @@ public class StructuredWorkoutController {
      * Capitaliza primeira letra
      */
     private String capitalize(String text) {
-        if (text == null || text.isEmpty()) return text;
+        if (text == null || text.isEmpty())
+            return text;
         return text.substring(0, 1).toUpperCase() + text.substring(1).toLowerCase();
     }
 
@@ -157,40 +162,37 @@ public class StructuredWorkoutController {
      */
     @Get("/{userId}")
     public HttpResponse<?> listWorkouts(
-        @PathVariable Long userId,
-        @QueryValue Long requesterId,
-        @QueryValue String requesterRole
-    ) {
+            @PathVariable Long userId,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
         try {
             // Validação de permissões
             if (!permissionService.canAccessUserData(requesterId, requesterRole, userId)) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Você não tem permissão para acessar treinos deste usuário"));
+                        .body(Map.of("error", "Você não tem permissão para acessar treinos deste usuário"));
             }
 
             List<StructuredWorkoutPlan> workouts = workoutPlanRepository
-                .findByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId);
+                    .findByUserIdAndDeletedAtIsNullOrderByCreatedAtDesc(userId);
 
             return HttpResponse.ok(workouts);
 
         } catch (Exception e) {
             e.printStackTrace();
             return HttpResponse.serverError(Map.of(
-                "error", "Erro ao listar treinos: " + e.getMessage()
-            ));
+                    "error", "Erro ao listar treinos: " + e.getMessage()));
         }
     }
 
     /**
      * GET /api/v2/treinos/detail/{workoutId}
-     * Buscar detalhes de um treino específico
+     * Buscar detalhes de uma treino específico
      */
     @Get("/detail/{workoutId}")
     public HttpResponse<?> getWorkoutDetails(
-        @PathVariable Long workoutId,
-        @QueryValue Long requesterId,
-        @QueryValue String requesterRole
-    ) {
+            @PathVariable Long workoutId,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
         try {
             var workoutOpt = workoutPlanRepository.findByIdAndDeletedAtIsNull(workoutId);
 
@@ -203,7 +205,29 @@ public class StructuredWorkoutController {
             // Validação de permissões
             if (!permissionService.canAccessUserData(requesterId, requesterRole, workout.getUserId())) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Você não tem permissão para acessar este treino"));
+                        .body(Map.of("error", "Você não tem permissão para acessar este treino"));
+            }
+
+            // --- INJETAR VÍDEOS PERSONALIZADOS ---
+            try {
+                // 1. Verificar se o usuário tem personal
+                Optional<Usuario> userOpt = usuarioRepository.findById(workout.getUserId());
+                if (userOpt.isPresent() && userOpt.get().getPersonalId() != null) {
+                    Long personalId = userOpt.get().getPersonalId();
+
+                    // 2. Buscar vídeos do personal
+                    List<ProfessorExerciseVideo> customVideos = professorVideoService.getVideosByProfessor(personalId);
+
+                    if (!customVideos.isEmpty()) {
+                        // 3. Processar JSON e substituir URLs
+                        String updatedDaysData = injectProfessorVideos(workout.getDaysData(), customVideos);
+                        workout.setDaysData(updatedDaysData);
+                    }
+                }
+            } catch (Exception e) {
+                System.err.println("Erro ao injetar vídeos personalizados: " + e.getMessage());
+                e.printStackTrace();
+                // Não falha a requisição, apenas loga e segue com o original
             }
 
             return HttpResponse.ok(workout);
@@ -211,8 +235,79 @@ public class StructuredWorkoutController {
         } catch (Exception e) {
             e.printStackTrace();
             return HttpResponse.serverError(Map.of(
-                "error", "Erro ao buscar treino: " + e.getMessage()
-            ));
+                    "error", "Erro ao buscar treino: " + e.getMessage()));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private String injectProfessorVideos(String jsonDaysData, List<ProfessorExerciseVideo> customVideos) {
+        try {
+            // Converter lista de vídeos para Map fácil de buscar
+            Map<String, String> videoMap = new HashMap<>(); // Alias/Query -> URL
+            for (ProfessorExerciseVideo v : customVideos) {
+                videoMap.put(v.getExerciseId(), v.getVideoUrl());
+            }
+
+            // Parse JSON genérico
+            // Estrutura esperada: Map<String, Object> onde chaves são dias, valores contêm
+            // "exercises"
+            // Mas o daysData é uma String que contém JSON.
+            // Na verdade, no Frontend types.ts, daysData é uma string que precisa ser
+            // parseada.
+            // Aqui no backend, vamos parsear para Map.
+
+            // O daysData costuma ser um Map<String, WorkoutDay> serializado ou
+            // List<WorkoutDay>
+            // Vamos assumir que é um Map<String, Object> representando o JSON completo.
+            Map<String, Object> data = jsonMapper.readValue(jsonDaysData, Map.class);
+
+            // Iterar sobre as chaves (dias da semana)
+            for (Object dayObj : data.values()) {
+                if (dayObj instanceof Map) {
+                    Map<String, Object> day = (Map<String, Object>) dayObj;
+                    Object exercisesObj = day.get("exercises");
+
+                    if (exercisesObj instanceof List) {
+                        List<Map<String, Object>> exercises = (List<Map<String, Object>>) exercisesObj;
+
+                        for (Map<String, Object> exercise : exercises) {
+                            String name = (String) exercise.get("name");
+                            String videoQuery = (String) exercise.get("videoQuery"); // Pode ser usado como ID
+
+                            // Tenta encontrar por videoQuery (que costuma ser o ID/Alias) ou pelo nome
+                            String customUrl = null;
+
+                            if (videoQuery != null && videoMap.containsKey(videoQuery)) {
+                                customUrl = videoMap.get(videoQuery);
+                            } else if (name != null && videoMap.containsKey(name)) {
+                                customUrl = videoMap.get(name);
+                            }
+
+                            if (customUrl != null) {
+                                // INJETAR URL!
+                                // Mas primeiro checar se JÁ EXISTE um customVideoUrl específico (Manual
+                                // Override)
+                                Object existingUrl = exercise.get("customVideoUrl");
+                                boolean hasManualOverride = existingUrl != null && !existingUrl.toString().isEmpty();
+
+                                if (!hasManualOverride) {
+                                    // Adicionamos campo novo para não quebrar busca do YouTube no mobile antigo
+                                    exercise.put("customVideoUrl", customUrl);
+                                }
+
+                                // NÃO sobrescrevemos videoQuery para manter fallback.
+                                // O Frontend/Mobile deve dar prioridade ao customVideoUrl se existir.
+                            }
+                        }
+                    }
+                }
+            }
+
+            return jsonMapper.writeValueAsString(data);
+
+        } catch (Exception e) {
+            System.err.println("Erro parsing JSON daysData: " + e.getMessage());
+            return jsonDaysData; // Retorna original se falhar
         }
     }
 
@@ -223,11 +318,10 @@ public class StructuredWorkoutController {
     @Put("/{workoutId}")
     @Transactional
     public HttpResponse<?> updateWorkout(
-        @PathVariable Long workoutId,
-        @Body StructuredWorkoutPlan updatedWorkout,
-        @QueryValue Long requesterId,
-        @QueryValue String requesterRole
-    ) {
+            @PathVariable Long workoutId,
+            @Body StructuredWorkoutPlan updatedWorkout,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
         try {
             var workoutOpt = workoutPlanRepository.findByIdAndDeletedAtIsNull(workoutId);
 
@@ -240,7 +334,7 @@ public class StructuredWorkoutController {
             // Validação de permissões
             if (!permissionService.canAccessUserData(requesterId, requesterRole, existingWorkout.getUserId())) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Você não tem permissão para atualizar este treino"));
+                        .body(Map.of("error", "Você não tem permissão para atualizar este treino"));
             }
 
             // Atualizar campos
@@ -261,8 +355,7 @@ public class StructuredWorkoutController {
         } catch (Exception e) {
             e.printStackTrace();
             return HttpResponse.serverError(Map.of(
-                "error", "Erro ao atualizar treino: " + e.getMessage()
-            ));
+                    "error", "Erro ao atualizar treino: " + e.getMessage()));
         }
     }
 
@@ -273,10 +366,9 @@ public class StructuredWorkoutController {
     @Delete("/{workoutId}")
     @Transactional
     public HttpResponse<?> deleteWorkout(
-        @PathVariable Long workoutId,
-        @QueryValue Long requesterId,
-        @QueryValue String requesterRole
-    ) {
+            @PathVariable Long workoutId,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
         try {
             var workoutOpt = workoutPlanRepository.findByIdAndDeletedAtIsNull(workoutId);
 
@@ -289,7 +381,7 @@ public class StructuredWorkoutController {
             // Validação de permissões
             if (!permissionService.canAccessUserData(requesterId, requesterRole, workout.getUserId())) {
                 return HttpResponse.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "Você não tem permissão para deletar este treino"));
+                        .body(Map.of("error", "Você não tem permissão para deletar este treino"));
             }
 
             // Soft delete
@@ -301,8 +393,7 @@ public class StructuredWorkoutController {
         } catch (Exception e) {
             e.printStackTrace();
             return HttpResponse.serverError(Map.of(
-                "error", "Erro ao deletar treino: " + e.getMessage()
-            ));
+                    "error", "Erro ao deletar treino: " + e.getMessage()));
         }
     }
 }
