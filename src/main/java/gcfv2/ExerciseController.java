@@ -136,4 +136,76 @@ public class ExerciseController {
             return HttpResponse.serverError(Map.of("message", "Erro ao atribuir exercício: " + e.getMessage()));
         }
     }
+
+    /**
+     * CRIAR NOVO EXERCÍCIO (CUSTOMIZADO)
+     * Endpoint: POST /api/exercises/create
+     * Permite que Professores/Admin criem novos exercícios.
+     * Se videoUrl for fornecido, já vincula como custom video do professor.
+     */
+    @Inject
+    private ProfessorVideoService professorVideoService;
+
+    @Post("/create")
+    @Transactional
+    public HttpResponse<?> createExercise(@Body Map<String, Object> body,
+            @QueryValue Long requesterId,
+            @QueryValue String requesterRole) {
+
+        // 1. Validar Permissões (Professor, Personal ou Admin)
+        boolean canCreate = "ADMIN".equalsIgnoreCase(requesterRole) ||
+                "PERSONAL".equalsIgnoreCase(requesterRole) ||
+                "PROFESSOR".equalsIgnoreCase(requesterRole);
+
+        if (!canCreate) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Apenas Professores e Administradores podem criar exercícios."));
+        }
+
+        String name = (String) body.get("name");
+        String videoUrl = (String) body.get("videoUrl");
+        String description = (String) body.get("description");
+
+        if (name == null || name.isBlank()) {
+            return HttpResponse.badRequest(Map.of("message", "Nome do exercício é obrigatório."));
+        }
+
+        // 2. Normalizar ID (UpperCase + Underscore)
+        String exerciseId = name.trim().toUpperCase().replaceAll("\\s+", "_");
+
+        // 3. Verificar se já existe (Evitar duplicatas globais com mesmo ID)
+        if (exerciseRepository.existsById(exerciseId)) {
+            // Se já existe, mas o usuário quer "criar", podemos apenas vincular o vídeo se
+            // for professor
+            // Ou retornar erro. Vamos assumir que se existe, retornamos o existente e
+            // tentamos vincular o vídeo.
+            LOG.info("Exercício já existe: {}", exerciseId);
+        } else {
+            // Criar Novo
+            Exercise newExercise = new Exercise();
+            newExercise.setId(exerciseId);
+            newExercise.setName(name);
+            newExercise.setCategory("CUSTOM"); // Categoria padrão
+            newExercise.setActive(true);
+            newExercise.setDescription("Criado por " + requesterRole + " " + requesterId);
+
+            exerciseRepository.save(newExercise);
+        }
+
+        // 4. Se houver Video URL e for Professor/Personal, salvar o vídeo customizado
+        if (videoUrl != null && !videoUrl.isBlank()) {
+            try {
+                // Se o serviço espera ID numérico para professor, usamos requesterId
+                professorVideoService.saveOrUpdateVideo(requesterId, exerciseId, videoUrl, description);
+            } catch (Exception e) {
+                LOG.error("Erro ao salvar vídeo para o novo exercício: ", e);
+                // Não falha o request todo, apenas loga
+            }
+        }
+
+        return HttpResponse.created(Map.of(
+                "message", "Exercício criado/atualizado com sucesso.",
+                "id", exerciseId,
+                "name", name));
+    }
 }
