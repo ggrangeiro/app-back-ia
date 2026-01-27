@@ -1,5 +1,5 @@
 CREATE TABLE professor_exercise_videos (
-    id BIGSERIAL PRIMARY KEY,
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
     professor_id BIGINT NOT NULL,
     exercise_id VARCHAR(255) NOT NULL,
     video_url TEXT NOT NULL,
