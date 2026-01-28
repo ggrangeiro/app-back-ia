@@ -2,11 +2,13 @@ package gcfv2;
 
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.annotation.*;
+import io.micronaut.http.server.cors.CrossOrigin;
 import io.micronaut.serde.annotation.Serdeable;
 
 import java.util.List;
 
 @Controller("/api/professors/videos")
+@CrossOrigin(allowedOrigins = "https://fitanalizer.com.br", allowedOriginsRegex = "^http(|s)://localhost:[0-9]+$")
 public class ProfessorVideoController {
 
     private final ProfessorVideoService service;
