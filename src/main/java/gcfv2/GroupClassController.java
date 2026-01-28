@@ -127,8 +127,28 @@ public class GroupClassController {
      * For Students
      */
     @Get("/available")
-    public HttpResponse<?> getAvailableClasses(@QueryValue(defaultValue = "false") boolean includeFull) {
-        List<GroupClass> classes = groupClassRepository.findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime.now());
+    public HttpResponse<?> getAvailableClasses(@QueryValue(defaultValue = "false") boolean includeFull,
+            @QueryValue Optional<Long> requesterId) {
+
+        List<GroupClass> classes;
+
+        if (requesterId.isPresent()) {
+            Optional<Usuario> studentOpt = usuarioRepository.findById(requesterId.get());
+            if (studentOpt.isPresent() && studentOpt.get().getPersonalId() != null) {
+                // If student has a personal, show ONLY that personal's classes
+                classes = groupClassRepository.findByProfessorIdAndStartTimeAfterOrderByStartTimeAsc(
+                        studentOpt.get().getPersonalId(), LocalDateTime.now());
+            } else {
+                // Fallback: If no personal assigned (or not found), show all (or empty?
+                // deciding on ALL for open gyms)
+                // For now, let's keep showing ALL to avoid breaking "demo" flows, or we could
+                // restrict.
+                // Given the user request, they WANT to see THEIR personal's classes.
+                classes = groupClassRepository.findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime.now());
+            }
+        } else {
+            classes = groupClassRepository.findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime.now());
+        }
 
         // Transform and filter full if needed (simple implementation)
         List<Map<String, Object>> result = classes.stream().map(c -> {

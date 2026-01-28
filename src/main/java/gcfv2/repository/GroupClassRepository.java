@@ -13,6 +13,9 @@ public interface GroupClassRepository extends CrudRepository<GroupClass, Long> {
 
     List<GroupClass> findByProfessorId(Long professorId);
 
-    // Find available classes in the future
+    // Find available classes in the future (Global)
     List<GroupClass> findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime time);
+
+    // Find available classes for a specific professor (Student's Personal)
+    List<GroupClass> findByProfessorIdAndStartTimeAfterOrderByStartTimeAsc(Long professorId, LocalDateTime time);
 }
