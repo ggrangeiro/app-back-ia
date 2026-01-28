@@ -231,6 +231,11 @@ public class TesteController {
                     user.setAccessLevel(atualizacao.getAccessLevel());
                 }
 
+                if (atualizacao.getPrimaryColor() != null)
+                    user.setPrimaryColor(atualizacao.getPrimaryColor());
+                if (atualizacao.getSecondaryColor() != null)
+                    user.setSecondaryColor(atualizacao.getSecondaryColor());
+
                 Usuario salvo = usuarioRepository.update(user);
                 return HttpResponse.ok(salvo);
             }).orElse(HttpResponse.notFound());

@@ -60,6 +60,28 @@ public class Usuario {
     @MappedProperty(converter = gcfv2.converter.AnamnesisConverter.class)
     private gcfv2.dto.anamnese.AnamnesisDTO anamnesis;
 
+    @MappedProperty("primary_color")
+    private String primaryColor;
+
+    @MappedProperty("secondary_color")
+    private String secondaryColor;
+
+    public String getPrimaryColor() {
+        return primaryColor;
+    }
+
+    public void setPrimaryColor(String primaryColor) {
+        this.primaryColor = primaryColor;
+    }
+
+    public String getSecondaryColor() {
+        return secondaryColor;
+    }
+
+    public void setSecondaryColor(String secondaryColor) {
+        this.secondaryColor = secondaryColor;
+    }
+
     @Transient
     private java.util.List<String> assignedExercises;
 
