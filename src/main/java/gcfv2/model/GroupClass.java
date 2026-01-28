@@ -41,6 +41,9 @@ public class GroupClass {
     @MappedProperty("recurrence_days")
     private String recurrenceDays; // "MONDAY,WEDNESDAY"
 
+    @MappedProperty("recurrence_group_id")
+    private String recurrenceGroupId;
+
     @MappedProperty("created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
@@ -130,6 +133,14 @@ public class GroupClass {
 
     public void setRecurrenceDays(String recurrenceDays) {
         this.recurrenceDays = recurrenceDays;
+    }
+
+    public String getRecurrenceGroupId() {
+        return recurrenceGroupId;
+    }
+
+    public void setRecurrenceGroupId(String recurrenceGroupId) {
+        this.recurrenceGroupId = recurrenceGroupId;
     }
 
     public LocalDateTime getCreatedAt() {

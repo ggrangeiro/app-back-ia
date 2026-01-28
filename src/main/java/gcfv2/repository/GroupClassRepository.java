@@ -18,4 +18,8 @@ public interface GroupClassRepository extends CrudRepository<GroupClass, Long> {
 
     // Find available classes for a specific professor (Student's Personal)
     List<GroupClass> findByProfessorIdAndStartTimeAfterOrderByStartTimeAsc(Long professorId, LocalDateTime time);
+
+    List<GroupClass> findByRecurrenceGroupId(String recurrenceGroupId);
+
+    void deleteByRecurrenceGroupId(String recurrenceGroupId);
 }

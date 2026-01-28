@@ -17,6 +17,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Controller("/api/classes")
@@ -75,23 +76,47 @@ public class GroupClassController {
             }
 
             LocalDateTime startTime = LocalDateTime.parse(startTimeStr, DateTimeFormatter.ISO_DATE_TIME);
+            String recurrenceGroupId = isRecurrent ? UUID.randomUUID().toString() : null;
 
-            GroupClass groupClass = new GroupClass();
-            groupClass.setName(name);
-            groupClass.setDescription(description);
-            groupClass.setProfessorId(requesterId); // The creator is the professor
-            groupClass.setStartTime(startTime);
-            groupClass.setDurationMinutes(duration);
-            groupClass.setCapacity(capacity);
-            groupClass.setLocation(location);
-            groupClass.setPhotoUrl(photoUrl);
-            groupClass.setIsRecurrent(isRecurrent);
-            groupClass.setRecurrenceDays(recurrenceDays);
-            groupClass.setCreatedAt(LocalDateTime.now());
+            if (isRecurrent) {
+                // Generate 12 weeks of classes
+                List<GroupClass> classesToSave = new java.util.ArrayList<>();
+                for (int i = 0; i < 12; i++) {
+                    GroupClass gc = new GroupClass();
+                    gc.setName(name);
+                    gc.setDescription(description);
+                    gc.setProfessorId(requesterId);
+                    gc.setStartTime(startTime.plusWeeks(i));
+                    gc.setDurationMinutes(duration);
+                    gc.setCapacity(capacity);
+                    gc.setLocation(location);
+                    gc.setPhotoUrl(photoUrl);
+                    gc.setIsRecurrent(true);
+                    gc.setRecurrenceDays(recurrenceDays);
+                    gc.setRecurrenceGroupId(recurrenceGroupId);
+                    gc.setCreatedAt(LocalDateTime.now());
+                    classesToSave.add(gc);
+                }
+                groupClassRepository.saveAll(classesToSave);
+                return HttpResponse.created(classesToSave.get(0));
+            } else {
+                // Single class
+                GroupClass groupClass = new GroupClass();
+                groupClass.setName(name);
+                groupClass.setDescription(description);
+                groupClass.setProfessorId(requesterId);
+                groupClass.setStartTime(startTime);
+                groupClass.setDurationMinutes(duration);
+                groupClass.setCapacity(capacity);
+                groupClass.setLocation(location);
+                groupClass.setPhotoUrl(photoUrl);
+                groupClass.setIsRecurrent(false);
+                groupClass.setRecurrenceDays(recurrenceDays);
+                groupClass.setCreatedAt(LocalDateTime.now());
 
-            groupClassRepository.save(groupClass);
-
-            return HttpResponse.created(groupClass);
+                groupClassRepository.save(groupClass);
+                return HttpResponse.created(groupClass);
+            }
 
         } catch (Exception e) {
             LOG.error("Error creating class", e);
