@@ -235,6 +235,10 @@ public class TesteController {
                     user.setPrimaryColor(atualizacao.getPrimaryColor());
                 if (atualizacao.getSecondaryColor() != null)
                     user.setSecondaryColor(atualizacao.getSecondaryColor());
+                if (atualizacao.getBackgroundColor() != null)
+                    user.setBackgroundColor(atualizacao.getBackgroundColor());
+                if (atualizacao.getSurfaceColor() != null)
+                    user.setSurfaceColor(atualizacao.getSurfaceColor());
 
                 Usuario salvo = usuarioRepository.update(user);
                 return HttpResponse.ok(salvo);

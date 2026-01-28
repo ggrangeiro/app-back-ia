@@ -82,6 +82,28 @@ public class Usuario {
         this.secondaryColor = secondaryColor;
     }
 
+    @MappedProperty("background_color")
+    private String backgroundColor;
+
+    @MappedProperty("surface_color")
+    private String surfaceColor;
+
+    public String getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public void setBackgroundColor(String backgroundColor) {
+        this.backgroundColor = backgroundColor;
+    }
+
+    public String getSurfaceColor() {
+        return surfaceColor;
+    }
+
+    public void setSurfaceColor(String surfaceColor) {
+        this.surfaceColor = surfaceColor;
+    }
+
     @Transient
     private java.util.List<String> assignedExercises;
 
