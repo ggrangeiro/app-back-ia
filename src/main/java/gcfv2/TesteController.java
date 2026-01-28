@@ -581,6 +581,8 @@ public class TesteController {
                 response.put("avatar", usuario.getAvatar() != null ? usuario.getAvatar() : "");
                 response.put("brandLogo", brandLogo != null ? brandLogo : "");
                 response.put("accessLevel", usuario.getAccessLevel() != null ? usuario.getAccessLevel() : "FULL");
+                response.put("methodology", usuario.getMethodology());
+                response.put("communicationStyle", usuario.getCommunicationStyle());
 
                 if (managerId != null) {
                     response.put("managerId", managerId);
@@ -666,6 +668,8 @@ public class TesteController {
             response.put("id", usuario.getId());
             response.put("role", usuario.getRole());
             response.put("accessLevel", usuario.getAccessLevel() != null ? usuario.getAccessLevel() : "FULL");
+            response.put("methodology", usuario.getMethodology());
+            response.put("communicationStyle", usuario.getCommunicationStyle());
 
             if (usuario.getPersonalId() != null) {
                 response.put("personalId", usuario.getPersonalId());
