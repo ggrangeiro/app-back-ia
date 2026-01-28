@@ -283,4 +283,29 @@ public class GroupClassController {
         }
         return HttpResponse.ok(Map.of("booked", false));
     }
+
+    /**
+     * DELETE RECURRENCE SERIES
+     */
+    @Delete("/recurrence/{groupId}")
+    @Transactional
+    public HttpResponse<?> deleteRecurrenceSeries(@PathVariable String groupId, @QueryValue Long requesterId) {
+
+        // Validation: Ensure requester owns the series (optional but good practice)
+        List<GroupClass> series = groupClassRepository.findByRecurrenceGroupId(groupId);
+        if (series.isEmpty()) {
+            return HttpResponse.notFound(Map.of("message", "Série não encontrada."));
+        }
+
+        // Simple security: Check if first class belongs to requester (Professor)
+        // Ideally checking role too, but requesterId match is strong enough for
+        // ownership
+        if (!series.get(0).getProfessorId().equals(requesterId)) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Você não tem permissão para apagar esta série."));
+        }
+
+        groupClassRepository.deleteByRecurrenceGroupId(groupId);
+        return HttpResponse.ok(Map.of("message", "Série de aulas removida com sucesso."));
+    }
 }
