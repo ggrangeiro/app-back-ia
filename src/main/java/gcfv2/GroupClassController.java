@@ -12,6 +12,7 @@ import io.micronaut.transaction.annotation.Transactional;
 import jakarta.inject.Inject;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -134,20 +135,30 @@ public class GroupClassController {
 
         if (requesterId.isPresent()) {
             Optional<Usuario> studentOpt = usuarioRepository.findById(requesterId.get());
-            if (studentOpt.isPresent() && studentOpt.get().getPersonalId() != null) {
-                // If student has a personal, show ONLY that personal's classes
-                classes = groupClassRepository.findByProfessorIdAndStartTimeAfterOrderByStartTimeAsc(
-                        studentOpt.get().getPersonalId(), LocalDateTime.now());
+
+            if (studentOpt.isPresent()) {
+                Usuario student = studentOpt.get();
+                LOG.info("Requesting available classes for Student ID: {}, Personal ID: {}", student.getId(),
+                        student.getPersonalId());
+
+                if (student.getPersonalId() != null) {
+                    LocalDateTime now = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+                    LOG.info("Filtering classes for Personal ID: {} after time: {}", student.getPersonalId(), now);
+                    classes = groupClassRepository.findByProfessorIdAndStartTimeAfterOrderByStartTimeAsc(
+                            student.getPersonalId(), now);
+                } else {
+                    LocalDateTime now = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+                    LOG.warn("Student has no Personal ID. Showing all classes.");
+                    classes = groupClassRepository.findByStartTimeAfterOrderByStartTimeAsc(now);
+                }
             } else {
-                // Fallback: If no personal assigned (or not found), show all (or empty?
-                // deciding on ALL for open gyms)
-                // For now, let's keep showing ALL to avoid breaking "demo" flows, or we could
-                // restrict.
-                // Given the user request, they WANT to see THEIR personal's classes.
-                classes = groupClassRepository.findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime.now());
+                LocalDateTime now = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+                LOG.warn("Student not found for ID: {}. Showing all classes.", requesterId.get());
+                classes = groupClassRepository.findByStartTimeAfterOrderByStartTimeAsc(now);
             }
         } else {
-            classes = groupClassRepository.findByStartTimeAfterOrderByStartTimeAsc(LocalDateTime.now());
+            LocalDateTime now = LocalDateTime.now(ZoneId.of("America/Sao_Paulo"));
+            classes = groupClassRepository.findByStartTimeAfterOrderByStartTimeAsc(now);
         }
 
         // Transform and filter full if needed (simple implementation)
