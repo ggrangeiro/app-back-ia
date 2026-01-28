@@ -18,4 +18,6 @@ public interface ClassBookingRepository extends CrudRepository<ClassBooking, Lon
     Optional<ClassBooking> findByClassIdAndStudentId(Long classId, Long studentId);
 
     long countByClassIdAndStatus(Long classId, String status);
+
+    void deleteByClassId(Long classId);
 }

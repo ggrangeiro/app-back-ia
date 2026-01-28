@@ -285,6 +285,33 @@ public class GroupClassController {
     }
 
     /**
+     * DELETE SINGLE CLASS
+     */
+    @Delete("/{id}")
+    @Transactional
+    public HttpResponse<?> deleteClass(@PathVariable Long id, @QueryValue Long requesterId) {
+
+        Optional<GroupClass> classOpt = groupClassRepository.findById(id);
+        if (classOpt.isEmpty()) {
+            return HttpResponse.notFound(Map.of("message", "Aula não encontrada."));
+        }
+
+        GroupClass groupClass = classOpt.get();
+        if (!groupClass.getProfessorId().equals(requesterId)) {
+            return HttpResponse.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("message", "Você não tem permissão para apagar esta aula."));
+        }
+
+        // Delete bookings first
+        classBookingRepository.deleteByClassId(id);
+
+        // Delete class
+        groupClassRepository.deleteById(id);
+
+        return HttpResponse.ok(Map.of("message", "Aula removida com sucesso."));
+    }
+
+    /**
      * DELETE RECURRENCE SERIES
      */
     @Delete("/recurrence/{groupId}")
