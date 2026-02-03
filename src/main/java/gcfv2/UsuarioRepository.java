@@ -18,6 +18,25 @@ public interface UsuarioRepository extends CrudRepository<Usuario, Long> {
 
     List<Usuario> findByRole(String role);
 
+    // === QUERIES PARA INTEGRAÇÃO EVO ===
+    
+    /**
+     * Buscar usuário pelo ID do membro no EVO
+     */
+    Optional<Usuario> findByEvoMemberId(String evoMemberId);
+
+    /**
+     * Buscar usuários de um personal que vieram do EVO
+     */
+    @Query("SELECT * FROM usuario WHERE personal_id = :personalId AND evo_member_id IS NOT NULL")
+    List<Usuario> findEvoMembersByPersonalId(Long personalId);
+
+    /**
+     * Buscar professores de um personal que vieram do EVO  
+     */
+    @Query("SELECT * FROM usuario WHERE manager_id = :managerId AND evo_member_id IS NOT NULL AND role = 'professor'")
+    List<Usuario> findEvoProfessorsByManagerId(Long managerId);
+
     // === QUERIES PARA PROFESSORES ===
 
     /**

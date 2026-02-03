@@ -104,6 +104,43 @@ public class Usuario {
         this.surfaceColor = surfaceColor;
     }
 
+    // ========== Campos de Integração EVO ==========
+    
+    @MappedProperty("evo_member_id")
+    private String evoMemberId; // ID do membro no sistema EVO
+    
+    @MappedProperty("evo_branch_id")
+    private String evoBranchId; // ID da filial no EVO
+    
+    @MappedProperty("evo_last_sync")
+    private java.time.LocalDateTime evoLastSync; // Última sincronização com EVO
+
+    public String getEvoMemberId() {
+        return evoMemberId;
+    }
+
+    public void setEvoMemberId(String evoMemberId) {
+        this.evoMemberId = evoMemberId;
+    }
+
+    public String getEvoBranchId() {
+        return evoBranchId;
+    }
+
+    public void setEvoBranchId(String evoBranchId) {
+        this.evoBranchId = evoBranchId;
+    }
+
+    public java.time.LocalDateTime getEvoLastSync() {
+        return evoLastSync;
+    }
+
+    public void setEvoLastSync(java.time.LocalDateTime evoLastSync) {
+        this.evoLastSync = evoLastSync;
+    }
+
+    // ===============================================
+
     @Transient
     private java.util.List<String> assignedExercises;
 

@@ -53,6 +53,14 @@ public class StructuredTreino {
     @MappedProperty("legacy_html")
     private String legacyHtml;
 
+    // ===== Campos de Integração EVO =====
+    
+    @MappedProperty("evo_workout_id")
+    private String evoWorkoutId; // ID do treino no EVO após exportação
+    
+    @MappedProperty("evo_synced_at")
+    private LocalDateTime evoSyncedAt; // Data da última sincronização com EVO
+
     // ===== Getters and Setters =====
 
     public Long getId() {
@@ -149,5 +157,23 @@ public class StructuredTreino {
 
     public void setLegacyHtml(String legacyHtml) {
         this.legacyHtml = legacyHtml;
+    }
+
+    // ===== Getters/Setters EVO =====
+    
+    public String getEvoWorkoutId() {
+        return evoWorkoutId;
+    }
+
+    public void setEvoWorkoutId(String evoWorkoutId) {
+        this.evoWorkoutId = evoWorkoutId;
+    }
+
+    public LocalDateTime getEvoSyncedAt() {
+        return evoSyncedAt;
+    }
+
+    public void setEvoSyncedAt(LocalDateTime evoSyncedAt) {
+        this.evoSyncedAt = evoSyncedAt;
     }
 }
