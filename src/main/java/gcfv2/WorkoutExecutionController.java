@@ -77,14 +77,27 @@ public class WorkoutExecutionController {
 
             // Validação do treino (Dual-Check: V2 Plans OR Legacy Treinos)
             boolean existsV2 = workoutPlanRepository.existsById(request.getWorkoutId());
-            boolean existsLegacy = false;
+            Long effectiveWorkoutId = request.getWorkoutId();
 
             if (!existsV2) {
-                existsLegacy = treinoRepository.existsById(request.getWorkoutId());
-            }
+                // Try to find the legacy treino
+                var legacyTreino = treinoRepository.findById(request.getWorkoutId());
+                if (legacyTreino.isEmpty()) {
+                    return HttpResponse.notFound(Map.of("error", "Treino não encontrado (nem V2 nem Legado)"));
+                }
 
-            if (!existsV2 && !existsLegacy) {
-                return HttpResponse.notFound(Map.of("error", "Treino não encontrado (nem V2 nem Legado)"));
+                // Auto-migrate: create a structured_workout_plans entry from the legacy treino
+                Treino treino = legacyTreino.get();
+                StructuredWorkoutPlan migratedPlan = new StructuredWorkoutPlan();
+                migratedPlan.setUserId(request.getUserId());
+                migratedPlan.setTitle(treino.getGoal() != null ? treino.getGoal() : "Treino Migrado");
+                migratedPlan.setDaysData(treino.getDaysData() != null ? treino.getDaysData() : "{}");
+                migratedPlan.setLegacyHtml(treino.getContent());
+                StructuredWorkoutPlan savedPlan = workoutPlanRepository.save(migratedPlan);
+                effectiveWorkoutId = savedPlan.getId();
+
+                System.out.println("[WORKOUT_EXECUTION] Auto-migrated legacy treino " +
+                    request.getWorkoutId() + " -> structured_workout_plans " + effectiveWorkoutId);
             }
 
             // Validação do dayOfWeek
@@ -102,7 +115,7 @@ public class WorkoutExecutionController {
             // Criar WorkoutExecution
             WorkoutExecution execution = new WorkoutExecution();
             execution.setUserId(request.getUserId());
-            execution.setWorkoutId(request.getWorkoutId());
+            execution.setWorkoutId(effectiveWorkoutId);
             execution.setDayOfWeek(permissionService.normalizeDayOfWeek(request.getDayOfWeek()));
             execution.setExecutedAt(request.getExecutedAt());
             execution.setComment(request.getComment());
