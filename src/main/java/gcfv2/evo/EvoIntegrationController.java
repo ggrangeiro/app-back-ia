@@ -76,19 +76,19 @@ public class EvoIntegrationController {
         }
         
         EvoIntegration evo = integration.get();
-        return HttpResponse.ok(Map.of(
-            "configured", true,
-            "status", evo.getStatus(),
-            "syncMembers", evo.getSyncMembers(),
-            "syncEmployees", evo.getSyncEmployees(),
-            "syncWorkouts", evo.getSyncWorkouts(),
-            "autoSync", evo.getAutoSync(),
-            "lastMembersSync", evo.getLastMembersSync() != null ? evo.getLastMembersSync().toString() : null,
-            "lastEmployeesSync", evo.getLastEmployeesSync() != null ? evo.getLastEmployeesSync().toString() : null,
-            "evoBranchId", evo.getEvoBranchId(),
-            "evoBaseUrl", evo.getEvoBaseUrl(),
-            "errorMessage", evo.getErrorMessage()
-        ));
+        Map<String, Object> result = new HashMap<>();
+        result.put("configured", true);
+        result.put("status", evo.getStatus());
+        result.put("syncMembers", evo.getSyncMembers());
+        result.put("syncEmployees", evo.getSyncEmployees());
+        result.put("syncWorkouts", evo.getSyncWorkouts());
+        result.put("autoSync", evo.getAutoSync());
+        result.put("lastMembersSync", evo.getLastMembersSync() != null ? evo.getLastMembersSync().toString() : null);
+        result.put("lastEmployeesSync", evo.getLastEmployeesSync() != null ? evo.getLastEmployeesSync().toString() : null);
+        result.put("evoBranchId", evo.getEvoBranchId());
+        result.put("evoBaseUrl", evo.getEvoBaseUrl());
+        result.put("errorMessage", evo.getErrorMessage());
+        return HttpResponse.ok(result);
     }
 
     /**
@@ -425,17 +425,17 @@ public class EvoIntegrationController {
         List<Usuario> evoMembers = usuarioRepository.findEvoMembersByPersonalId(requesterId);
         List<Usuario> evoProfessors = usuarioRepository.findEvoProfessorsByManagerId(requesterId);
         
-        return HttpResponse.ok(Map.of(
-            "configured", true,
-            "status", integration.getStatus(),
-            "lastMembersSync", integration.getLastMembersSync() != null ? 
-                               integration.getLastMembersSync().toString() : null,
-            "lastEmployeesSync", integration.getLastEmployeesSync() != null ? 
-                                 integration.getLastEmployeesSync().toString() : null,
-            "importedMembersCount", evoMembers.size(),
-            "importedProfessorsCount", evoProfessors.size(),
-            "errorMessage", integration.getErrorMessage()
-        ));
+        Map<String, Object> statusResult = new HashMap<>();
+        statusResult.put("configured", true);
+        statusResult.put("status", integration.getStatus());
+        statusResult.put("lastMembersSync", integration.getLastMembersSync() != null ? 
+                           integration.getLastMembersSync().toString() : null);
+        statusResult.put("lastEmployeesSync", integration.getLastEmployeesSync() != null ? 
+                             integration.getLastEmployeesSync().toString() : null);
+        statusResult.put("importedMembersCount", evoMembers.size());
+        statusResult.put("importedProfessorsCount", evoProfessors.size());
+        statusResult.put("errorMessage", integration.getErrorMessage());
+        return HttpResponse.ok(statusResult);
     }
 
     // ========== EXERCÍCIOS E MAPEAMENTO (FASE 5) ==========

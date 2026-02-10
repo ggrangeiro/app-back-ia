@@ -17,6 +17,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
+import io.micronaut.core.type.Argument;
 import io.micronaut.json.JsonMapper;
 
 /**
@@ -313,20 +314,17 @@ public class EvoApiClient {
         try {
             // A API EVO pode retornar um array ou um objeto com array
             if (json.trim().startsWith("[")) {
-                return jsonMapper.readValue(json, 
-                    jsonMapper.getTypeFactory().constructCollectionType(List.class, EvoMemberDTO.class));
+                return jsonMapper.readValue(json, Argument.listOf(EvoMemberDTO.class));
             } else {
                 // Tenta extrair array de um objeto wrapper
                 @SuppressWarnings("unchecked")
                 Map<String, Object> wrapper = jsonMapper.readValue(json, Map.class);
                 if (wrapper.containsKey("members")) {
                     String membersJson = jsonMapper.writeValueAsString(wrapper.get("members"));
-                    return jsonMapper.readValue(membersJson,
-                        jsonMapper.getTypeFactory().constructCollectionType(List.class, EvoMemberDTO.class));
+                    return jsonMapper.readValue(membersJson, Argument.listOf(EvoMemberDTO.class));
                 } else if (wrapper.containsKey("data")) {
                     String dataJson = jsonMapper.writeValueAsString(wrapper.get("data"));
-                    return jsonMapper.readValue(dataJson,
-                        jsonMapper.getTypeFactory().constructCollectionType(List.class, EvoMemberDTO.class));
+                    return jsonMapper.readValue(dataJson, Argument.listOf(EvoMemberDTO.class));
                 }
             }
             return new ArrayList<>();
@@ -339,19 +337,16 @@ public class EvoApiClient {
     private List<EvoEmployeeDTO> parseEmployees(String json) {
         try {
             if (json.trim().startsWith("[")) {
-                return jsonMapper.readValue(json,
-                    jsonMapper.getTypeFactory().constructCollectionType(List.class, EvoEmployeeDTO.class));
+                return jsonMapper.readValue(json, Argument.listOf(EvoEmployeeDTO.class));
             } else {
                 @SuppressWarnings("unchecked")
                 Map<String, Object> wrapper = jsonMapper.readValue(json, Map.class);
                 if (wrapper.containsKey("employees")) {
                     String employeesJson = jsonMapper.writeValueAsString(wrapper.get("employees"));
-                    return jsonMapper.readValue(employeesJson,
-                        jsonMapper.getTypeFactory().constructCollectionType(List.class, EvoEmployeeDTO.class));
+                    return jsonMapper.readValue(employeesJson, Argument.listOf(EvoEmployeeDTO.class));
                 } else if (wrapper.containsKey("data")) {
                     String dataJson = jsonMapper.writeValueAsString(wrapper.get("data"));
-                    return jsonMapper.readValue(dataJson,
-                        jsonMapper.getTypeFactory().constructCollectionType(List.class, EvoEmployeeDTO.class));
+                    return jsonMapper.readValue(dataJson, Argument.listOf(EvoEmployeeDTO.class));
                 }
             }
             return new ArrayList<>();
